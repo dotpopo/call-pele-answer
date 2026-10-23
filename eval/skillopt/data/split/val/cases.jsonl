@@ -1,0 +1,6 @@
+{"id":"c002","task_type":"simple","question":"HTTP 状态码 404 是什么意思？","carrier":"chat","expect":[],"forbid":["mermaid","slider","steps","tabs","views"]}
+{"id":"c005","task_type":"process","question":"OAuth 2.0 授权码模式的完整流程是怎样的？浏览器、客户端、授权服务器、资源服务器之间怎么来回？","carrier":"page","expect":[["sequenceDiagram","steps"]],"forbid":["pie","xychart-beta"]}
+{"id":"c008","task_type":"state","question":"一个电商订单从下单到完成或取消，有哪些状态，状态之间怎么流转？","carrier":"page","expect":[["stateDiagram-v2"]],"forbid":["pie","xychart-beta"]}
+{"id":"c011","task_type":"compare","question":"对比一下 REST、GraphQL、gRPC，各自适合什么场景？","carrier":"page","expect":[["table","tabs"]],"forbid":["pie"]}
+{"id":"c014","task_type":"principle","question":"一致性哈希是怎么解决节点增减时大量数据迁移问题的？","carrier":"page","expect":[["flowchart","steps","slider","block-beta"]],"forbid":["pie"]}
+{"id":"c021","task_type":"data","question":"我们 App 上个月渠道来源是：自然搜索 42%、信息流广告 31%、应用商店推荐 18%、其他 9%。帮我讲讲这个结构说明了什么。","carrier":"page","expect":[["pie","xychart-beta","table","sankey-beta"]],"forbid":[]}

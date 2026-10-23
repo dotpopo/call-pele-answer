@@ -1,0 +1,6 @@
+{"id":"c024","task_type":"simple","question":"What's the difference between `let` and `const` in JavaScript?","carrier":"chat","expect":[],"forbid":["mermaid","slider","steps","tabs","views"]}
+{"id":"c006","task_type":"process","question":"从在浏览器地址栏输入网址到页面显示出来，中间发生了什么？做成一页给我看。","carrier":"page","expect":[["flowchart","sequenceDiagram","steps","olist"]],"forbid":["pie"]}
+{"id":"c009","task_type":"state","question":"Kubernetes 里一个 Pod 的生命周期有哪些阶段，什么情况下会进入 CrashLoopBackOff？","carrier":"page","expect":[["stateDiagram-v2","flowchart"]],"forbid":["pie"]}
+{"id":"c012","task_type":"compare","question":"Redis 的 RDB 和 AOF 两种持久化方式有什么区别，我该怎么选？","carrier":"page","expect":[["table","tabs"]],"forbid":["pie","xychart-beta"]}
+{"id":"c017","task_type":"architecture","question":"讲讲 RAG 系统的架构：文档怎么入库，用户提问时检索和生成怎么配合？","carrier":"page","expect":[["flowchart","architecture-beta","sequenceDiagram"]],"forbid":["pie"]}
+{"id":"c023","task_type":"teach","question":"给初学者讲讲快速排序是怎么一步步把数组排好的。","carrier":"page","expect":[["steps","olist","slider"]],"forbid":["pie"]}
