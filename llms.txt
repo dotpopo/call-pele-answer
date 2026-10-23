@@ -1,0 +1,10 @@
+# call-pele-answer
+
+> Open-source agent skill (Claude Code plugin, also works with OpenAI Codex CLI, Cursor, OpenCode) that turns long AI answers into one-file offline interactive HTML explainer pages. It splits an answer into blocks and picks the best form per block (prose, table, Mermaid flowchart/state/sequence diagram, timeline, slider, tabs, step player, switchable views) instead of using a fixed template. Model writes Markdown only; bundled Node.js CLI `pe` renders. Includes a palette (recolor) and annotations (copy feedback to the agent with block IDs). Router: TypeSafe Jev / System One, free endpoint, or local rules. Runs are logged (runs.jsonl) and `pe stats` gives tuning advice. MIT license. Chinese and English.
+
+- [README (中文)](README.md)
+- [README (English)](README.en.md)
+- [Agent instructions](skills/call-pele-answer/SKILL.md)
+- [Routing rules](skills/call-pele-answer/references/routing.md)
+- [Plugin / extension API](skills/call-pele-answer/references/plugins.md)
+- [Promo video](docs/promo.mp4)

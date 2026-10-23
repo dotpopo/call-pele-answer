@@ -8,9 +8,20 @@
   "license": "MIT",
   "keywords": [
     "explainer",
+    "explain",
+    "answer-to-html",
+    "markdown-to-html",
     "mermaid",
-    "ste",
-    "routing",
-    "system-one"
-  ]
+    "interactive",
+    "visualization",
+    "agent-skill",
+    "claude-code",
+    "codex",
+    "cursor",
+    "opencode",
+    "system-one",
+    "jev"
+  ],
+  "homepage": "https://github.com/dotpopo/call-pele-answer",
+  "repository": "https://github.com/dotpopo/call-pele-answer"
 }
