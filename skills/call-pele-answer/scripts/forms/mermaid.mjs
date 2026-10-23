@@ -15,7 +15,10 @@ export default {
     const src = node.body.join('\n');
     const id = `pe${++seq}`;
     node.data = { src, kind: src.trim().split(/\s/)[0], edges: (src.match(/-->|---|-\.->|==>|->>|-->>|--\)|-x/g) || []).length };
-    if (/\b(style|classDef)\b[^\n]*#[0-9a-f]{3,6}/i.test(src)) ctx.warn(node.line, 'route/fixed-color', '图里写了固定颜色', '删掉 style/classDef 里的 #色值：固定色不随主题切换');
+    // `%% 图例: bad=违反规则; fixed=已修复` (or `%% legend:`) → a legend row of theme-coloured chips above the diagram
+    const lg = src.match(/^\s*%%\s*(?:图例|legend)\s*[:：]\s*(.+)$/im);
+    if (lg) node.data.legend = lg[1].split(/[;；,，]\s*/).map(x => x.split(/\s*=\s*/)).filter(x => x[0] && x[1]).map(([k, v]) => ({ k: k.trim(), v: v.trim() }));
+    if (/\b(style|classDef)\b[^\n]*#[0-9a-f]{3,6}/i.test(src)) ctx.warn(node.line, 'route/fixed-color', '图里写了固定颜色', '删掉 style/classDef 里的 #色值：固定色不随主题切换。改用语义类 `class A,B bad`（bad/ok/fixed/warn/new/muted 或 blue/green/red… 色名），配 `%% 图例: bad=违反规则`');
     try {
       const opt = { fontFamily: FONT, fontFamilyMono: MONO, fontSize: 15, responsive: true };
       const wide = peleRender(src, { ...opt, maxWidth: 880, idPrefix: id + 'w' });
@@ -30,7 +33,7 @@ export default {
     }
   },
   render: {
-    html: (n, r) => n.data?.svg ? `<figure class="pe-fig" data-type="${r.esc(n.data.type)}"><div class="pe-svg pe-wide">${n.data.svg}</div>${n.data.narrowSvg ? `<div class="pe-svg pe-narrow">${n.data.narrowSvg}</div>` : ''}</figure>` : '',
+    html: (n, r) => n.data?.svg ? `<figure class="pe-fig" data-type="${r.esc(n.data.type)}">${n.data.legend ? `<div class="pe-legend">${n.data.legend.map(x => `<span class="pe-chip ${r.esc(x.k.replace(/[^\w-]/g, ''))}">${r.esc(x.v)}</span>`).join('')}</div>` : ''}<div class="pe-svg pe-wide">${n.data.svg}</div>${n.data.narrowSvg ? `<div class="pe-svg pe-narrow">${n.data.narrowSvg}</div>` : ''}</figure>` : '',
     markdown: n => ['```mermaid', ...n.body, '```'].join('\n'),
   },
   lint(node, report) {

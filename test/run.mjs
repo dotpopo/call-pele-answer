@@ -160,5 +160,14 @@ console.log('— 路由缓存');
   const { blocks: nb } = await routeLocal(['用户可以在设置里修改密码。', 'Redis 是一个内存数据库，读写很快。']);
   t('一句话的短块仍是文字', nb.every(b => b.family === 'prose'));
 }
+
+{ // 语义类 + 图例：不写固定色也能分类上色
+  const md = '# t\n\n## 状态\n```mermaid\nstateDiagram-v2\n  %% 图例: bad=违反规则; fixed=已修复\n  [*] --> A\n  A --> B: 出错\n  B --> C: 修复后\n  class B bad\n  class C fixed\n```\n';
+  const { renderMarkdown } = await import('../skills/call-pele-answer/scripts/core/engine.mjs').catch(() => ({}));
+  const { render: peleR } = await import('../skills/call-pele-answer/scripts/vendor/pele.mjs');
+  const svg = peleR('stateDiagram-v2\n  [*] --> A\n  A --> B\n  class B bad').svg;
+  const css = (await import('fs')).readFileSync(new URL('../skills/call-pele-answer/scripts/themes/pele.css', import.meta.url), 'utf8');
+  t('语义类进入 SVG，主题 CSS 给它上色', /pele-state bad/.test(svg) && /\.pe-svg g\[class\]:is\(\.bad/.test(css) && /\.pe-legend/.test(css));
+}
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exitCode = fail ? 1 : 0;

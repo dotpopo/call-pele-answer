@@ -74,3 +74,20 @@ footer summary{cursor:pointer}
 .nojs [hidden]{display:block}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{body{padding:0}.pe-bar,.pe-theme,footer details{display:none}.pe-beat[hidden],.pe-stop[hidden],.pe-tab[hidden]{display:block!important}.pe-wide{display:flex!important}.pe-narrow{display:none!important}}
+
+/* semantic node classes — `class A,B bad` or `A:::ok` in any diagram. Colours follow the theme and the palette. */
+:is(.pe-svg g,.pe-chip):is(.bad,.bug,.error,.danger){--k:var(--pe-red)}
+:is(.pe-svg g,.pe-chip):is(.ok,.good,.fixed,.done,.pass){--k:var(--pe-green)}
+:is(.pe-svg g,.pe-chip):is(.warn,.risk,.todo){--k:var(--pe-yellow)}
+:is(.pe-svg g,.pe-chip):is(.new,.focus,.hot){--k:var(--pe-blue)}
+:is(.pe-svg g,.pe-chip).muted{--k:var(--pe-faint)}
+:is(.pe-svg g,.pe-chip).blue{--k:var(--pe-blue)}:is(.pe-svg g,.pe-chip).green{--k:var(--pe-green)}:is(.pe-svg g,.pe-chip).red{--k:var(--pe-red)}
+:is(.pe-svg g,.pe-chip).yellow{--k:var(--pe-yellow)}:is(.pe-svg g,.pe-chip).orange{--k:var(--pe-orange)}:is(.pe-svg g,.pe-chip).cyan{--k:var(--pe-cyan)}
+:is(.pe-svg g,.pe-chip).purple{--k:var(--pe-purple)}:is(.pe-svg g,.pe-chip).magenta{--k:var(--pe-magenta)}
+.pe-svg g[class]:is(.bad,.bug,.error,.danger,.ok,.good,.fixed,.done,.pass,.warn,.risk,.todo,.new,.focus,.hot,.muted,.blue,.green,.red,.yellow,.orange,.cyan,.purple,.magenta){
+  --_s:color-mix(in srgb,var(--k) 13%,var(--pe-paper));--_b:color-mix(in srgb,var(--k) 55%,var(--pe-border));}
+.pe-svg g:is(.bad,.bug,.error,.danger,.fixed,.pass){--_b:var(--k);--_fg:color-mix(in srgb,var(--k) 80%,var(--pe-ink))}
+.pe-svg g:is(.bad,.bug,.error,.danger,.fixed,.pass)>:is(rect,path,polygon,circle,ellipse){stroke-width:2px}
+.pe-legend{display:flex;flex-wrap:wrap;gap:.4rem .5rem;justify-content:center;margin:.25rem 0 .6rem;font-size:.8rem;color:var(--pe-muted)}
+.pe-chip{display:inline-flex;align-items:center;gap:.35rem;padding:.1rem .55rem;border-radius:999px;border:1px solid color-mix(in srgb,var(--k,var(--pe-border)) 55%,var(--pe-border));background:color-mix(in srgb,var(--k,var(--pe-surface)) 13%,var(--pe-paper));color:var(--pe-ink)}
+.pe-chip:is(.bad,.bug,.error,.danger,.fixed,.pass){border:2px solid var(--k);color:color-mix(in srgb,var(--k) 80%,var(--pe-ink))}
