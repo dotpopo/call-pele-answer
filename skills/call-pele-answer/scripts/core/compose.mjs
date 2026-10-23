@@ -7,11 +7,14 @@
 //  3. scaffold() writes the draft: when several forms can be derived for one block, the block becomes a
 //                ```views fence, so the reader can switch between representations of the same content.
 import { TYPES } from '../routers/catalog.mjs';
+import { STRUCTURAL } from '../routers/engine.mjs';
 
 export const DEFAULT_POLICY = {
   device: 'desktop',
   minScore: 0.15,            // a family below this probability is not a candidate
   promote: 0.55,             // a prose block is only upgraded when the router was at least this sure
+  promoteStructure: 0.45,    // …or this sure, for a structural picture (hierarchy, structure, state, sequence, landscape, grammar)
+  bonus: { structure: 0.1 }, // a structural family gains this when the block lists 3+ items: the picture shows the shape prose hides
   maxViews: 3,               // representations offered per block, original text included
   budget: { interactive: 2 },// slider / tabs / steps per page
   penalty: { repeat: 0.15, overBudget: 0.5, short: 0.45, mobileWide: 0.1 },
@@ -19,8 +22,9 @@ export const DEFAULT_POLICY = {
 const INTERACTIVE = new Set(['slider', 'tabs', 'steps']);
 const WIDE = new Set(['structure', 'tabs', 'table']);
 
+const listy = t => (t.match(/[、；;]|\n\s*[-*\d]/g) || []).length + 1;
 export function compose(blocks, policy = {}) {
-  const P = { ...DEFAULT_POLICY, ...policy, budget: { ...DEFAULT_POLICY.budget, ...policy.budget }, penalty: { ...DEFAULT_POLICY.penalty, ...policy.penalty } };
+  const P = { ...DEFAULT_POLICY, ...policy, budget: { ...DEFAULT_POLICY.budget, ...policy.budget }, penalty: { ...DEFAULT_POLICY.penalty, ...policy.penalty }, bonus: { ...DEFAULT_POLICY.bonus, ...policy.bonus } };
   let prev = null, interactive = 0;
   for (const b of blocks) {
     const scores = b.scores && Object.keys(b.scores).length ? { ...b.scores } : { [b.family]: b.confidence };
@@ -32,12 +36,13 @@ export function compose(blocks, policy = {}) {
       if (INTERACTIVE.has(f) && interactive >= P.budget.interactive) { v -= P.penalty.overBudget; why.push('交互预算已满'); }
       if (b.text.length < 40) { v -= P.penalty.short; why.push('一句话能说清'); }
       if (P.device === 'mobile' && WIDE.has(f)) { v -= P.penalty.mobileWide; why.push('窄屏'); }
+      if (STRUCTURAL.has(f) && listy(b.text) >= 3) v += P.bonus.structure;
       return { family: f, score: +v.toFixed(3), why };
     }).sort((x, y) => y.score - x.score);
     const best = ranked[0];
     // the composer may re-rank and demote, but it never promotes a block the router left as prose:
     // a non-prose pick must clear the router's own confidence bar (MIN_CONF) before penalties.
-    const ok = best && best.score >= 0.5 && (b.family !== 'prose' || (scores[best.family] ?? 0) >= P.promote);
+    const ok = best && best.score >= (STRUCTURAL.has(best.family) ? 0.45 : 0.5) && (b.family !== 'prose' || (scores[best.family] ?? 0) >= (STRUCTURAL.has(best.family) ? P.promoteStructure : P.promote));
     const pick = ok ? best.family : 'prose';
     const lost = ranked.find(r => r.family === b.family);
     if (pick !== b.family) b.recomposed = `${b.family} → ${pick}${lost?.why.length ? '（' + lost.why.join('、') + '）' : ''}`;

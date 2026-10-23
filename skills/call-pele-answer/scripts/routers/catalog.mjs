@@ -5,14 +5,16 @@ export const FAMILIES = {
   prose:     'a plain fact, definition, conclusion or recommendation; one idea that needs no picture',
   steps:     'an ordered list of actions or a process, possibly with branches or decisions',
   sequence:  'messages or requests passed back and forth between two or more actors over time',
-  state:     'states of one thing and the transitions between them; a lifecycle',
-  structure: 'parts of a system and how they connect: architecture, components, dependencies, data model',
+  state:     'states of one thing and the transitions between them; a lifecycle; or work items grouped on a board by status',
+  structure: 'parts of a system and how they connect: architecture, components, dependencies, data model, who can use it, its requirements, events, or the byte layout of a message',
   hierarchy: 'a hierarchy, taxonomy, directory or folder tree, or a breakdown of a topic into parts',
   timeline:  'dated or ordered events, history, versions or a schedule',
   table:     'several options or items compared across several attributes',
   chart:     'numbers to compare: amounts, shares, trends over time, flows between quantities, scores',
   slider:    'how a result changes when one parameter value is made larger or smaller',
   tabs:      'two to five alternative answers or approaches, each described in detail',
+  landscape: 'placing things on a strategy map: a value chain by how evolved each part is, or problems by how predictable they are',
+  grammar:   'the syntax or grammar of a language, command, file format, identifier or pattern',
 };
 
 export const FAMILY_INSTRUCTION = 'Pick the visual form that best explains this block of an answer: ' +
@@ -31,6 +33,7 @@ export const TYPES = {
   state: {
     stateDiagram: { desc: 'states and transitions', skel: 'stateDiagram-v2\n  [*] --> 状态一\n  状态一 --> 状态二 : 事件\n  状态二 --> [*]' },
     journey: { desc: 'a person moving through stages with a feeling or score at each', skel: 'journey\n  title 用户旅程\n  section 阶段一\n    动作: 5: 用户' },
+    kanban: { desc: 'work items or tasks grouped into columns by status, like a board', skel: 'kanban\n  todo[待办]\n    t1[任务一]\n  doing[进行中]\n    t2[任务二]@{ assigned: \'负责人\' }\n  done[已完成]\n    t3[任务三]' },
   },
   structure: {
     flowchart: { desc: 'a small set of connected components or services', skel: 'flowchart LR\n  subgraph 前端\n    UI[界面]\n  end\n  subgraph 后端\n    API[接口] --> DB[(数据库)]\n  end\n  UI --> API' },
@@ -38,6 +41,11 @@ export const TYPES = {
     erDiagram: { desc: 'database tables or entities with fields and relationships', skel: 'erDiagram\n  USER ||--o{ ORDER : places\n  USER {\n    string id PK\n  }' },
     classDiagram: { desc: 'classes or types with members and inheritance', skel: 'classDiagram\n  Animal <|-- Dog\n  Animal : +name\n  Dog : +bark()' },
     block: { desc: 'a layout of blocks or modules in rows and columns', skel: 'block\n  columns 3\n  a["模块一"] b["模块二"] c["模块三"]' },
+    c4: { desc: 'one system in its context: the people who use it and the external systems it talks to', skel: 'C4Context\n  title 系统上下文\n  Person(user, "用户", "做什么")\n  System(app, "本系统", "负责什么")\n  System_Ext(ext, "外部系统")\n  Rel(user, app, "使用")\n  Rel(app, ext, "调用", "HTTPS")' },
+    usecase: { desc: 'which actors or roles can do which actions with a system', skel: 'usecase-beta\n  direction LR\n  actor u("角色甲")\n  actor v("角色乙")\n  systemBoundary sys("系统")\n    a("功能一")\n    b("功能二")\n  end\n  u --> a\n  v --> b' },
+    requirement: { desc: 'requirements and which parts satisfy or verify them', skel: 'requirementDiagram\n  requirement req1 {\n    id: 1\n    text: "需求描述"\n    risk: medium\n    verifymethod: test\n  }\n  element part1 {\n    type: "模块"\n  }\n  part1 - satisfies -> req1' },
+    eventmodeling: { desc: 'commands, events and read models of a system over time (event sourcing, CQRS)', skel: 'eventmodeling\n  timeframe 01 ui OrderPage\n  timeframe 02 command PlaceOrder\n  timeframe 03 event OrderPlaced\n  timeframe 04 readmodel OrderList' },
+    packet: { desc: 'the bit or byte layout of a message, header or binary format', skel: 'packet-beta\n  0-15: "字段一"\n  16-31: "字段二"\n  32-63: "字段三"' },
   },
   hierarchy: {
     mindmap: { desc: 'a topic broken into ideas and sub-ideas', skel: 'mindmap\n  root((主题))\n    分支一\n      要点\n    分支二' },
@@ -58,6 +66,13 @@ export const TYPES = {
     radar: { desc: 'several items scored on several criteria', skel: 'radar-beta\n  axis a["维度一"], b["维度二"], c["维度三"]\n  curve x["选项甲"]{4, 3, 5}\n  max 5' },
     quadrant: { desc: 'items placed on two axes to show a trade-off', skel: 'quadrantChart\n  x-axis 低成本 --> 高成本\n  y-axis 低收益 --> 高收益\n  选项甲: [0.3, 0.7]' },
     venn: { desc: 'overlap between sets', skel: 'venn-beta\n  set A["集合一"]\n  set B["集合二"]\n  union A,B["共同部分"]' },
+  },
+  landscape: {
+    wardley: { desc: 'a value chain from user need down to components, placed by how evolved each one is (genesis to commodity)', skel: 'wardley-beta\n  title 价值链\n  anchor "用户" [0.95, 0.6]\n  component "能力一" [0.7, 0.4]\n  component "基础设施" [0.2, 0.9]\n  "用户" -> "能力一"\n  "能力一" -> "基础设施"' },
+    cynefin: { desc: 'problems sorted into clear, complicated, complex and chaotic domains', skel: 'cynefin-beta\n  title 问题分类\n  clear\n    "有标准做法的事"\n  complicated\n    "需要专家分析的事"\n  complex\n    "只能试了才知道的事"\n  chaotic\n    "先止血的事"' },
+  },
+  grammar: {
+    railroad: { desc: 'grammar rules drawn as railroad (syntax) diagrams', skel: 'railroad-ebnf-beta\n  title "语法"\n  rule = part , { "," , part } ;\n  part = "a" | "b" ;' },
   },
 };
 

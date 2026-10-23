@@ -44,16 +44,19 @@ PE_EOF
 |---|---|---|---|
 | 结论、定义、建议、一个事实 | 无 | 文字 | 段落，STE 风格 |
 | 有先后的动作 | 读者要记住顺序 | 步骤列表；分支多时用流程图 | `1. 2. 3.` / ```` ```mermaid flowchart ```` |
-| 谁连着谁、架构、依赖 | 文字里要靠“它/上面那个”指代 | 图 | `flowchart` `architecture-beta` `C4…` `block` |
+| 谁连着谁、架构、依赖 | 文字里要靠“它/上面那个”指代 | 图 | `flowchart` `architecture-beta` `C4Context` `block` |
+| 谁能做什么、需求与验证、事件流、字节布局 | 角色与功能交错 | 图 | `usecase-beta` `requirementDiagram` `eventmodeling` `packet` |
 | 参与者之间按时间来回发消息 | 先后与方向 | 图 | `sequenceDiagram` |
-| 状态与转移、生命周期 | 哪些状态能到哪 | 图 | `stateDiagram-v2` |
-| 层级、目录、分类 | 嵌套深度 | 图 | `mindmap` `treeView-beta` `treemap-beta` |
+| 状态与转移、生命周期 | 哪些状态能到哪 | 图 | `stateDiagram-v2`；按状态分组的任务用 `kanban` |
+| 层级、目录、分类、一个主题拆成几个方面 | 嵌套深度 | 图 | `mindmap` `treeView-beta` `treemap-beta` |
 | 实体与字段、类与继承 | 关系基数 | 图 | `erDiagram` `classDiagram` |
 | 历史、阶段、排期 | 时间轴 | 图 | `timeline` `gantt` `gitGraph` |
 | 多个选项 × 多个维度 | 横向对照 | 表格 | Markdown 表格，状态列写 `ok/no/warn` |
 | 同一问题的几个备选答案，每个都有细节 | 一次只看一个 | 标签页 | ```` ```tabs ```` |
 | 数量比较、趋势、占比、流向 | 量级 | 数据图（**必须有真实数据或标“示意”**） | `xychart` `pie` `sankey` `radar-beta` `quadrantChart` |
 | 原因归类、取舍空间 | 全局视野 | 图 | `ishikawa-beta` `quadrantChart` `venn-beta` |
+| 价值链演进、问题属于哪类域 | 位置即含义 | 图 | `wardley-beta` `cynefin-beta` |
+| 语言、命令、格式的语法 | 规则嵌套 | 图 | `railroad-ebnf-beta` |
 | 改一个参数会怎样 | 只能靠想象 | 滑块 | ```` ```slider ```` |
 | 随时间展开的过程、动态机制 | 要“看着它变” | 分步播放（视频的第 0 级） | ```` ```steps ```` |
 | 项目里真实存在的代码 | 防止编造 | 代码引用 | ```` ```ts src=路径 lines=10-30 ```` |

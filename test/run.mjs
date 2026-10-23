@@ -147,5 +147,18 @@ console.log('— 路由缓存');
   t('没变的块不再请求，只问新块', calls === 3 && r2[2].q.noul === 0.3 && r2.model === 'm1');
   await c.ask(['a'], { q: 2 }); t('问题集变了就重新请求', calls === 4);
 }
+
+{ // 路由覆盖 Pele 全部图型：每个骨架都能渲染，离线路由能选到新图型
+  const { TYPES } = await import('../skills/call-pele-answer/scripts/routers/catalog.mjs');
+  const { render: peleR } = await import('../skills/call-pele-answer/scripts/vendor/pele.mjs');
+  const skels = Object.values(TYPES).flatMap(t => Object.values(t)).filter(v => v.skel);
+  t('全部图型骨架可渲染（≥ 34）', skels.length >= 34 && skels.every(v => { try { peleR(v.skel); return true; } catch { return false; } }));
+  const { routeLocal } = await import('../skills/call-pele-answer/scripts/routers/engine.mjs');
+  const S = { mindmap: '一个好的产品经理要具备几个方面的能力：用户洞察、数据分析、项目管理、沟通协调和技术理解。', kanban: '这周看板上：待办有写需求文档、设计评审；进行中有开发支付接口；已完成有上线登录功能。', usecase: '在这个商城里，顾客可以浏览商品、下单、申请退款；客服角色可以处理退款和回复咨询；管理员可以上架商品。', cynefin: '用 Cynefin 看这些问题：退款有标准做法属于清晰域，数据库调优属于繁杂，新市场定价属于复杂域，线上事故属于混沌。', railroad: '手机号的格式为：以 1 开头，第二位是 3 到 9 的数字，后面跟 9 位数字；用正则写就是 1[3-9]\\d{9}，语法很简单。', packet: 'TCP 报文头前 16 位是源端口，接着 16 位是目的端口，然后 32 位序列号和 32 位确认号，每个字段占固定的比特数。' };
+  const { blocks: rb } = await routeLocal(Object.values(S));
+  t('离线路由选到脑图/看板/用例/Cynefin/语法图/包结构', Object.keys(S).every((k, i) => rb[i].type === k));
+  const { blocks: nb } = await routeLocal(['用户可以在设置里修改密码。', 'Redis 是一个内存数据库，读写很快。']);
+  t('一句话的短块仍是文字', nb.every(b => b.family === 'prose'));
+}
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exitCode = fail ? 1 : 0;

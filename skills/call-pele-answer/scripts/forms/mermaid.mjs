@@ -10,7 +10,7 @@ let seq = 0;
 export default {
   name: 'mermaid',
   fences: ['mermaid'],
-  routes: ['steps', 'sequence', 'state', 'structure', 'hierarchy', 'timeline', 'chart'],
+  routes: ['steps', 'sequence', 'state', 'structure', 'hierarchy', 'timeline', 'chart', 'landscape', 'grammar'],
   parse(node, ctx) {
     const src = node.body.join('\n');
     const id = `pe${++seq}`;

@@ -39,10 +39,15 @@
 | 请求链路、协议握手 | `sequenceDiagram` | `autonumber` 给消息编号；`Note over` 写关键说明 |
 | 状态机、订单/任务生命周期 | `stateDiagram-v2` | 终态写 `[*]` |
 | 系统组件、部署 | `architecture-beta`、`C4Container` | 组件少于 8 个时 `flowchart` 更省 |
+| 系统和它的使用者、外部系统 | `C4Context` | 一个系统放中间，人和外部系统围着它 |
+| 哪些角色能做哪些事 | `usecase-beta` | 角色写 `actor u("学员")`，功能放进 `systemBoundary` |
+| 需求和满足/验证它的部分 | `requirementDiagram` | 中文写在引号里：`text: "…"` |
+| 事件溯源、命令与读模型 | `eventmodeling` | 名称只支持英文标识符，含义在正文里说 |
+| 按状态分组的任务 | `kanban` | 列 = 状态，卡片 = 任务 |
 | Agent 工作流、工具调用 | `agentflow-beta` | |
 | 数据模型 | `erDiagram` | 只放和问题有关的字段 |
 | 类型关系 | `classDiagram` | 只放关键成员 |
-| 分类、知识结构 | `mindmap` | 层级 ≤ 3 |
+| 分类、知识结构、一个主题拆成几个方面 | `mindmap` | 层级 ≤ 3；正文里出现“分为/包括/一是二是/几个方面”或冒号后列出 3 项以上时优先考虑 |
 | 目录结构 | `treeView-beta` | `## 注释` 写在行尾 |
 | 历史、版本演进 | `timeline` | |
 | 排期、依赖 | `gantt` | |
@@ -54,9 +59,12 @@
 | 二维取舍 | `quadrantChart` | |
 | 原因分析 | `ishikawa-beta` | |
 | 集合重叠 | `venn-beta` | |
-| 协议/包结构 | `packet` | |
-| 语法 | `railroad-ebnf-beta` | |
-| 价值链演化 | `wardley-beta` | |
+| 协议/包结构、字节布局 | `packet` | |
+| 语法、命令或格式的写法 | `railroad-ebnf-beta` | |
+| 价值链演化、该自建还是外购 | `wardley-beta` | 中文名加引号：`component "训练框架" [0.5, 0.75]` |
+| 问题属于哪种域（清晰/繁杂/复杂/混沌） | `cynefin-beta` | |
+
+自动路由覆盖上表全部类型：结构类（层级、结构、状态、时序、战略图、语法）门槛更低（置信 ≥ 0.45），块里列出 3 项以上时再加分；一句话能说清的短块仍保留文字。
 
 通用规则：
 

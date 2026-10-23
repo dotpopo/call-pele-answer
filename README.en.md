@@ -11,7 +11,7 @@
 
 Templates look great, but their layout is fixed, and someone still has to browse and try them one by one. call-pele-answer looks at the content first:
 
-- **Block-level routing.** The Jev router (TypeSafe, System One protocol) scores candidate forms per block in about 200 ms (2 ms on cache hit). No key? A free endpoint or local rules work too.
+- **Block-level routing.** The Jev router (TypeSafe, System One protocol) scores candidate forms per block in about 200 ms (2 ms on cache hit). No key? A free endpoint or local rules work too. Routing covers all 33 Pele diagram types — mindmap, use case, C4 context, requirement, event modeling, kanban, packet, Wardley map, Cynefin, railroad grammar and more — and leans toward a diagram when a block carries structure.
 - **The model writes only Markdown.** The bundled CLI handles layout, colors, diagram coordinates and lint checks.
 - **Palette + annotations in the page.** Recolor anything from a whole section down to one paragraph, table cell, diagram node or pie slice — main colour and background separately — leave typed notes, copy them back to your agent with block IDs.
 - **Self-improving.** Every run is logged to `runs.jsonl`; `pe stats` gives tuning advice. One 6-block answer went from 2.0 s to 40 ms.
