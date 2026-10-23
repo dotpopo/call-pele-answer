@@ -17,7 +17,7 @@ Templates look great, but their layout is fixed, and someone still has to browse
 - **Self-improving.** Every run is logged to `runs.jsonl`; `pe stats` gives tuning advice. One 6-block answer went from 2.0 s to 40 ms.
 - **Pluggable like Lego.** 9 extension points: form, adapter, router, deriver, theme, palette, annotation, output, rule.
 
-<img src="docs/images/hero.jpg" width="100%" alt="Plain text answer vs. the page call-pele-answer composes">
+<img src="docs/images/interactive-demo.gif" width="100%" alt="Recorded page: switch a block between state diagram, transition table and source; recolor blocks with the palette while views still switch">
 
 ## Install
 

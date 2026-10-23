@@ -36,9 +36,15 @@
 ```
 
 <p align="center">
-  <img src="docs/images/hero.jpg" width="100%" alt="同一个问题的两种回答：左边是一整面 Markdown 文字，右边是 call-pele-answer 生成的页面，含状态图、时间线和分节">
+  <img src="docs/images/interactive-demo.gif" width="100%" alt="call-pele-answer 生成的页面实录：点击状态图/转移表/原文、时间线/表格切换同一块内容的看法，打开调色器给内容块换色，调色时依然可以切换">
 </p>
-<p align="center"><sub>同一份回答。左：普通文字。右：call-pele-answer 按内容组合出的页面（状态图、时间线、分节导读）。</sub></p>
+<p align="center"><sub>真实页面实录：同一块内容可在「状态图 / 转移表 / 原文」「时间线 / 表格 / 原文」之间切换；打开调色器给内容块换色，切换照样可用。</sub></p>
+
+<details>
+<summary>对比：普通文字回答 vs 生成的页面</summary>
+
+<img src="docs/images/hero.jpg" width="100%" alt="同一个问题的两种回答：左边是一整面 Markdown 文字，右边是 call-pele-answer 生成的页面">
+</details>
 
 ## 宣传片
 

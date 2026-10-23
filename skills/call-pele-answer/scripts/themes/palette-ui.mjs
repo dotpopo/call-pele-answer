@@ -82,7 +82,7 @@ const copy=b('','复制配色');copy.onclick=()=>{navigator.clipboard?.writeText
 const reset=b('','重置全部');reset.onclick=()=>{st={};apply();save();sync()};foot.append(copy,reset);
 const sync=()=>{pages.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String((st.page||'ink')===x.dataset.n)));
   const cur=sel&&st[sel.dataset.peId]||'';sws.querySelectorAll('button').forEach(x=>{x.disabled=!sel;x.setAttribute('aria-pressed',String(!!sel&&x.dataset.n===cur))});tgt.textContent=sel?sel.dataset.peName:'点选页面上的任一组件'};
-const pick=e=>{if(!d.classList.contains('pe-picking')||P.contains(e.target)||e.target.closest('.pe-head'))return;const t=e.target.closest('[data-pe-id]');if(!t)return;e.preventDefault();e.stopPropagation();sel?.removeAttribute('data-pe-sel');sel=t;t.setAttribute('data-pe-sel','');sync()};
+const pick=e=>{if(!d.classList.contains('pe-picking')||P.contains(e.target)||e.target.closest('.pe-head'))return;const t=e.target.closest('[data-pe-id]');if(!t)return;const ctl=e.target.closest('button,a[href],input,select,textarea,label,summary,[role=tab],[role=button],.pe-an-btn');if(!(ctl&&t.contains(ctl))){e.preventDefault();e.stopPropagation()}sel?.removeAttribute('data-pe-sel');sel=t;t.setAttribute('data-pe-sel','');sync()};
 const open=o=>{P.hidden=!o;d.classList.toggle('pe-picking',o);btn.setAttribute('aria-pressed',String(o));if(!o){sel?.removeAttribute('data-pe-sel');sel=null}sync()};
 document.addEventListener('click',pick,true);
 P.querySelector('h3 button').onclick=()=>open(false);btn.onclick=()=>open(P.hidden);
