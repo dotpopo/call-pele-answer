@@ -122,6 +122,7 @@ t('hook 脚本读 stdin 记一行，识别 pe 调用', JSON.parse(readFileSync(h
 console.log('— 调色器');
 const { parsePalette } = await import('../skills/call-pele-answer/scripts/core/../themes/palette-ui.mjs');
 t('palette 行解析', JSON.stringify(parsePalette('page=warm s2.1=cobalt, s4=mint')) === '{"page":"warm","s2.1":"cobalt","s4":"mint"}');
+t('palette 细粒度键：背景 ~bg、段落、单元格、图形', JSON.stringify(parsePalette('lead.p1~bg=mustard s4.h=tomato s4.1.r2c1~bg=mint s5.1.g3=tomato')) === '{"lead.p1~bg":"mustard","s4.h":"tomato","s4.1.r2c1~bg":"mint","s5.1.g3":"tomato"}');
 execFileSync('node', [PE, 'render', '-', '-o', join(dir, 'pal.html')], { input: good.replace('---\n', '---\npalette: page=warm s1=tomato\n') }); const palHtml = readFileSync(join(dir, 'pal.html'), 'utf8');
 t('烘焙配色：data-pal 与 data-palette 写进页面，色板 CSS 在内', /data-pal="warm"/.test(palHtml) && /data-palette="page=warm s1=tomato"/.test(palHtml) && /\[data-pk\]/.test(palHtml) && /class="pe-pal"/.test(palHtml));
 execFileSync('node', [PE, 'render', '-', '-o', join(dir, 'off.html')], { input: good.replace('---\n', '---\npalette: off\n') }); const offHtml = readFileSync(join(dir, 'off.html'), 'utf8');

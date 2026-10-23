@@ -13,7 +13,7 @@ Templates look great, but their layout is fixed, and someone still has to browse
 
 - **Block-level routing.** The Jev router (TypeSafe, System One protocol) scores candidate forms per block in about 200 ms (2 ms on cache hit). No key? A free endpoint or local rules work too.
 - **The model writes only Markdown.** The bundled CLI handles layout, colors, diagram coordinates and lint checks.
-- **Palette + annotations in the page.** Recolor blocks, leave typed notes, copy them back to your agent with block IDs.
+- **Palette + annotations in the page.** Recolor anything from a whole section down to one paragraph, table cell, diagram node or pie slice — main colour and background separately — leave typed notes, copy them back to your agent with block IDs.
 - **Self-improving.** Every run is logged to `runs.jsonl`; `pe stats` gives tuning advice. One 6-block answer went from 2.0 s to 40 ms.
 - **Pluggable like Lego.** 9 extension points: form, adapter, router, deriver, theme, palette, annotation, output, rule.
 
