@@ -1,5 +1,10 @@
 ---
 name: call-pele-answer
+slug: call-pele-answer
+displayName: Call Pele Answer
+version: 0.4.1
+summary: 把长回答按块拆开，逐块挑最合适的形式（文字、表格、33 种图、滑块、标签页、分步播放），生成离线交互讲解页，可调色、可批注。
+homepage: https://github.com/dotpopo/call-pele-answer
 description: >-
   按块路由的解释技能：给回答里的每一段内容挑最合适的形式（文字、表格、图、步骤、滑杆）。先画出回答的全貌，
   拆成内容块，按每块的信息形状和理解障碍选形式：STE 风格文字、表格、Mermaid 图（内置渲染，30+ 种）、
