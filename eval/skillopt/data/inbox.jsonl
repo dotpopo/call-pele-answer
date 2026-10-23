@@ -1,0 +1,1 @@
+{"id":"real-001","source":"real-trajectory 2026-10-23","prompt":"解释一下这里的方法论和世界观：https://stephango.com/vault","expect":{"carrier":"page","forms_any":["table","flowchart","olist"]},"failure":"agent skipped skill entirely and answered as plain chat summary; trigger miss on '解释一下' + URL","note":"skill-trigger failure, not form failure"}
