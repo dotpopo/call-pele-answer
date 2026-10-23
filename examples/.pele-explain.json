@@ -1,0 +1,10 @@
+{
+  "plugins": ["./plugins/kpi.mjs"],
+  "adapters": [
+    { "name": "my-proxy", "kind": "native", "url": "https://classifier.dev/v1/systemone", "keyEnv": ["CLASSIFIER_API_KEY"], "anonymousKey": "unused", "describe": "示例：任意说 System One 协议的端点" }
+  ],
+  "routers": [
+    { "name": "proxy-full", "strategy": "full", "adapter": "my-proxy", "fallback": "classifier" }
+  ],
+  "policy": { "budget": { "interactive": 1 } }
+}

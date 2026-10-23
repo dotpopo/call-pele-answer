@@ -1,0 +1,12 @@
+本软件包含以下第三方组件，按其许可保留版权声明。
+
+1. 图表渲染引擎（skills/call-pele-answer/scripts/vendor/pele.mjs）
+   Pele 1.9.0 — Copyright (c) 2026 kepano — MIT License
+   全文见 skills/call-pele-answer/scripts/vendor/PELE-LICENSE.txt
+
+2. 默认主题配色值参考 Flexoki — Copyright (c) Steph Ango — MIT License
+
+3. 调色器中「番茄 / 芥末 / 薄荷 / 钴蓝 / 腮红」五个色板的色值参考 Colorfigures
+   — Copyright (c) 2026 April Zhu — MIT License
+
+4. 文字检查的结构规则参考 asd-ste100-skill — Copyright (c) 2026 Dustin Yuchen Teng — MIT License

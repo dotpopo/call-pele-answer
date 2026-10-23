@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="zh-CN" class="nojs" data-default="auto" data-theme-name="pele">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<meta name="generator" content="call-pele-answer ir1; forms=mermaid,slider,steps,callout">
+<title>学习率怎么影响训练</title>
+<style>
+:root{
+  --pe-paper:#FFFCF0;--pe-ink:#100F0F;--pe-muted:#6F6E69;--pe-faint:#B7B5AC;--pe-border:#CECDC3;--pe-surface:#F2F0E5;--pe-surface-2:#E6E4D9;
+  --pe-blue:#205EA6;--pe-red:#AF3029;--pe-green:#66800B;--pe-yellow:#AD8301;--pe-orange:#BC5215;--pe-cyan:#24837B;--pe-purple:#5E409D;--pe-magenta:#A02F6F;
+  --pe-accent:var(--pe-blue);
+  --pe-font:-apple-system,BlinkMacSystemFont,"Inter","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --pe-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --pe-radius:4px;--pe-measure:44rem;color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --pe-paper:#100F0F;--pe-ink:#CECDC3;--pe-muted:#878580;--pe-faint:#575653;--pe-border:#403E3C;--pe-surface:#1C1B1A;--pe-surface-2:#282726;
+  --pe-blue:#4385BE;--pe-red:#D14D41;--pe-green:#879A39;--pe-yellow:#D0A215;--pe-orange:#DA702C;--pe-cyan:#3AA99F;--pe-purple:#8B7EC8;--pe-magenta:#CE5D97;}}
+:root[data-theme=dark]{
+  --pe-paper:#100F0F;--pe-ink:#CECDC3;--pe-muted:#878580;--pe-faint:#575653;--pe-border:#403E3C;--pe-surface:#1C1B1A;--pe-surface-2:#282726;
+  --pe-blue:#4385BE;--pe-red:#D14D41;--pe-green:#879A39;--pe-yellow:#D0A215;--pe-orange:#DA702C;--pe-cyan:#3AA99F;--pe-purple:#8B7EC8;--pe-magenta:#CE5D97;}
+/* diagrams read the same tokens as the prose: one palette, swapped without re-rendering */
+.pele{--pele-bg:var(--pe-paper);--pele-fg:var(--pe-ink);--pele-muted:var(--pe-muted);--pele-line:var(--pe-ink);--pele-surface:var(--pe-surface);
+  --pele-surface-alt:var(--pe-surface-2);--pele-border:var(--pe-border);--pele-accent:var(--pe-accent);--pele-critical:var(--pe-red);--pele-radius:var(--pe-radius);
+  --pele-series-1:var(--pe-blue);--pele-series-2:var(--pe-orange);--pele-series-3:var(--pe-green);--pele-series-4:var(--pe-red);
+  --pele-series-5:var(--pe-cyan);--pele-series-6:var(--pe-yellow);--pele-series-7:var(--pe-purple);--pele-series-8:var(--pe-magenta);
+  --pele-font:var(--pe-font);--pele-font-mono:var(--pe-mono);max-width:100%;height:auto}
+*{box-sizing:border-box}
+html{background:var(--pe-paper);color:var(--pe-ink);font:16px/1.7 var(--pe-font);-webkit-text-size-adjust:100%}
+body{margin:0;padding:3.5rem 1.25rem 4rem}
+main{max-width:var(--pe-measure);margin:0 auto}
+header.pe-head{margin-bottom:2rem}
+.pe-meta{font:12px/1.4 var(--pe-mono);color:var(--pe-muted);letter-spacing:.02em;display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
+h1{font-size:1.75rem;line-height:1.25;font-weight:650;margin:.4rem 0 .3rem;letter-spacing:-.01em}
+.pe-sub{color:var(--pe-muted);margin:0}
+.pe-lead{font-size:1.125rem;line-height:1.65;padding:0 0 1.75rem;border-bottom:1px solid var(--pe-border)}
+.pe-lead p{margin:.25rem 0}
+section.pe-panel{padding:1.75rem 0;border-bottom:1px solid var(--pe-border)}
+section.pe-panel>h2{font-size:1.125rem;font-weight:650;margin:0 0 .75rem;display:flex;gap:.6rem;align-items:baseline}
+.pe-n{font:12px var(--pe-mono);color:var(--pe-faint);min-width:1.4rem}
+h3,h4{font-size:1rem;font-weight:650;margin:1.25rem 0 .4rem}
+p{margin:.5rem 0}
+ul,ol{margin:.5rem 0;padding-left:1.4rem}
+li{margin:.2rem 0}
+a{color:var(--pe-accent);text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+code{font:.875em var(--pe-mono);background:var(--pe-surface);border-radius:3px;padding:.08em .32em}
+strong{font-weight:650}
+del{color:var(--pe-muted)}
+blockquote{margin:.75rem 0;padding:.1rem 0 .1rem 1rem;border-left:2px solid var(--pe-border);color:var(--pe-muted)}
+.pe-fig{margin:1rem 0;padding:1rem;background:var(--pe-paper);border:1px solid var(--pe-border);border-radius:var(--pe-radius);overflow-x:auto}
+.pe-svg{display:flex;justify-content:center}
+.pe-narrow{display:none}
+@media (max-width:640px){.pe-fig:has(.pe-narrow) .pe-wide{display:none}.pe-narrow{display:flex}body{padding-top:2rem}h1{font-size:1.45rem}}
+.pe-table{overflow-x:auto;margin:.75rem 0}
+table{border-collapse:collapse;width:100%;font-size:.9375rem}
+th,td{text-align:left;padding:.45rem .7rem .45rem 0;border-bottom:1px solid var(--pe-border);vertical-align:top}
+th{font-weight:600;color:var(--pe-muted);font-size:.8125rem}
+tr.pe-row-no td{color:var(--pe-muted)}
+.pe-badge{display:inline-block;min-width:1.15rem;font:600 12px/1.15rem var(--pe-mono);text-align:center;border-radius:3px}
+.pe-ok{color:var(--pe-green);background:color-mix(in srgb,var(--pe-green) 12%,transparent)}
+.pe-no{color:var(--pe-red);background:color-mix(in srgb,var(--pe-red) 12%,transparent)}
+.pe-warn{color:var(--pe-yellow);background:color-mix(in srgb,var(--pe-yellow) 14%,transparent)}
+.pe-code{margin:1rem 0}
+.pe-code figcaption{font:12px var(--pe-mono);color:var(--pe-muted);margin-bottom:.3rem}
+pre{margin:0;padding:.9rem 1rem;background:var(--pe-surface);border-radius:var(--pe-radius);overflow-x:auto;font:13px/1.6 var(--pe-mono)}
+pre code{background:none;padding:0;font:inherit}
+.pe-w-title{display:block;font-size:.875rem;color:var(--pe-muted);margin-bottom:.5rem}
+.pe-w-title output{color:var(--pe-ink);font:600 .9375rem var(--pe-mono)}
+.pe-steps,.pe-slider,.pe-tabs{margin:1rem 0;padding:1rem;border:1px solid var(--pe-border);border-radius:var(--pe-radius)}
+.pe-steps .pe-fig,.pe-slider .pe-fig,.pe-tabs .pe-fig{border:0;padding:.25rem 0;margin:.5rem 0}
+button{font:inherit;color:var(--pe-ink);background:var(--pe-paper);border:1px solid var(--pe-border);border-radius:var(--pe-radius);min-width:2rem;height:2rem;cursor:pointer}
+button:hover{background:var(--pe-surface)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--pe-accent);outline-offset:2px}
+footer.pe-foot{margin-top:2rem;font-size:.8125rem;color:var(--pe-muted)}
+footer details pre{max-height:24rem;margin-top:.5rem;white-space:pre-wrap}
+footer summary{cursor:pointer}
+.pe-theme{margin-left:auto;height:1.6rem;min-width:auto;padding:0 .5rem;font:11px var(--pe-mono);color:var(--pe-muted)}
+.js .pe-beat[hidden],.js .pe-stop[hidden],.js .pe-tab[hidden]{display:none}
+.nojs .pe-bar,.nojs input[type=range],.nojs .pe-tablist,.nojs .pe-theme{display:none}
+.nojs [hidden]{display:block}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{body{padding:0}.pe-bar,.pe-theme,footer details{display:none}.pe-beat[hidden],.pe-stop[hidden],.pe-tab[hidden]{display:block!important}.pe-wide{display:flex!important}.pe-narrow{display:none!important}}
+
+input[type=range]{width:100%;accent-color:var(--pe-accent)}.pe-ticks{display:flex;justify-content:space-between;font:11px var(--pe-mono);color:var(--pe-muted);margin:-.1rem 0 .5rem}
+.pe-bar{display:flex;align-items:center;gap:.4rem;margin-top:.75rem;font:12px var(--pe-mono);color:var(--pe-muted)}.pe-track{flex:1;height:2px;background:var(--pe-border);margin-left:.5rem}.pe-track i{display:block;height:2px;background:var(--pe-accent);transition:width .2s}
+aside.pe-callout{margin:1rem 0;padding:.7rem 1rem;border-left:3px solid var(--c);background:color-mix(in srgb,var(--c) 7%,var(--pe-paper));border-radius:0 var(--pe-radius) var(--pe-radius) 0;--c:var(--pe-blue)}
+aside.pe-callout>b{display:block;color:var(--c);font-weight:650;margin-bottom:.15rem}aside.pe-callout p{margin:.2rem 0}
+aside.pe-ok{--c:var(--pe-green)}aside.pe-warn{--c:var(--pe-yellow)}aside.pe-err{--c:var(--pe-red)}</style></head>
+<body><main>
+<header class="pe-head"><div class="pe-meta"><span>2026-10-23</span><span>source · 示意数据，非真实训练记录</span><button type="button" class="pe-theme">主题</button></div>
+<h1>学习率怎么影响训练</h1><p class="pe-sub">同一个问题，按块选形式：文字、流程图、滑块、表格、分步</p></header>
+<div class="pe-lead"><p>学习率决定每一步沿梯度走多远。太小，收敛慢；太大，损失来回震荡甚至发散。先用 1e-3 起步，再按验证损失调整。</p></div>
+<section class="pe-panel" id="s1"><h2><span class="pe-n">01</span>一次更新在做什么</h2><figure class="pe-fig" data-type="flowchart"><div class="pe-svg pe-wide"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-flowchart" viewBox="0 0 689 91" width="689" height="91" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="flowchart"><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge" data-id="L_A_B_0"><path d="M119,49.25L132,49.25C143,49.25 143,31.5 154,31.5L160,31.5"/><path class="pele-marker" d="M167,31.5L159,34.86L159,28.14Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_B_C_0"><path d="M293,31.5L334,31.5"/><path class="pele-marker" d="M341,31.5L333,34.86L333,28.14Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_C_D_0"><path d="M452,31.5C469.5,31.5 469.5,49.25 487,49.25L493,49.25"/><path class="pele-marker" d="M500,49.25L492,52.61L492,45.89Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_D_A_0"><path d="M500,65.25L487,65.25C469.5,65.25 469.5,83 452,83L167,83C149.5,83 149.5,65.25 132,65.25L126,65.25"/><path class="pele-marker" d="M119,65.25L127,61.89L127,68.61Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-nodes"><g class="pele-node pele-shape-rect" data-id="A" transform="translate(63.5,57.25)"><rect x="-55.5" y="-23.5" width="111" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">取一批数据</text></g><g class="pele-node pele-shape-rect" data-id="B" transform="translate(230,31.5)"><rect x="-63" y="-23.5" width="126" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">前向计算损失</text></g><g class="pele-node pele-shape-rect" data-id="C" transform="translate(396.5,31.5)"><rect x="-55.5" y="-23.5" width="111" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">反向求梯度</text></g><g class="pele-node pele-shape-rect" data-id="D" transform="translate(590.07,57.25)"><rect x="-90.07" y="-23.5" width="180.14" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">参数 -= 学习率 × 梯度</text></g></g></svg></div><div class="pe-svg pe-narrow"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-flowchart" viewBox="0 0 215 348" width="215" height="348" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="flowchart"><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge" data-id="L_A_B_0"><path d="M108.5,55L108.5,68C108.5,79 71,79 71,90L71,96"/><path class="pele-marker" d="M71,103L67.64,95L74.36,95Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_B_C_0"><path d="M71,150L71,191"/><path class="pele-marker" d="M71,198L67.64,190L74.36,190Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_C_D_0"><path d="M71,245L71,286"/><path class="pele-marker" d="M71,293L67.64,285L74.36,285Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_D_A_0"><path d="M162,293L162,103C162,85.5 124.5,85.5 124.5,68L124.5,62"/><path class="pele-marker" d="M124.5,55L127.86,63L121.14,63Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-nodes"><g class="pele-node pele-shape-rect" data-id="A" transform="translate(116.5,31.5)"><rect x="-55.5" y="-23.5" width="111" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">取一批数据</text></g><g class="pele-node pele-shape-rect" data-id="B" transform="translate(71,126.5)"><rect x="-63" y="-23.5" width="126" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">前向计算损失</text></g><g class="pele-node pele-shape-rect" data-id="C" transform="translate(71,221.5)"><rect x="-55.5" y="-23.5" width="111" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">反向求梯度</text></g><g class="pele-node pele-shape-rect" data-id="D" transform="translate(116.5,316.5)"><rect x="-90.07" y="-23.5" width="180.14" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">参数 -= 学习率 × 梯度</text></g></g></svg></div></figure>
+<p>学习率只出现在第 4 步。它不改变方向，只改变步长。</p></section>
+<section class="pe-panel" id="s2"><h2><span class="pe-n">02</span>拖动看看步长的影响</h2><div class="pe-slider"><label class="pe-w-title">学习率：<output>0.01</output></label><input type="range" min="0" max="2" step="1" value="1" aria-label="学习率" data-values='[&quot;0.0001&quot;,&quot;0.01&quot;,&quot;0.5&quot;]'><div class="pe-ticks"><span>0.0001</span><span>0.01</span><span>0.5</span></div><div class="pe-stop" hidden><p>步子太小。100 轮后损失还在缓慢下降。</p>
+<figure class="pe-fig" data-type="xychart"><div class="pe-svg pe-wide"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-xychart" viewBox="0 0 700 500" width="700" height="500" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_tw:var(--pele-title-weight,bold);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="xychart"><text class="pele-title" font-weight="var(--_tw)" text-anchor="middle" xml:space="preserve"><tspan x="350" y="24.75">损失（示意）</tspan></text><path class="pele-grid" d="M62.07,464H692M62.07,395.5H692M62.07,327H692M62.07,258.5H692M62.07,190H692M62.07,121.5H692M62.07,53H692" stroke="var(--_a)"/><g class="pele-plot"><g class="pele-series pele-line" fill="var(--pele-series-1,#4c78a8)"><path d="M114.56,80.4L219.55,107.8L324.54,135.2L429.53,155.75L534.52,176.3L639.51,190" fill="none" stroke="var(--pele-series-1,#4c78a8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="114.56" cy="80.4" r="3"/><circle cx="219.55" cy="107.8" r="3"/><circle cx="324.54" cy="135.2" r="3"/><circle cx="429.53" cy="155.75" r="3"/><circle cx="534.52" cy="176.3" r="3"/><circle cx="639.51" cy="190" r="3"/></g></g><path class="pele-axis" d="M62.07,53V464M62.07,464H692M62.07,464h-4M62.07,395.5h-4M62.07,327h-4M62.07,258.5h-4M62.07,190h-4M62.07,121.5h-4M62.07,53h-4M114.56,464v4M219.55,464v4M324.54,464v4M429.53,464v4M534.52,464v4M639.51,464v4" fill="none" stroke="var(--_b)"/><g class="pele-axis-labels" font-size="13" fill="var(--_m)"><text x="52.07" y="468.55" text-anchor="end">0</text><text x="52.07" y="400.05" text-anchor="end">0.5</text><text x="52.07" y="331.55" text-anchor="end">1</text><text x="52.07" y="263.05" text-anchor="end">1.5</text><text x="52.07" y="194.55" text-anchor="end">2</text><text x="52.07" y="126.05" text-anchor="end">2.5</text><text x="52.07" y="57.55" text-anchor="end">3</text><text x="114.56" y="486.55" text-anchor="middle">0</text><text x="219.55" y="486.55" text-anchor="middle">20</text><text x="324.54" y="486.55" text-anchor="middle">40</text><text x="429.53" y="486.55" text-anchor="middle">60</text><text x="534.52" y="486.55" text-anchor="middle">80</text><text x="639.51" y="486.55" text-anchor="middle">100</text></g><g class="pele-axis-titles" font-size="13"><g transform="translate(18,258.5) rotate(-90)"><text x="0" y="4.55" text-anchor="middle">loss</text></g></g></svg></div><div class="pe-svg pe-narrow"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-xychart" viewBox="0 0 360 300" width="360" height="300" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_tw:var(--pele-title-weight,bold);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="xychart"><text class="pele-title" font-weight="var(--_tw)" text-anchor="middle" xml:space="preserve"><tspan x="180" y="24.75">损失（示意）</tspan></text><path class="pele-grid" d="M51.23,264H352M51.23,193.67H352M51.23,123.33H352M51.23,53H352" stroke="var(--_a)"/><g class="pele-plot"><g class="pele-series pele-line" fill="var(--pele-series-1,#4c78a8)"><path d="M76.29,67.07L126.42,81.13L176.55,95.2L226.68,105.75L276.81,116.3L326.94,123.33" fill="none" stroke="var(--pele-series-1,#4c78a8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="76.29" cy="67.07" r="3"/><circle cx="126.42" cy="81.13" r="3"/><circle cx="176.55" cy="95.2" r="3"/><circle cx="226.68" cy="105.75" r="3"/><circle cx="276.81" cy="116.3" r="3"/><circle cx="326.94" cy="123.33" r="3"/></g></g><path class="pele-axis" d="M51.23,53V264M51.23,264H352M51.23,264h-4M51.23,193.67h-4M51.23,123.33h-4M51.23,53h-4M76.29,264v4M126.42,264v4M176.55,264v4M226.68,264v4M276.81,264v4M326.94,264v4" fill="none" stroke="var(--_b)"/><g class="pele-axis-labels" font-size="13" fill="var(--_m)"><text x="41.23" y="268.55" text-anchor="end">0</text><text x="41.23" y="198.22" text-anchor="end">1</text><text x="41.23" y="127.88" text-anchor="end">2</text><text x="41.23" y="57.55" text-anchor="end">3</text><text x="76.29" y="286.55" text-anchor="middle">0</text><text x="126.42" y="286.55" text-anchor="middle">20</text><text x="176.55" y="286.55" text-anchor="middle">40</text><text x="226.68" y="286.55" text-anchor="middle">60</text><text x="276.81" y="286.55" text-anchor="middle">80</text><text x="326.94" y="286.55" text-anchor="middle">100</text></g><g class="pele-axis-titles" font-size="13"><g transform="translate(18,158.5) rotate(-90)"><text x="0" y="4.55" text-anchor="middle">loss</text></g></g></svg></div></figure></div><div class="pe-stop"><p>步长合适。损失平稳下降，60 轮后接近收敛。</p>
+<figure class="pe-fig" data-type="xychart"><div class="pe-svg pe-wide"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-xychart" viewBox="0 0 700 500" width="700" height="500" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_tw:var(--pele-title-weight,bold);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="xychart"><text class="pele-title" font-weight="var(--_tw)" text-anchor="middle" xml:space="preserve"><tspan x="350" y="24.75">损失（示意）</tspan></text><path class="pele-grid" d="M62.07,464H692M62.07,395.5H692M62.07,327H692M62.07,258.5H692M62.07,190H692M62.07,121.5H692M62.07,53H692" stroke="var(--_a)"/><g class="pele-plot"><g class="pele-series pele-line" fill="var(--pele-series-1,#4c78a8)"><path d="M114.56,80.4L219.55,244.8L324.54,340.7L429.53,381.8L534.52,388.65L639.51,392.76" fill="none" stroke="var(--pele-series-1,#4c78a8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="114.56" cy="80.4" r="3"/><circle cx="219.55" cy="244.8" r="3"/><circle cx="324.54" cy="340.7" r="3"/><circle cx="429.53" cy="381.8" r="3"/><circle cx="534.52" cy="388.65" r="3"/><circle cx="639.51" cy="392.76" r="3"/></g></g><path class="pele-axis" d="M62.07,53V464M62.07,464H692M62.07,464h-4M62.07,395.5h-4M62.07,327h-4M62.07,258.5h-4M62.07,190h-4M62.07,121.5h-4M62.07,53h-4M114.56,464v4M219.55,464v4M324.54,464v4M429.53,464v4M534.52,464v4M639.51,464v4" fill="none" stroke="var(--_b)"/><g class="pele-axis-labels" font-size="13" fill="var(--_m)"><text x="52.07" y="468.55" text-anchor="end">0</text><text x="52.07" y="400.05" text-anchor="end">0.5</text><text x="52.07" y="331.55" text-anchor="end">1</text><text x="52.07" y="263.05" text-anchor="end">1.5</text><text x="52.07" y="194.55" text-anchor="end">2</text><text x="52.07" y="126.05" text-anchor="end">2.5</text><text x="52.07" y="57.55" text-anchor="end">3</text><text x="114.56" y="486.55" text-anchor="middle">0</text><text x="219.55" y="486.55" text-anchor="middle">20</text><text x="324.54" y="486.55" text-anchor="middle">40</text><text x="429.53" y="486.55" text-anchor="middle">60</text><text x="534.52" y="486.55" text-anchor="middle">80</text><text x="639.51" y="486.55" text-anchor="middle">100</text></g><g class="pele-axis-titles" font-size="13"><g transform="translate(18,258.5) rotate(-90)"><text x="0" y="4.55" text-anchor="middle">loss</text></g></g></svg></div><div class="pe-svg pe-narrow"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-xychart" viewBox="0 0 360 300" width="360" height="300" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_tw:var(--pele-title-weight,bold);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="xychart"><text class="pele-title" font-weight="var(--_tw)" text-anchor="middle" xml:space="preserve"><tspan x="180" y="24.75">损失（示意）</tspan></text><path class="pele-grid" d="M51.23,264H352M51.23,193.67H352M51.23,123.33H352M51.23,53H352" stroke="var(--_a)"/><g class="pele-plot"><g class="pele-series pele-line" fill="var(--pele-series-1,#4c78a8)"><path d="M76.29,67.07L126.42,151.47L176.55,200.7L226.68,221.8L276.81,225.32L326.94,227.43" fill="none" stroke="var(--pele-series-1,#4c78a8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="76.29" cy="67.07" r="3"/><circle cx="126.42" cy="151.47" r="3"/><circle cx="176.55" cy="200.7" r="3"/><circle cx="226.68" cy="221.8" r="3"/><circle cx="276.81" cy="225.32" r="3"/><circle cx="326.94" cy="227.43" r="3"/></g></g><path class="pele-axis" d="M51.23,53V264M51.23,264H352M51.23,264h-4M51.23,193.67h-4M51.23,123.33h-4M51.23,53h-4M76.29,264v4M126.42,264v4M176.55,264v4M226.68,264v4M276.81,264v4M326.94,264v4" fill="none" stroke="var(--_b)"/><g class="pele-axis-labels" font-size="13" fill="var(--_m)"><text x="41.23" y="268.55" text-anchor="end">0</text><text x="41.23" y="198.22" text-anchor="end">1</text><text x="41.23" y="127.88" text-anchor="end">2</text><text x="41.23" y="57.55" text-anchor="end">3</text><text x="76.29" y="286.55" text-anchor="middle">0</text><text x="126.42" y="286.55" text-anchor="middle">20</text><text x="176.55" y="286.55" text-anchor="middle">40</text><text x="226.68" y="286.55" text-anchor="middle">60</text><text x="276.81" y="286.55" text-anchor="middle">80</text><text x="326.94" y="286.55" text-anchor="middle">100</text></g><g class="pele-axis-titles" font-size="13"><g transform="translate(18,158.5) rotate(-90)"><text x="0" y="4.55" text-anchor="middle">loss</text></g></g></svg></div></figure></div><div class="pe-stop" hidden><p>步子太大。每一步都跨过谷底，损失来回跳。</p>
+<figure class="pe-fig" data-type="xychart"><div class="pe-svg pe-wide"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-xychart" viewBox="0 0 700 500" width="700" height="500" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_tw:var(--pele-title-weight,bold);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="xychart"><text class="pele-title" font-weight="var(--_tw)" text-anchor="middle" xml:space="preserve"><tspan x="350" y="24.75">损失（示意）</tspan></text><path class="pele-grid" d="M62.07,464H692M62.07,395.5H692M62.07,327H692M62.07,258.5H692M62.07,190H692M62.07,121.5H692M62.07,53H692" stroke="var(--_a)"/><g class="pele-plot"><g class="pele-series pele-line" fill="var(--pele-series-1,#4c78a8)"><path d="M114.56,80.4L219.55,299.6L324.54,135.2L429.53,340.7L534.52,107.8L639.51,272.2" fill="none" stroke="var(--pele-series-1,#4c78a8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="114.56" cy="80.4" r="3"/><circle cx="219.55" cy="299.6" r="3"/><circle cx="324.54" cy="135.2" r="3"/><circle cx="429.53" cy="340.7" r="3"/><circle cx="534.52" cy="107.8" r="3"/><circle cx="639.51" cy="272.2" r="3"/></g></g><path class="pele-axis" d="M62.07,53V464M62.07,464H692M62.07,464h-4M62.07,395.5h-4M62.07,327h-4M62.07,258.5h-4M62.07,190h-4M62.07,121.5h-4M62.07,53h-4M114.56,464v4M219.55,464v4M324.54,464v4M429.53,464v4M534.52,464v4M639.51,464v4" fill="none" stroke="var(--_b)"/><g class="pele-axis-labels" font-size="13" fill="var(--_m)"><text x="52.07" y="468.55" text-anchor="end">0</text><text x="52.07" y="400.05" text-anchor="end">0.5</text><text x="52.07" y="331.55" text-anchor="end">1</text><text x="52.07" y="263.05" text-anchor="end">1.5</text><text x="52.07" y="194.55" text-anchor="end">2</text><text x="52.07" y="126.05" text-anchor="end">2.5</text><text x="52.07" y="57.55" text-anchor="end">3</text><text x="114.56" y="486.55" text-anchor="middle">0</text><text x="219.55" y="486.55" text-anchor="middle">20</text><text x="324.54" y="486.55" text-anchor="middle">40</text><text x="429.53" y="486.55" text-anchor="middle">60</text><text x="534.52" y="486.55" text-anchor="middle">80</text><text x="639.51" y="486.55" text-anchor="middle">100</text></g><g class="pele-axis-titles" font-size="13"><g transform="translate(18,258.5) rotate(-90)"><text x="0" y="4.55" text-anchor="middle">loss</text></g></g></svg></div><div class="pe-svg pe-narrow"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-xychart" viewBox="0 0 360 300" width="360" height="300" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_tw:var(--pele-title-weight,bold);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="xychart"><text class="pele-title" font-weight="var(--_tw)" text-anchor="middle" xml:space="preserve"><tspan x="180" y="24.75">损失（示意）</tspan></text><path class="pele-grid" d="M51.23,264H352M51.23,193.67H352M51.23,123.33H352M51.23,53H352" stroke="var(--_a)"/><g class="pele-plot"><g class="pele-series pele-line" fill="var(--pele-series-1,#4c78a8)"><path d="M76.29,67.07L126.42,179.6L176.55,95.2L226.68,200.7L276.81,81.13L326.94,165.53" fill="none" stroke="var(--pele-series-1,#4c78a8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="76.29" cy="67.07" r="3"/><circle cx="126.42" cy="179.6" r="3"/><circle cx="176.55" cy="95.2" r="3"/><circle cx="226.68" cy="200.7" r="3"/><circle cx="276.81" cy="81.13" r="3"/><circle cx="326.94" cy="165.53" r="3"/></g></g><path class="pele-axis" d="M51.23,53V264M51.23,264H352M51.23,264h-4M51.23,193.67h-4M51.23,123.33h-4M51.23,53h-4M76.29,264v4M126.42,264v4M176.55,264v4M226.68,264v4M276.81,264v4M326.94,264v4" fill="none" stroke="var(--_b)"/><g class="pele-axis-labels" font-size="13" fill="var(--_m)"><text x="41.23" y="268.55" text-anchor="end">0</text><text x="41.23" y="198.22" text-anchor="end">1</text><text x="41.23" y="127.88" text-anchor="end">2</text><text x="41.23" y="57.55" text-anchor="end">3</text><text x="76.29" y="286.55" text-anchor="middle">0</text><text x="126.42" y="286.55" text-anchor="middle">20</text><text x="176.55" y="286.55" text-anchor="middle">40</text><text x="226.68" y="286.55" text-anchor="middle">60</text><text x="276.81" y="286.55" text-anchor="middle">80</text><text x="326.94" y="286.55" text-anchor="middle">100</text></g><g class="pele-axis-titles" font-size="13"><g transform="translate(18,158.5) rotate(-90)"><text x="0" y="4.55" text-anchor="middle">loss</text></g></g></svg></div></figure></div></div></section>
+<section class="pe-panel" id="s3"><h2><span class="pe-n">03</span>三种调度策略</h2><div class="pe-table"><table><thead><tr><th>策略</th><th>做法</th><th>适合</th><th>风险</th></tr></thead><tbody><tr><td>固定</td><td>全程同一个值</td><td><span class="pe-badge pe-ok">✓</span> 小模型、快速试验</td><td><span class="pe-badge pe-warn">!</span> 后期震荡</td></tr><tr><td>阶梯衰减</td><td>每 N 轮乘 0.1</td><td><span class="pe-badge pe-ok">✓</span> 图像分类</td><td><span class="pe-badge pe-warn">!</span> 需要手调 N</td></tr><tr><td>预热 + 余弦</td><td>先升后按余弦降</td><td><span class="pe-badge pe-ok">✓</span> 大模型、Transformer</td><td><span class="pe-badge pe-ok">✓</span> 最稳</td></tr></tbody></table></div></section>
+<section class="pe-panel" id="s4"><h2><span class="pe-n">04</span>找学习率的步骤</h2><div class="pe-steps" data-autoplay="1" data-ms="2600"><div class="pe-w-title">LR range test</div><div class="pe-stage"><section class="pe-beat" aria-label="1/4"><ol><li>从 1e-7 开始训练一小段。</li></ol></section><section class="pe-beat" hidden aria-label="2/4"><ol><li>每一步把学习率乘一个固定倍数。</li></ol></section><section class="pe-beat" hidden aria-label="3/4"><ol><li>记录每一步的损失。</li></ol></section><section class="pe-beat" hidden aria-label="4/4"><ol><li>选损失下降最快处，再往小取十分之一。</li></ol>
+<figure class="pe-fig" data-type="flowchart"><div class="pe-svg pe-wide"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-flowchart" viewBox="0 0 544 63" width="544" height="63" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="flowchart"><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge" data-id="L_S_U_0"><path d="M74.02,31.5L115.01,31.5"/><path class="pele-marker" d="M122.01,31.5L114.01,34.86L114.01,28.14Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_U_R_0"><path d="M218.02,31.5L259.02,31.5"/><path class="pele-marker" d="M266.02,31.5L258.02,34.86L258.02,28.14Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_R_P_0"><path d="M362.02,31.5L403.02,31.5"/><path class="pele-marker" d="M410.02,31.5L402.02,34.86L402.02,28.14Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-nodes"><g class="pele-node pele-shape-rect" data-id="S" transform="translate(41.01,31.5)"><rect x="-33.01" y="-23.5" width="66.02" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">1e-7</text></g><g class="pele-node pele-shape-rect" data-id="U" transform="translate(170.02,31.5)"><rect x="-48" y="-23.5" width="96" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">指数增大</text></g><g class="pele-node pele-shape-rect" data-id="R" transform="translate(314.02,31.5)"><rect x="-48" y="-23.5" width="96" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">记录损失</text></g><g class="pele-node pele-shape-rect" data-id="P" transform="translate(472.79,31.5)"><rect x="-62.77" y="-23.5" width="125.55" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">选最陡处 ÷10</text></g></g></svg></div><div class="pe-svg pe-narrow"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-flowchart" viewBox="0 0 142 348" width="142" height="348" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="flowchart"><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge" data-id="L_S_U_0"><path d="M70.78,55L70.78,96"/><path class="pele-marker" d="M70.78,103L67.42,95L74.14,95Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_U_R_0"><path d="M70.78,150L70.78,191"/><path class="pele-marker" d="M70.78,198L67.42,190L74.14,190Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge" data-id="L_R_P_0"><path d="M70.78,245L70.78,286"/><path class="pele-marker" d="M70.78,293L67.42,285L74.14,285Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-nodes"><g class="pele-node pele-shape-rect" data-id="S" transform="translate(70.78,31.5)"><rect x="-33.01" y="-23.5" width="66.02" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">1e-7</text></g><g class="pele-node pele-shape-rect" data-id="U" transform="translate(70.78,126.5)"><rect x="-48" y="-23.5" width="96" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">指数增大</text></g><g class="pele-node pele-shape-rect" data-id="R" transform="translate(70.78,221.5)"><rect x="-48" y="-23.5" width="96" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">记录损失</text></g><g class="pele-node pele-shape-rect" data-id="P" transform="translate(70.78,316.5)"><rect x="-62.77" y="-23.5" width="125.55" height="47" fill="var(--_s)" stroke="var(--_b)" style="rx:var(--_r)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">选最陡处 ÷10</text></g></g></svg></div></figure></section></div><div class="pe-bar"><button type="button" data-act="prev" aria-label="上一步">‹</button><button type="button" data-act="play" aria-label="播放/暂停">▶</button><button type="button" data-act="next" aria-label="下一步">›</button><span class="pe-count">1 / 4</span><span class="pe-track"><i style="width:25%"></i></span></div></div>
+<aside class="pe-callout pe-warn"><b>注意</b><p>本页曲线是示意数据，只用来说明趋势，不代表任何真实模型。</p></aside></section>
+<footer class="pe-foot"><details><summary>原稿（Markdown，可复制给 Agent 修改）</summary><button type="button" data-copy style="margin-top:.5rem;padding:0 .6rem">复制原稿</button><pre>---
+title: 学习率怎么影响训练
+subtitle: 同一个问题，按块选形式：文字、流程图、滑块、表格、分步
+source: 示意数据，非真实训练记录
+---
+学习率决定每一步沿梯度走多远。太小，收敛慢；太大，损失来回震荡甚至发散。先用 1e-3 起步，再按验证损失调整。
+
+## 一次更新在做什么
+
+```mermaid
+flowchart LR
+  A[取一批数据] --&gt; B[前向计算损失]
+  B --&gt; C[反向求梯度]
+  C --&gt; D[&quot;参数 -= 学习率 × 梯度&quot;]
+  D --&gt; A
+```
+
+学习率只出现在第 4 步。它不改变方向，只改变步长。
+
+## 拖动看看步长的影响
+
+```slider label=&quot;学习率&quot; default=0.01
+@ 0.0001
+步子太小。100 轮后损失还在缓慢下降。
+
+~~~mermaid
+xychart
+  title &quot;损失（示意）&quot;
+  x-axis [0, 20, 40, 60, 80, 100]
+  y-axis &quot;loss&quot; 0 --&gt; 3
+  line [2.8, 2.6, 2.4, 2.25, 2.1, 2.0]
+~~~
+@ 0.01
+步长合适。损失平稳下降，60 轮后接近收敛。
+
+~~~mermaid
+xychart
+  title &quot;损失（示意）&quot;
+  x-axis [0, 20, 40, 60, 80, 100]
+  y-axis &quot;loss&quot; 0 --&gt; 3
+  line [2.8, 1.6, 0.9, 0.6, 0.55, 0.52]
+~~~
+@ 0.5
+步子太大。每一步都跨过谷底，损失来回跳。
+
+~~~mermaid
+xychart
+  title &quot;损失（示意）&quot;
+  x-axis [0, 20, 40, 60, 80, 100]
+  y-axis &quot;loss&quot; 0 --&gt; 3
+  line [2.8, 1.2, 2.4, 0.9, 2.6, 1.4]
+~~~
+```
+
+## 三种调度策略
+
+| 策略 | 做法 | 适合 | 风险 |
+|---|---|---|---|
+| 固定 | 全程同一个值 | ok 小模型、快速试验 | warn 后期震荡 |
+| 阶梯衰减 | 每 N 轮乘 0.1 | ok 图像分类 | warn 需要手调 N |
+| 预热 + 余弦 | 先升后按余弦降 | ok 大模型、Transformer | ok 最稳 |
+
+## 找学习率的步骤
+
+```steps title=&quot;LR range test&quot; ms=2600
+1. 从 1e-7 开始训练一小段。
+---
+2. 每一步把学习率乘一个固定倍数。
+---
+3. 记录每一步的损失。
+---
+4. 选损失下降最快处，再往小取十分之一。
+
+~~~mermaid
+flowchart LR
+  S[1e-7] --&gt; U[指数增大] --&gt; R[记录损失] --&gt; P[选最陡处 ÷10]
+~~~
+```
+
+```callout warn 注意
+本页曲线是示意数据，只用来说明趋势，不代表任何真实模型。
+```
+</pre></details>
+<p>图表由 Pele 渲染 · 离线单文件</p></footer>
+</main>
+<script type="text/markdown" id="pe-source">---
+title: 学习率怎么影响训练
+subtitle: 同一个问题，按块选形式：文字、流程图、滑块、表格、分步
+source: 示意数据，非真实训练记录
+---
+学习率决定每一步沿梯度走多远。太小，收敛慢；太大，损失来回震荡甚至发散。先用 1e-3 起步，再按验证损失调整。
+
+## 一次更新在做什么
+
+```mermaid
+flowchart LR
+  A[取一批数据] --> B[前向计算损失]
+  B --> C[反向求梯度]
+  C --> D["参数 -= 学习率 × 梯度"]
+  D --> A
+```
+
+学习率只出现在第 4 步。它不改变方向，只改变步长。
+
+## 拖动看看步长的影响
+
+```slider label="学习率" default=0.01
+@ 0.0001
+步子太小。100 轮后损失还在缓慢下降。
+
+~~~mermaid
+xychart
+  title "损失（示意）"
+  x-axis [0, 20, 40, 60, 80, 100]
+  y-axis "loss" 0 --> 3
+  line [2.8, 2.6, 2.4, 2.25, 2.1, 2.0]
+~~~
+@ 0.01
+步长合适。损失平稳下降，60 轮后接近收敛。
+
+~~~mermaid
+xychart
+  title "损失（示意）"
+  x-axis [0, 20, 40, 60, 80, 100]
+  y-axis "loss" 0 --> 3
+  line [2.8, 1.6, 0.9, 0.6, 0.55, 0.52]
+~~~
+@ 0.5
+步子太大。每一步都跨过谷底，损失来回跳。
+
+~~~mermaid
+xychart
+  title "损失（示意）"
+  x-axis [0, 20, 40, 60, 80, 100]
+  y-axis "loss" 0 --> 3
+  line [2.8, 1.2, 2.4, 0.9, 2.6, 1.4]
+~~~
+```
+
+## 三种调度策略
+
+| 策略 | 做法 | 适合 | 风险 |
+|---|---|---|---|
+| 固定 | 全程同一个值 | ok 小模型、快速试验 | warn 后期震荡 |
+| 阶梯衰减 | 每 N 轮乘 0.1 | ok 图像分类 | warn 需要手调 N |
+| 预热 + 余弦 | 先升后按余弦降 | ok 大模型、Transformer | ok 最稳 |
+
+## 找学习率的步骤
+
+```steps title="LR range test" ms=2600
+1. 从 1e-7 开始训练一小段。
+---
+2. 每一步把学习率乘一个固定倍数。
+---
+3. 记录每一步的损失。
+---
+4. 选损失下降最快处，再往小取十分之一。
+
+~~~mermaid
+flowchart LR
+  S[1e-7] --> U[指数增大] --> R[记录损失] --> P[选最陡处 ÷10]
+~~~
+```
+
+```callout warn 注意
+本页曲线是示意数据，只用来说明趋势，不代表任何真实模型。
+```
+</script>
+<script>(()=>{const d=document.documentElement;d.classList.replace('nojs','js');window.PE={reduce:matchMedia('(prefers-reduced-motion: reduce)').matches};
+const tb=document.querySelector('.pe-theme'),order=['auto','light','dark'],lab={auto:'自动',light:'浅色',dark:'深色'};
+const setT=t=>{if(t==='auto')d.removeAttribute('data-theme');else d.dataset.theme=t;if(tb)tb.textContent='主题：'+lab[t];try{localStorage.setItem('pe-theme',t)}catch(e){}};
+let cur=(()=>{try{return localStorage.getItem('pe-theme')}catch(e){}})()||d.dataset.default||'auto';setT(cur);
+tb&&tb.addEventListener('click',()=>{cur=order[(order.indexOf(cur)+1)%3];setT(cur)});
+const cp=document.querySelector('[data-copy]');cp&&cp.addEventListener('click',()=>{navigator.clipboard?.writeText(document.getElementById('pe-source').textContent);cp.textContent='已复制'});
+document.querySelectorAll('.pe-slider').forEach(w=>{const r=w.querySelector('input'),o=w.querySelector('output'),s=[...w.querySelectorAll('.pe-stop')],v=JSON.parse(r.dataset.values);r.addEventListener('input',()=>{s.forEach((x,j)=>x.hidden=j!=r.value);o.textContent=v[r.value]})});
+document.querySelectorAll('.pe-steps').forEach(w=>{const b=[...w.querySelectorAll('.pe-beat')],c=w.querySelector('.pe-count'),bar=w.querySelector('.pe-track i'),pl=w.querySelector('[data-act=play]');let i=0,t=null;
+ const go=k=>{i=(k+b.length)%b.length;b.forEach((x,j)=>x.hidden=j!==i);c.textContent=(i+1)+' / '+b.length;bar.style.width=((i+1)/b.length*100)+'%'};
+ const stop=()=>{clearInterval(t);t=null;pl.textContent='▶'};
+ const play=()=>{if(t)return stop();pl.textContent='❚❚';t=setInterval(()=>{if(i===b.length-1)return stop();go(i+1)},+w.dataset.ms)};
+ w.addEventListener('click',e=>{const a=e.target.closest('button')?.dataset.act;if(a==='prev'){stop();go(i-1)}if(a==='next'){stop();go(i+1)}if(a==='play')play()});
+ w.tabIndex=0;w.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){stop();go(i+1)}if(e.key==='ArrowLeft'){stop();go(i-1)}if(e.key===' '){e.preventDefault();play()}});
+ if(w.dataset.autoplay==='1'&&!PE.reduce&&'IntersectionObserver'in window){const io=new IntersectionObserver(es=>{if(es[0].isIntersecting){play();io.disconnect()}},{threshold:.6});io.observe(w)}});
+
+
+})();</script>
+</body></html>

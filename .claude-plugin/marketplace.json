@@ -1,0 +1,5 @@
+{
+  "name": "call-pele-answer",
+  "owner": { "name": "Nadiya Nova" },
+  "plugins": [{ "name": "call-pele-answer", "source": "./", "description": "按块自适应的解释页：可爱多色、可调色、可批注" }]
+}

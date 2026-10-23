@@ -1,0 +1,54 @@
+{
+  "date": "2026-10-23T02:35:48.963Z",
+  "blocks": 20,
+  "keyed": {
+    "typesafe": true,
+    "classifier": true
+  },
+  "local": {
+    "accuracy": "14/20",
+    "median_ms": 1,
+    "by": "local",
+    "notes": [],
+    "wrong": [
+      "11:hierarchy→prose",
+      "13:table→prose",
+      "14:table→prose",
+      "15:chart→prose",
+      "17:slider→prose",
+      "18:slider→prose"
+    ]
+  },
+  "classifier": {
+    "accuracy": "20/20",
+    "median_ms": 1512,
+    "by": "classifier/jev-1.13.0 · fast",
+    "notes": [],
+    "wrong": []
+  },
+  "systemone-free": {
+    "accuracy": "19/20",
+    "median_ms": 3432,
+    "by": "classifier-systemone/jev-1.13.0 · full",
+    "notes": [],
+    "wrong": [
+      "19:tabs→table"
+    ]
+  },
+  "typesafe": {
+    "accuracy": "19/20",
+    "median_ms": 191,
+    "by": "typesafe/jev-1.14.0 · full",
+    "notes": [],
+    "wrong": [
+      "19:tabs→prose"
+    ]
+  },
+  "hybrid": {
+    "accuracy": "20/20",
+    "median_ms": 1399,
+    "by": "classifier/jev-1.13.0 · fast + typesafe gates",
+    "notes": [],
+    "wrong": []
+  }
+}

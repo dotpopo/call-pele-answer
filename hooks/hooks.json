@@ -1,0 +1,9 @@
+{
+  "description": "call-pele-answer timing: logs prompt → tool calls → answer to ~/.call-pele-answer/logs/agent.jsonl; `pe stats` reads it",
+  "hooks": {
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/call-pele-answer/scripts/hooks/agent-hook.mjs\"", "timeout": 5 }] }],
+    "PreToolUse":       [{ "matcher": "*", "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/call-pele-answer/scripts/hooks/agent-hook.mjs\"", "timeout": 5 }] }],
+    "PostToolUse":      [{ "matcher": "*", "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/call-pele-answer/scripts/hooks/agent-hook.mjs\"", "timeout": 5 }] }],
+    "Stop":             [{ "hooks": [{ "type": "command", "command": "node \"${CLAUDE_PLUGIN_ROOT}/skills/call-pele-answer/scripts/hooks/agent-hook.mjs\"", "timeout": 5 }] }]
+  }
+}

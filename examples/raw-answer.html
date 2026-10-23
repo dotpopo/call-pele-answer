@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="zh-CN" class="nojs" data-default="auto" data-theme-name="pele">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
+<meta name="generator" content="call-pele-answer ir1; forms=views,mermaid">
+<title>一个电商订单系统怎么运转</title>
+<style>
+:root{
+  --pe-paper:#FFFCF0;--pe-ink:#100F0F;--pe-muted:#6F6E69;--pe-faint:#B7B5AC;--pe-border:#CECDC3;--pe-surface:#F2F0E5;--pe-surface-2:#E6E4D9;
+  --pe-blue:#205EA6;--pe-red:#AF3029;--pe-green:#66800B;--pe-yellow:#AD8301;--pe-orange:#BC5215;--pe-cyan:#24837B;--pe-purple:#5E409D;--pe-magenta:#A02F6F;
+  --pe-accent:var(--pe-blue);
+  --pe-font:-apple-system,BlinkMacSystemFont,"Inter","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --pe-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --pe-radius:4px;--pe-measure:44rem;color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+  --pe-paper:#100F0F;--pe-ink:#CECDC3;--pe-muted:#878580;--pe-faint:#575653;--pe-border:#403E3C;--pe-surface:#1C1B1A;--pe-surface-2:#282726;
+  --pe-blue:#4385BE;--pe-red:#D14D41;--pe-green:#879A39;--pe-yellow:#D0A215;--pe-orange:#DA702C;--pe-cyan:#3AA99F;--pe-purple:#8B7EC8;--pe-magenta:#CE5D97;}}
+:root[data-theme=dark]{
+  --pe-paper:#100F0F;--pe-ink:#CECDC3;--pe-muted:#878580;--pe-faint:#575653;--pe-border:#403E3C;--pe-surface:#1C1B1A;--pe-surface-2:#282726;
+  --pe-blue:#4385BE;--pe-red:#D14D41;--pe-green:#879A39;--pe-yellow:#D0A215;--pe-orange:#DA702C;--pe-cyan:#3AA99F;--pe-purple:#8B7EC8;--pe-magenta:#CE5D97;}
+/* diagrams read the same tokens as the prose: one palette, swapped without re-rendering */
+.pele{--pele-bg:var(--pe-paper);--pele-fg:var(--pe-ink);--pele-muted:var(--pe-muted);--pele-line:var(--pe-ink);--pele-surface:var(--pe-surface);
+  --pele-surface-alt:var(--pe-surface-2);--pele-border:var(--pe-border);--pele-accent:var(--pe-accent);--pele-critical:var(--pe-red);--pele-radius:var(--pe-radius);
+  --pele-series-1:var(--pe-blue);--pele-series-2:var(--pe-orange);--pele-series-3:var(--pe-green);--pele-series-4:var(--pe-red);
+  --pele-series-5:var(--pe-cyan);--pele-series-6:var(--pe-yellow);--pele-series-7:var(--pe-purple);--pele-series-8:var(--pe-magenta);
+  --pele-font:var(--pe-font);--pele-font-mono:var(--pe-mono);max-width:100%;height:auto}
+*{box-sizing:border-box}
+html{background:var(--pe-paper);color:var(--pe-ink);font:16px/1.7 var(--pe-font);-webkit-text-size-adjust:100%}
+body{margin:0;padding:3.5rem 1.25rem 4rem}
+main{max-width:var(--pe-measure);margin:0 auto}
+header.pe-head{margin-bottom:2rem}
+.pe-meta{font:12px/1.4 var(--pe-mono);color:var(--pe-muted);letter-spacing:.02em;display:flex;gap:.75rem;flex-wrap:wrap;align-items:center}
+h1{font-size:1.75rem;line-height:1.25;font-weight:650;margin:.4rem 0 .3rem;letter-spacing:-.01em}
+.pe-sub{color:var(--pe-muted);margin:0}
+.pe-lead{font-size:1.125rem;line-height:1.65;padding:0 0 1.75rem;border-bottom:1px solid var(--pe-border)}
+.pe-lead p{margin:.25rem 0}
+section.pe-panel{padding:1.75rem 0;border-bottom:1px solid var(--pe-border)}
+section.pe-panel>h2{font-size:1.125rem;font-weight:650;margin:0 0 .75rem;display:flex;gap:.6rem;align-items:baseline}
+.pe-n{font:12px var(--pe-mono);color:var(--pe-faint);min-width:1.4rem}
+h3,h4{font-size:1rem;font-weight:650;margin:1.25rem 0 .4rem}
+p{margin:.5rem 0}
+ul,ol{margin:.5rem 0;padding-left:1.4rem}
+li{margin:.2rem 0}
+a{color:var(--pe-accent);text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px}
+code{font:.875em var(--pe-mono);background:var(--pe-surface);border-radius:3px;padding:.08em .32em}
+strong{font-weight:650}
+del{color:var(--pe-muted)}
+blockquote{margin:.75rem 0;padding:.1rem 0 .1rem 1rem;border-left:2px solid var(--pe-border);color:var(--pe-muted)}
+.pe-fig{margin:1rem 0;padding:1rem;background:var(--pe-paper);border:1px solid var(--pe-border);border-radius:var(--pe-radius);overflow-x:auto}
+.pe-svg{display:flex;justify-content:center}
+.pe-narrow{display:none}
+@media (max-width:640px){.pe-fig:has(.pe-narrow) .pe-wide{display:none}.pe-narrow{display:flex}body{padding-top:2rem}h1{font-size:1.45rem}}
+.pe-table{overflow-x:auto;margin:.75rem 0}
+table{border-collapse:collapse;width:100%;font-size:.9375rem}
+th,td{text-align:left;padding:.45rem .7rem .45rem 0;border-bottom:1px solid var(--pe-border);vertical-align:top}
+th{font-weight:600;color:var(--pe-muted);font-size:.8125rem}
+tr.pe-row-no td{color:var(--pe-muted)}
+.pe-badge{display:inline-block;min-width:1.15rem;font:600 12px/1.15rem var(--pe-mono);text-align:center;border-radius:3px}
+.pe-ok{color:var(--pe-green);background:color-mix(in srgb,var(--pe-green) 12%,transparent)}
+.pe-no{color:var(--pe-red);background:color-mix(in srgb,var(--pe-red) 12%,transparent)}
+.pe-warn{color:var(--pe-yellow);background:color-mix(in srgb,var(--pe-yellow) 14%,transparent)}
+.pe-code{margin:1rem 0}
+.pe-code figcaption{font:12px var(--pe-mono);color:var(--pe-muted);margin-bottom:.3rem}
+pre{margin:0;padding:.9rem 1rem;background:var(--pe-surface);border-radius:var(--pe-radius);overflow-x:auto;font:13px/1.6 var(--pe-mono)}
+pre code{background:none;padding:0;font:inherit}
+.pe-w-title{display:block;font-size:.875rem;color:var(--pe-muted);margin-bottom:.5rem}
+.pe-w-title output{color:var(--pe-ink);font:600 .9375rem var(--pe-mono)}
+.pe-steps,.pe-slider,.pe-tabs{margin:1rem 0;padding:1rem;border:1px solid var(--pe-border);border-radius:var(--pe-radius)}
+.pe-steps .pe-fig,.pe-slider .pe-fig,.pe-tabs .pe-fig{border:0;padding:.25rem 0;margin:.5rem 0}
+button{font:inherit;color:var(--pe-ink);background:var(--pe-paper);border:1px solid var(--pe-border);border-radius:var(--pe-radius);min-width:2rem;height:2rem;cursor:pointer}
+button:hover{background:var(--pe-surface)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--pe-accent);outline-offset:2px}
+footer.pe-foot{margin-top:2rem;font-size:.8125rem;color:var(--pe-muted)}
+footer details pre{max-height:24rem;margin-top:.5rem;white-space:pre-wrap}
+footer summary{cursor:pointer}
+.pe-theme{margin-left:auto;height:1.6rem;min-width:auto;padding:0 .5rem;font:11px var(--pe-mono);color:var(--pe-muted)}
+.js .pe-beat[hidden],.js .pe-stop[hidden],.js .pe-tab[hidden]{display:none}
+.nojs .pe-bar,.nojs input[type=range],.nojs .pe-tablist,.nojs .pe-theme{display:none}
+.nojs [hidden]{display:block}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{body{padding:0}.pe-bar,.pe-theme,footer details{display:none}.pe-beat[hidden],.pe-stop[hidden],.pe-tab[hidden]{display:block!important}.pe-wide{display:flex!important}.pe-narrow{display:none!important}}
+
+.pe-views{position:relative;margin:.5rem 0}.pe-seg{display:inline-flex;border:1px solid var(--pe-border);border-radius:var(--pe-radius);overflow:hidden;margin-bottom:.25rem;float:right;position:relative;z-index:1}
+.pe-seg button{border:0;border-radius:0;height:1.6rem;min-width:auto;padding:0 .55rem;font:11px var(--pe-mono);color:var(--pe-muted);background:var(--pe-paper)}
+.pe-seg button+button{border-left:1px solid var(--pe-border)}.pe-seg button[aria-selected=true]{color:var(--pe-ink);background:var(--pe-surface)}
+.pe-view{clear:both}</style></head>
+<body><main>
+<header class="pe-head"><div class="pe-meta"><span>2026-10-23</span><button type="button" class="pe-theme">主题</button></div>
+<h1>一个电商订单系统怎么运转</h1></header>
+<div class="pe-lead"><p>订单系统的核心是一条状态链：每次支付、发货、退款都只是让订单换一个状态。</p></div>
+<section class="pe-panel" id="s1"><h2><span class="pe-n">01</span>下单时发生了什么</h2><p>用户点击下单后，前端发请求给订单服务，订单服务调用库存服务锁定库存，库存服务返回成功，订单服务再请求支付网关创建支付单，支付网关返回支付链接给前端。</p></section>
+<section class="pe-panel" id="s2"><h2><span class="pe-n">02</span>订单状态</h2><div class="pe-views"><div class="pe-seg" role="tablist" aria-label="换一种看法"><button type="button" role="tab" aria-selected="true">状态图</button><button type="button" role="tab" aria-selected="false">转移表</button><button type="button" role="tab" aria-selected="false">原文</button></div><div class="pe-view" role="tabpanel"><figure class="pe-fig" data-type="state"><div class="pe-svg pe-wide"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-state" viewBox="0 0 195 402" width="195" height="402" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="state"><g class="pele-edges" fill="none" stroke="var(--_l)" stroke-linecap="round"><g class="pele-edge pele-transition" data-id="edge0"><path d="M101.25,22L101.25,59"/><path class="pele-marker" d="M101.25,66L97.89,58L104.61,58Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge1"><path d="M93.25,109C93.25,136.5 46.5,136.5 46.5,164L46.5,170"/><path class="pele-marker" d="M46.5,177L43.14,169L49.86,169Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge2"><path d="M46.5,220L46.5,257"/><path class="pele-marker" d="M46.5,264L43.14,256L49.86,256Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge3"><path d="M46.5,307L46.5,344"/><path class="pele-marker" d="M46.5,351L43.14,343L49.86,343Z" fill="var(--_l)" stroke="none"/></g><g class="pele-edge pele-transition" data-id="edge4"><path d="M109.25,109C109.25,118.25 156,118.25 156,127.5L156,170"/><path class="pele-marker" d="M156,177L152.64,169L159.36,169Z" fill="var(--_l)" stroke="none"/></g></g><g class="pele-edge-labels" font-size="13"><g class="pele-edge-label" data-id="edge4"><rect x="139" y="129.5" width="34" height="20" rx="3" fill="var(--_bg)"/><text x="156" y="144.05" text-anchor="middle">超时</text></g></g><g class="pele-nodes"><g class="pele-node pele-state-start" data-id="root_start" transform="translate(101.25,15)"><circle r="7" fill="var(--_l)"/></g><g class="pele-node pele-state" data-id="待支付" transform="translate(101.25,87.5)"><rect x="-38.5" y="-21.5" width="77" height="43" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">待支付</text></g><g class="pele-node pele-state" data-id="已支付" transform="translate(46.5,198.5)"><rect x="-38.5" y="-21.5" width="77" height="43" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">已支付</text></g><g class="pele-node pele-state" data-id="已发货" transform="translate(46.5,285.5)"><rect x="-38.5" y="-21.5" width="77" height="43" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">已发货</text></g><g class="pele-node pele-state" data-id="已完成" transform="translate(46.5,372.5)"><rect x="-38.5" y="-21.5" width="77" height="43" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">已完成</text></g><g class="pele-node pele-state" data-id="取消" transform="translate(156,198.5)"><rect x="-31" y="-21.5" width="62" height="43" rx="10" fill="var(--_s)" stroke="var(--_b)"/><text class="pele-label" x="0" y="5.25" text-anchor="middle">取消</text></g></g></svg></div></figure></div><div class="pe-view" role="tabpanel" hidden><div class="pe-table"><table><thead><tr><th>从</th><th>到</th><th>触发</th></tr></thead><tbody><tr><td>待支付</td><td>已支付</td><td>—</td></tr><tr><td>已支付</td><td>已发货</td><td>—</td></tr><tr><td>已发货</td><td>已完成</td><td>—</td></tr><tr><td>待支付</td><td>取消</td><td>超时</td></tr></tbody></table></div></div><div class="pe-view" role="tabpanel" hidden><p>订单从待支付变成已支付，从已支付变成已发货，从已发货变成已完成；待支付超时则取消，已完成后可以申请退款。</p></div></div></section>
+<section class="pe-panel" id="s3"><h2><span class="pe-n">03</span>系统由哪些部分组成</h2><p>系统包括网关、订单服务、库存服务、支付服务和一个 MySQL 数据库，订单服务依赖库存服务和支付服务，所有服务都通过网关对外。</p></section>
+<section class="pe-panel" id="s4"><h2><span class="pe-n">04</span>发展历程</h2><div class="pe-views"><div class="pe-seg" role="tablist" aria-label="换一种看法"><button type="button" role="tab" aria-selected="true">时间线</button><button type="button" role="tab" aria-selected="false">表格</button><button type="button" role="tab" aria-selected="false">原文</button></div><div class="pe-view" role="tabpanel"><figure class="pe-fig" data-type="timeline"><div class="pe-svg pe-wide"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-timeline" viewBox="0 0 800 131" width="800" height="131" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="timeline"><path class="pele-axis" d="M8,67H785" fill="none" stroke="var(--_l)"/><path class="pele-marker" d="M792,67L784,70.36L784,63.64Z" fill="var(--_l)" stroke="none"/><g class="pele-node pele-period" data-id="2019"><rect x="8" y="8" width="176" height="39" fill="var(--pele-series-1,#4c78a8)" style="rx:var(--_r)"/><text fill="var(--_bg)" x="96" y="32.75" text-anchor="middle">2019</text><path class="pele-edge" d="M96,47V87" fill="none" stroke="var(--_b)"/><circle class="pele-dot" cx="96" cy="67" r="4" fill="var(--pele-series-1,#4c78a8)" stroke="var(--_bg)" stroke-width="2"/><g class="pele-node pele-event"><rect x="8" y="87" width="176" height="36" fill="var(--pele-series-1,#4c78a8)" fill-opacity="0.16" style="rx:var(--_r)"/><text font-size="13" x="96" y="109.55" text-anchor="middle">上线单体版本</text></g></g><g class="pele-node pele-period" data-id="2021"><rect x="204" y="8" width="176" height="39" fill="var(--pele-series-2,#f58518)" style="rx:var(--_r)"/><text fill="var(--_bg)" x="292" y="32.75" text-anchor="middle">2021</text><path class="pele-edge" d="M292,47V87" fill="none" stroke="var(--_b)"/><circle class="pele-dot" cx="292" cy="67" r="4" fill="var(--pele-series-2,#f58518)" stroke="var(--_bg)" stroke-width="2"/><g class="pele-node pele-event"><rect x="204" y="87" width="176" height="36" fill="var(--pele-series-2,#f58518)" fill-opacity="0.16" style="rx:var(--_r)"/><text font-size="13" x="292" y="109.55" text-anchor="middle">拆分成微服务</text></g></g><g class="pele-node pele-period" data-id="2023"><rect x="400" y="8" width="176" height="39" fill="var(--pele-series-3,#54a24b)" style="rx:var(--_r)"/><text fill="var(--_bg)" x="488" y="32.75" text-anchor="middle">2023</text><path class="pele-edge" d="M488,47V87" fill="none" stroke="var(--_b)"/><circle class="pele-dot" cx="488" cy="67" r="4" fill="var(--pele-series-3,#54a24b)" stroke="var(--_bg)" stroke-width="2"/><g class="pele-node pele-event"><rect x="400" y="87" width="176" height="36" fill="var(--pele-series-3,#54a24b)" fill-opacity="0.16" style="rx:var(--_r)"/><text font-size="13" x="488" y="109.55" text-anchor="middle">接入海外支付</text></g></g><g class="pele-node pele-period" data-id="2025"><rect x="596" y="8" width="176" height="39" fill="var(--pele-series-4,#e45756)" style="rx:var(--_r)"/><text fill="var(--_bg)" x="684" y="32.75" text-anchor="middle">2025</text><path class="pele-edge" d="M684,47V87" fill="none" stroke="var(--_b)"/><circle class="pele-dot" cx="684" cy="67" r="4" fill="var(--pele-series-4,#e45756)" stroke="var(--_bg)" stroke-width="2"/><g class="pele-node pele-event"><rect x="596" y="87" width="176" height="36" fill="var(--pele-series-4,#e45756)" fill-opacity="0.16" style="rx:var(--_r)"/><text font-size="13" x="684" y="109.55" text-anchor="middle">订单量突破千万</text></g></g></svg></div><div class="pe-svg pe-narrow"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-timeline" viewBox="0 0 360 252" width="360" height="252" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_r:var(--pele-radius,4px);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="timeline"><path class="pele-axis" d="M146,8V237" fill="none" stroke="var(--_l)"/><path class="pele-marker" d="M146,244L142.64,236L149.36,236Z" fill="var(--_l)" stroke="none"/><g class="pele-node pele-period" data-id="2019"><rect x="8" y="8" width="118" height="39" fill="var(--pele-series-1,#4c78a8)" style="rx:var(--_r)"/><text fill="var(--_bg)" x="67" y="32.75" text-anchor="middle">2019</text><path class="pele-edge" d="M126,27.5H146M160,27.5H174M146,27.5H160V27.5" fill="none" stroke="var(--_b)"/><circle class="pele-dot" cx="146" cy="27.5" r="4" fill="var(--pele-series-1,#4c78a8)" stroke="var(--_bg)" stroke-width="2"/><g class="pele-node pele-event"><rect x="174" y="9.5" width="178" height="36" fill="var(--pele-series-1,#4c78a8)" fill-opacity="0.16" style="rx:var(--_r)"/><text font-size="13" x="263" y="32.05" text-anchor="middle">上线单体版本</text></g></g><g class="pele-node pele-period" data-id="2021"><rect x="8" y="67" width="118" height="39" fill="var(--pele-series-2,#f58518)" style="rx:var(--_r)"/><text fill="var(--_bg)" x="67" y="91.75" text-anchor="middle">2021</text><path class="pele-edge" d="M126,86.5H146M160,86.5H174M146,86.5H160V86.5" fill="none" stroke="var(--_b)"/><circle class="pele-dot" cx="146" cy="86.5" r="4" fill="var(--pele-series-2,#f58518)" stroke="var(--_bg)" stroke-width="2"/><g class="pele-node pele-event"><rect x="174" y="68.5" width="178" height="36" fill="var(--pele-series-2,#f58518)" fill-opacity="0.16" style="rx:var(--_r)"/><text font-size="13" x="263" y="91.05" text-anchor="middle">拆分成微服务</text></g></g><g class="pele-node pele-period" data-id="2023"><rect x="8" y="126" width="118" height="39" fill="var(--pele-series-3,#54a24b)" style="rx:var(--_r)"/><text fill="var(--_bg)" x="67" y="150.75" text-anchor="middle">2023</text><path class="pele-edge" d="M126,145.5H146M160,145.5H174M146,145.5H160V145.5" fill="none" stroke="var(--_b)"/><circle class="pele-dot" cx="146" cy="145.5" r="4" fill="var(--pele-series-3,#54a24b)" stroke="var(--_bg)" stroke-width="2"/><g class="pele-node pele-event"><rect x="174" y="127.5" width="178" height="36" fill="var(--pele-series-3,#54a24b)" fill-opacity="0.16" style="rx:var(--_r)"/><text font-size="13" x="263" y="150.05" text-anchor="middle">接入海外支付</text></g></g><g class="pele-node pele-period" data-id="2025"><rect x="8" y="185" width="118" height="39" fill="var(--pele-series-4,#e45756)" style="rx:var(--_r)"/><text fill="var(--_bg)" x="67" y="209.75" text-anchor="middle">2025</text><path class="pele-edge" d="M126,204.5H146M160,204.5H174M146,204.5H160V204.5" fill="none" stroke="var(--_b)"/><circle class="pele-dot" cx="146" cy="204.5" r="4" fill="var(--pele-series-4,#e45756)" stroke="var(--_bg)" stroke-width="2"/><g class="pele-node pele-event"><rect x="174" y="186.5" width="178" height="36" fill="var(--pele-series-4,#e45756)" fill-opacity="0.16" style="rx:var(--_r)"/><text font-size="13" x="263" y="209.05" text-anchor="middle">订单量突破千万</text></g></g></svg></div></figure></div><div class="pe-view" role="tabpanel" hidden><div class="pe-table"><table><thead><tr><th>年份</th><th>事件</th></tr></thead><tbody><tr><td>2019</td><td>上线单体版本</td></tr><tr><td>2021</td><td>拆分成微服务</td></tr><tr><td>2023</td><td>接入海外支付</td></tr><tr><td>2025</td><td>订单量突破千万</td></tr></tbody></table></div></div><div class="pe-view" role="tabpanel" hidden><p>2019 年上线单体版本，2021 年拆分成微服务，2023 年接入海外支付，2025 年订单量突破千万。</p></div></div></section>
+<section class="pe-panel" id="s5"><h2><span class="pe-n">05</span>订单来源</h2><div class="pe-views"><div class="pe-seg" role="tablist" aria-label="换一种看法"><button type="button" role="tab" aria-selected="true">饼图</button><button type="button" role="tab" aria-selected="false">表格</button><button type="button" role="tab" aria-selected="false">原文</button></div><div class="pe-view" role="tabpanel"><figure class="pe-fig" data-type="pie"><div class="pe-svg pe-wide"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-pie" viewBox="0 0 403 351" width="403" height="351" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_tw:var(--pele-title-weight,bold);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="pie"><text class="pele-title" font-weight="var(--_tw)" text-anchor="middle" xml:space="preserve"><tspan x="201.5" y="24.75">占比（来源：待补）</tspan></text><g class="pele-slices" transform="translate(156,195)" stroke="var(--_bg)" stroke-width="1" stroke-linejoin="round"><path class="pele-slice" data-id="App" d="M0,0L0,-120A120,120 0 1 1 -82.15,87.48Z" fill="var(--pele-series-1,#4c78a8)"/><path class="pele-slice" data-id="小程序" d="M0,0L-82.15,87.48A120,120 0 0 1 -87.48,-82.15Z" fill="var(--pele-series-2,#f58518)"/><path class="pele-slice" data-id="网页" d="M0,0L-87.48,-82.15A120,120 0 0 1 -29.84,-116.23Z" fill="var(--pele-series-3,#54a24b)"/><path class="pele-slice" data-id="其他" d="M0,0L-29.84,-116.23A120,120 0 0 1 0,-120Z" fill="var(--pele-series-4,#e45756)"/></g><g class="pele-slice-labels" transform="translate(156,195)" font-size="13" text-anchor="middle" fill="var(--_bg)"><text x="83.68" y="37.68">62%</text><text x="-89.96" y="7.38">25%</text><text x="-45.81" y="-72.92">9%</text></g><g class="pele-slice-labels" transform="translate(156,195)" font-size="13" text-anchor="middle"><text x="-16.79" y="-128.39">4%</text></g><g class="pele-legend" font-size="13"><g class="pele-legend-item" data-id="App"><rect x="336" y="150" width="12" height="12" rx="2" fill="var(--pele-series-1,#4c78a8)"/><text x="367.56" y="160.55" text-anchor="middle">App</text></g><g class="pele-legend-item" data-id="小程序"><rect x="336" y="176" width="12" height="12" rx="2" fill="var(--pele-series-2,#f58518)"/><text x="375.5" y="186.55" text-anchor="middle">小程序</text></g><g class="pele-legend-item" data-id="网页"><rect x="336" y="202" width="12" height="12" rx="2" fill="var(--pele-series-3,#54a24b)"/><text x="369" y="212.55" text-anchor="middle">网页</text></g><g class="pele-legend-item" data-id="其他"><rect x="336" y="228" width="12" height="12" rx="2" fill="var(--pele-series-4,#e45756)"/><text x="369" y="238.55" text-anchor="middle">其他</text></g></g></svg></div><div class="pe-svg pe-narrow"><svg xmlns="http://www.w3.org/2000/svg" class="pele pele-pie" viewBox="0 0 312 475" width="312" height="475" style="max-width:100%;height:auto;--_bg:var(--pele-bg,#fff);--_fg:var(--pele-fg,#1f1f1f);--_m:var(--pele-muted,#6e6e6e);--_l:var(--pele-line,#1f1f1f);--_s:var(--pele-surface,#f3f3f3);--_a:var(--pele-surface-alt,#e6e6e6);--_b:var(--pele-border,#8a8a8a);--_c:var(--pele-accent,#5b7bd5);color:var(--_fg);--_tw:var(--pele-title-weight,bold);--_fm:var(--pele-font-mono,ui-monospace, &quot;SF Mono&quot;, Menlo, Consolas, monospace);font:15px sans-serif;letter-spacing:normal;word-spacing:normal;text-transform:none;direction:ltr;font-family:var(--pele-font,-apple-system, BlinkMacSystemFont, &quot;Inter&quot;, &quot;PingFang SC&quot;, &quot;Hiragino Sans GB&quot;, &quot;Microsoft YaHei&quot;, &quot;Noto Sans CJK SC&quot;, sans-serif)" fill="var(--_fg)" role="graphics-document document" aria-roledescription="pie"><text class="pele-title" font-weight="var(--_tw)" text-anchor="middle" xml:space="preserve"><tspan x="156" y="24.75">占比（来源：待补）</tspan></text><g class="pele-slices" transform="translate(156,195)" stroke="var(--_bg)" stroke-width="1" stroke-linejoin="round"><path class="pele-slice" data-id="App" d="M0,0L0,-120A120,120 0 1 1 -82.15,87.48Z" fill="var(--pele-series-1,#4c78a8)"/><path class="pele-slice" data-id="小程序" d="M0,0L-82.15,87.48A120,120 0 0 1 -87.48,-82.15Z" fill="var(--pele-series-2,#f58518)"/><path class="pele-slice" data-id="网页" d="M0,0L-87.48,-82.15A120,120 0 0 1 -29.84,-116.23Z" fill="var(--pele-series-3,#54a24b)"/><path class="pele-slice" data-id="其他" d="M0,0L-29.84,-116.23A120,120 0 0 1 0,-120Z" fill="var(--pele-series-4,#e45756)"/></g><g class="pele-slice-labels" transform="translate(156,195)" font-size="13" text-anchor="middle" fill="var(--_bg)"><text x="83.68" y="37.68">62%</text><text x="-89.96" y="7.38">25%</text><text x="-45.81" y="-72.92">9%</text></g><g class="pele-slice-labels" transform="translate(156,195)" font-size="13" text-anchor="middle"><text x="-16.79" y="-128.39">4%</text></g><g class="pele-legend" font-size="13"><g class="pele-legend-item" data-id="App"><rect x="126.5" y="370" width="12" height="12" rx="2" fill="var(--pele-series-1,#4c78a8)"/><text x="158.06" y="380.55" text-anchor="middle">App</text></g><g class="pele-legend-item" data-id="小程序"><rect x="126.5" y="396" width="12" height="12" rx="2" fill="var(--pele-series-2,#f58518)"/><text x="166" y="406.55" text-anchor="middle">小程序</text></g><g class="pele-legend-item" data-id="网页"><rect x="126.5" y="422" width="12" height="12" rx="2" fill="var(--pele-series-3,#54a24b)"/><text x="159.5" y="432.55" text-anchor="middle">网页</text></g><g class="pele-legend-item" data-id="其他"><rect x="126.5" y="448" width="12" height="12" rx="2" fill="var(--pele-series-4,#e45756)"/><text x="159.5" y="458.55" text-anchor="middle">其他</text></g></g></svg></div></figure></div><div class="pe-view" role="tabpanel" hidden><div class="pe-table"><table><thead><tr><th>项</th><th>数值</th></tr></thead><tbody><tr><td>App</td><td>62%</td></tr><tr><td>小程序</td><td>25%</td></tr><tr><td>网页</td><td>9%</td></tr><tr><td>其他</td><td>4%</td></tr></tbody></table></div></div><div class="pe-view" role="tabpanel" hidden><p>去年订单来源：App 62%，小程序 25%，网页 9%，其他 4%。</p></div></div></section>
+<section class="pe-panel" id="s6"><h2><span class="pe-n">06</span>发布新版本的步骤</h2><p>先在预发环境跑完回归测试，再灰度 5% 流量，观察半小时，没有报错就全量，最后关闭旧版本。</p></section>
+<section class="pe-panel" id="s7"><h2><span class="pe-n">07</span>两种库存扣减方案</h2><p>下单扣库存和支付扣库存相比：前者防超卖但容易被恶意占库存，后者体验好但高并发时可能超卖，在一致性、实现难度、用户体验三个方面各有取舍。</p></section>
+<footer class="pe-foot"><details><summary>原稿（Markdown，可复制给 Agent 修改）</summary><button type="button" data-copy style="margin-top:.5rem;padding:0 .6rem">复制原稿</button><pre>---
+title: 一个电商订单系统怎么运转
+---
+订单系统的核心是一条状态链：每次支付、发货、退款都只是让订单换一个状态。
+
+## 下单时发生了什么
+&lt;!-- route: sequence/sequenceDiagram 0.99 --&gt;
+用户点击下单后，前端发请求给订单服务，订单服务调用库存服务锁定库存，库存服务返回成功，订单服务再请求支付网关创建支付单，支付网关返回支付链接给前端。
+
+&lt;!-- TODO 按下面的 Pele 骨架改写这块，删掉正文里重复的描述
+```mermaid
+sequenceDiagram
+  autonumber
+  participant A as 甲
+  participant B as 乙
+  A-&gt;&gt;B: 请求
+  B--&gt;&gt;A: 响应
+```
+--&gt;
+
+## 订单状态
+&lt;!-- route: state/stateDiagram 1.00 --&gt;
+```views
+=== 状态图
+~~~mermaid
+stateDiagram-v2
+  [*] --&gt; 待支付
+  待支付 --&gt; 已支付
+  已支付 --&gt; 已发货
+  已发货 --&gt; 已完成
+  待支付 --&gt; 取消 : 超时
+~~~
+=== 转移表
+| 从 | 到 | 触发 |
+|---|---|---|
+| 待支付 | 已支付 | — |
+| 已支付 | 已发货 | — |
+| 已发货 | 已完成 | — |
+| 待支付 | 取消 | 超时 |
+=== 原文
+订单从待支付变成已支付，从已支付变成已发货，从已发货变成已完成；待支付超时则取消，已完成后可以申请退款。
+```
+
+## 系统由哪些部分组成
+&lt;!-- route: structure/architecture 1.00 --&gt;
+系统包括网关、订单服务、库存服务、支付服务和一个 MySQL 数据库，订单服务依赖库存服务和支付服务，所有服务都通过网关对外。
+
+&lt;!-- TODO 按下面的 Pele 骨架改写这块，删掉正文里重复的描述
+```mermaid
+architecture-beta
+  group app(cloud)[应用]
+  service api(server)[接口] in app
+  service db(database)[数据库] in app
+  api:R --&gt; L:db
+```
+--&gt;
+
+## 发展历程
+&lt;!-- route: timeline/timeline 1.00 --&gt;
+```views
+=== 时间线
+~~~mermaid
+timeline
+  2019 : 上线单体版本
+  2021 : 拆分成微服务
+  2023 : 接入海外支付
+  2025 : 订单量突破千万
+~~~
+=== 表格
+| 年份 | 事件 |
+|---|---|
+| 2019 | 上线单体版本 |
+| 2021 | 拆分成微服务 |
+| 2023 | 接入海外支付 |
+| 2025 | 订单量突破千万 |
+=== 原文
+2019 年上线单体版本，2021 年拆分成微服务，2023 年接入海外支付，2025 年订单量突破千万。
+```
+
+## 订单来源
+&lt;!-- route: chart/pie 1.00 --&gt;
+```views
+=== 饼图
+~~~mermaid
+pie title 占比（来源：待补）
+  &quot;App&quot; : 62
+  &quot;小程序&quot; : 25
+  &quot;网页&quot; : 9
+  &quot;其他&quot; : 4
+~~~
+=== 表格
+| 项 | 数值 |
+|---|---|
+| App | 62% |
+| 小程序 | 25% |
+| 网页 | 9% |
+| 其他 | 4% |
+=== 原文
+去年订单来源：App 62%，小程序 25%，网页 9%，其他 4%。
+```
+
+## 发布新版本的步骤
+&lt;!-- route: steps/flowchart 0.99 --&gt;
+先在预发环境跑完回归测试，再灰度 5% 流量，观察半小时，没有报错就全量，最后关闭旧版本。
+
+&lt;!-- TODO 按下面的 Pele 骨架改写这块，删掉正文里重复的描述
+```mermaid
+flowchart LR
+  A[第一步] --&gt; B{判断?}
+  B -- 是 --&gt; C[结果一]
+  B -- 否 --&gt; D[结果二]
+```
+--&gt;
+
+## 两种库存扣减方案
+&lt;!-- route: table 0.99 --&gt;
+下单扣库存和支付扣库存相比：前者防超卖但容易被恶意占库存，后者体验好但高并发时可能超卖，在一致性、实现难度、用户体验三个方面各有取舍。
+
+&lt;!-- TODO 改成表格：行 = 选项，列 = 维度，状态列写 ok/no/warn --&gt;
+</pre></details>
+<p>图表由 Pele 渲染 · 离线单文件</p></footer>
+</main>
+<script type="text/markdown" id="pe-source">---
+title: 一个电商订单系统怎么运转
+---
+订单系统的核心是一条状态链：每次支付、发货、退款都只是让订单换一个状态。
+
+## 下单时发生了什么
+<!-- route: sequence/sequenceDiagram 0.99 -->
+用户点击下单后，前端发请求给订单服务，订单服务调用库存服务锁定库存，库存服务返回成功，订单服务再请求支付网关创建支付单，支付网关返回支付链接给前端。
+
+<!-- TODO 按下面的 Pele 骨架改写这块，删掉正文里重复的描述
+```mermaid
+sequenceDiagram
+  autonumber
+  participant A as 甲
+  participant B as 乙
+  A->>B: 请求
+  B-->>A: 响应
+```
+-->
+
+## 订单状态
+<!-- route: state/stateDiagram 1.00 -->
+```views
+=== 状态图
+~~~mermaid
+stateDiagram-v2
+  [*] --> 待支付
+  待支付 --> 已支付
+  已支付 --> 已发货
+  已发货 --> 已完成
+  待支付 --> 取消 : 超时
+~~~
+=== 转移表
+| 从 | 到 | 触发 |
+|---|---|---|
+| 待支付 | 已支付 | — |
+| 已支付 | 已发货 | — |
+| 已发货 | 已完成 | — |
+| 待支付 | 取消 | 超时 |
+=== 原文
+订单从待支付变成已支付，从已支付变成已发货，从已发货变成已完成；待支付超时则取消，已完成后可以申请退款。
+```
+
+## 系统由哪些部分组成
+<!-- route: structure/architecture 1.00 -->
+系统包括网关、订单服务、库存服务、支付服务和一个 MySQL 数据库，订单服务依赖库存服务和支付服务，所有服务都通过网关对外。
+
+<!-- TODO 按下面的 Pele 骨架改写这块，删掉正文里重复的描述
+```mermaid
+architecture-beta
+  group app(cloud)[应用]
+  service api(server)[接口] in app
+  service db(database)[数据库] in app
+  api:R --> L:db
+```
+-->
+
+## 发展历程
+<!-- route: timeline/timeline 1.00 -->
+```views
+=== 时间线
+~~~mermaid
+timeline
+  2019 : 上线单体版本
+  2021 : 拆分成微服务
+  2023 : 接入海外支付
+  2025 : 订单量突破千万
+~~~
+=== 表格
+| 年份 | 事件 |
+|---|---|
+| 2019 | 上线单体版本 |
+| 2021 | 拆分成微服务 |
+| 2023 | 接入海外支付 |
+| 2025 | 订单量突破千万 |
+=== 原文
+2019 年上线单体版本，2021 年拆分成微服务，2023 年接入海外支付，2025 年订单量突破千万。
+```
+
+## 订单来源
+<!-- route: chart/pie 1.00 -->
+```views
+=== 饼图
+~~~mermaid
+pie title 占比（来源：待补）
+  "App" : 62
+  "小程序" : 25
+  "网页" : 9
+  "其他" : 4
+~~~
+=== 表格
+| 项 | 数值 |
+|---|---|
+| App | 62% |
+| 小程序 | 25% |
+| 网页 | 9% |
+| 其他 | 4% |
+=== 原文
+去年订单来源：App 62%，小程序 25%，网页 9%，其他 4%。
+```
+
+## 发布新版本的步骤
+<!-- route: steps/flowchart 0.99 -->
+先在预发环境跑完回归测试，再灰度 5% 流量，观察半小时，没有报错就全量，最后关闭旧版本。
+
+<!-- TODO 按下面的 Pele 骨架改写这块，删掉正文里重复的描述
+```mermaid
+flowchart LR
+  A[第一步] --> B{判断?}
+  B -- 是 --> C[结果一]
+  B -- 否 --> D[结果二]
+```
+-->
+
+## 两种库存扣减方案
+<!-- route: table 0.99 -->
+下单扣库存和支付扣库存相比：前者防超卖但容易被恶意占库存，后者体验好但高并发时可能超卖，在一致性、实现难度、用户体验三个方面各有取舍。
+
+<!-- TODO 改成表格：行 = 选项，列 = 维度，状态列写 ok/no/warn -->
+</script>
+<script>(()=>{const d=document.documentElement;d.classList.replace('nojs','js');window.PE={reduce:matchMedia('(prefers-reduced-motion: reduce)').matches};
+const tb=document.querySelector('.pe-theme'),order=['auto','light','dark'],lab={auto:'自动',light:'浅色',dark:'深色'};
+const setT=t=>{if(t==='auto')d.removeAttribute('data-theme');else d.dataset.theme=t;if(tb)tb.textContent='主题：'+lab[t];try{localStorage.setItem('pe-theme',t)}catch(e){}};
+let cur=(()=>{try{return localStorage.getItem('pe-theme')}catch(e){}})()||d.dataset.default||'auto';setT(cur);
+tb&&tb.addEventListener('click',()=>{cur=order[(order.indexOf(cur)+1)%3];setT(cur)});
+const cp=document.querySelector('[data-copy]');cp&&cp.addEventListener('click',()=>{navigator.clipboard?.writeText(document.getElementById('pe-source').textContent);cp.textContent='已复制'});
+document.querySelectorAll('.pe-views').forEach(w=>{const bs=[...w.querySelectorAll('.pe-seg button')],ps=[...w.querySelectorAll(':scope>.pe-view')];bs.forEach((b,k)=>b.addEventListener('click',()=>{bs.forEach((x,j)=>x.setAttribute('aria-selected',j===k));ps.forEach((p,j)=>p.hidden=j!==k)}))});
+
+})();</script>
+</body></html>
