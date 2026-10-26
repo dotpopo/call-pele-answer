@@ -124,7 +124,7 @@ export function scaffold({ title, lead, blocks, derivers = DERIVERS, policy = {}
       out.push(views[0].md, '', ['timeline', 'chart'].includes(b.family) ? `<!-- 原文：${safeText} -->` : b.text, '');
     } else {
       out.push(b.text, '');
-      if (auto) return;
+      if (auto) { if (!authored && b.family !== 'prose' && b.family !== 'table') b.underived = true; return; }
       const skel = b.type && TYPES[b.family]?.[b.type]?.skel;
       if (b.family === 'table') out.push('<!-- TODO 改成表格：行 = 选项，列 = 维度，状态列写 ok/no/warn -->', '');
       else if (b.family === 'slider') out.push('<!-- TODO 改成 ```slider label="参数"，每个 @ 取值写结果 -->', '');

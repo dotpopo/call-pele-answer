@@ -83,6 +83,7 @@ async function answer(engine, file, opts) {
   const res = await engine.route(readInput(file), { router: opts.router || undefined, policy: opts.device ? { device: opts.device } : {}, auto: true });
   res.notes.forEach(n => console.error('! ' + n));
   console.log(`route ${res.blocks.length} 块 · ${res.by} · ${res.ms} ms`);
+  res.blocks.filter(b => b.underived).forEach(b => console.log(`  ! 「${b.title || b.text.slice(0, 18)}」路由为 ${b.family}${b.type ? '/' + b.type : ''}，一遍模式没法自动生成，仍是文字；要图就在这块手写对应围栏`));
   const tmp = join(tmpdir(), `call-pele-answer-answer-${Date.now()}.md`);
   writeFileSync(tmp, res.draft);
   return build(engine, tmp, { ...opts, quiet: true });
