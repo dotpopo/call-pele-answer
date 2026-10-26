@@ -112,7 +112,7 @@ class Engine {
     if (!process.env.PE_NO_LOG && !errors.length) logUsage(draft, this.registry.components());
     const found = [...warns];
     const report = (l, r, m, f) => found.push([l, r, m, f]);
-    const ctx = { registry: this.registry, ste };
+    const ctx = { registry: this.registry, ste, draft, error: (l, r, m, f) => errors.push([l, r, m, f]) };
     for (const rule of this.registry.rules()) T.span(`lint:${rule.id}`, () => rule.check(doc, report, ctx));
     T.count('warnings', found.length); T.count('errors', errors.length);
     found.sort((a, b) => a[0] - b[0]);

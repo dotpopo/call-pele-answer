@@ -50,3 +50,44 @@
 - 每次运行把分阶段耗时追加到 `~/.call-pele-answer/logs/runs.jsonl`（`PE_TRACE=0` 关闭；`--trace` 打印；`PE_LOG_DIR` 指到持久位置）。
 - Agent 回合计时：Claude Code 装插件后自动记录（`hooks/hooks.json`）。其他 Agent 每步开始运行 `node ${SKILL_DIR}/scripts/hooks/agent-hook.mjs mark <步骤>`（如 research、write、pe-answer、verify），交付后 `mark end`。
 - `pe stats`：各阶段 p50/p95、每回合模型/工具/pe 占比、最慢调用和改法。每约 20 次运行看一次：路由慢 → 换路由器；TODO 多 → 加派生器或直接写表格；模型占比高 → 少写一遍；非 pe 命令多 → 交付前只跑 `pe check`。
+
+## 稿件与围栏写法（从 SKILL.md 移来）
+
+````markdown
+---
+title: 标题
+subtitle: 一句话摘要（可选）
+ste: flavored   # 默认；strict 用于步骤、工具描述、Agent 指令；off 关闭
+---
+核心结论（第一个 ## 之前的文字）。
+
+## 块标题写“读者会明白什么”
+正文、列表、表格、```mermaid 图……
+
+```slider label="学习率" default=0.01
+@ 0.001
+这个取值下的结果（可嵌 ~~~mermaid）
+@ 0.01
+…
+```
+
+```tabs
+=== 方案 A
+…
+=== 方案 B
+…
+```
+
+```steps title="三次握手" ms=3000
+第一拍：一两句旁白 + 图的第一阶段
+---
+第二拍：只变一样东西
+```
+````
+
+`tabs` 放不同的答案；`views`（同样写法）放同一内容的不同看法，第一个是首选。其他 front matter 键会显示在页眉。
+
+主图块（≥6 个节点或有分支）可写成 `views`：`=== 图`、`=== 原文`；只有同一批元素有 ≥2 个可比属性时才加 `=== 表格` 视图。
+
+
+`pe options` 先把块里已有的表格还原成句子再判断，表格本身不算“该用表格”的证据。`table` 组件只在 ≥2 项 × ≥2 个可比属性（≥6 格）时提供；已写表格的形状（步骤、位置、状态、数字、长选项）会在 lint 里给出改用的组件。lint `route/table-heavy`（多于一块只有表格且无 `<!-- pe:use table -->`）是错误，`route/table-shape`、`route/number-table`、`route/dup-fact` 是警告。

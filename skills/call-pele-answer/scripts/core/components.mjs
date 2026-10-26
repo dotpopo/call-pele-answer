@@ -15,6 +15,7 @@
 //   min       JEV probability needed (generic shapes like mindmap need more)
 //   requires  hard conditions the script checks first; all must pass, each returns evidence or null
 import { TYPES } from '../routers/catalog.mjs';
+import { tablesIn, tableShape } from './tableshape.mjs';
 
 const count = (t, rx) => (t.match(rx) || []).length;
 const num = t => count(t, /(?<![\w.])\d+(\.\d+)?\s*(%|ms|秒|分钟|小时|天|个|次|条|元|美元|万|亿|KB|MB|GB|k|K)?(?![\w.])/g);
@@ -31,6 +32,14 @@ export const CHECKS = {
   code: t => (/`[^`]+`|^\s*\$\s|\b(npm|node|git|pip|curl|npx|bash)\s/m.test(t) ? '有代码或命令' : null),
   branching: t => (/(如果|否则|失败|成功|是否|若|则|if|else|otherwise|unless|fail)/i.test(t) ? '有条件分支' : null),
   param: t => (/(越大|越小|调大|调小|增大|减小|取值|参数|阈值|larger|smaller|threshold|parameter)/i.test(t) && num(t) >= 2 ? '有可调参数和取值' : null),
+  // several items along the same comparable attributes. An authored table counts only when its shape is a
+  // real comparison (tableshape.mjs); otherwise ≥3 list items each carrying ≥2 attribute values.
+  grid: (t, raw = t) => {
+    const ts = tablesIn(raw);
+    if (ts.length) { const sh = ts.map(tableShape); const ok = sh.find(x => x.kind === 'comparison'); return ok ? ok.why : null; }
+    const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || []).filter(l => (l.match(/[，,；;：:]/g) || []).length >= 2);
+    return items.length >= 3 ? `${items.length} 项各带 ≥2 个属性` : null;
+  },
   kw: rx => t => (rx.test(t) ? `提到「${(t.match(rx) || [''])[0]}」` : null),
 };
 const kw = CHECKS.kw;
@@ -72,7 +81,7 @@ export const BUILTIN_COMPONENTS = [
   m('wardley', 'landscape', 'wardley', '', 0.85, [kw(/(演进|成熟度|商品化|定制|evolution|commodity|genesis|Wardley)/i)]),
   m('cynefin', 'landscape', 'cynefin', '', 0.85, [kw(/(Cynefin|混沌|繁杂|复杂域|清晰域|chaotic|complicated|complex domain)/i)]),
   m('railroad', 'grammar', 'railroad', '', 0.85, [kw(/(语法|文法|BNF|产生式|格式为|syntax|grammar|token)/i)]),
-  { name: 'table', fence: 'table', desc: 'several items compared along the same attributes', skeleton: '| 项 | 属性一 | 属性二 |\n|---|---|---|\n| 甲 | … | … |\n| 乙 | … | … |\n| 丙 | … | … |', ask: 'The text itself describes several items along the same attributes, so they could be compared side by side', min: 0.8, requires: ['items3'] },
+  { name: 'table', fence: 'table', desc: 'several items compared along the same attributes', skeleton: '| 项 | 属性一 | 属性二 |\n|---|---|---|\n| 甲 | … | … |\n| 乙 | … | … |\n| 丙 | … | … |', ask: 'The text itself compares two or more items along the same attributes, with at least two attributes and six or more cells of facts (not steps in order, not rules placed along a process, not unrelated numbers)', min: 0.8, requires: ['grid'] },
   { name: 'callout', fence: 'callout', desc: 'one warning, hard limit or key takeaway the reader must not miss', skeleton: '一句必须记住的限制或结论。', ask: 'The text itself contains one warning, hard limit or key takeaway the reader must not miss', min: 0.7, requires: ['warning'] },
   { name: 'steps', fence: 'steps', desc: 'a click-through walkthrough, one beat at a time', skeleton: '第一拍：一两句旁白\n---\n第二拍：只变一样东西\n---\n第三拍：…', ask: 'The text itself describes a process that is easier to follow one step at a time', min: 0.85, requires: ['items3'] },
   { name: 'tabs', fence: 'tabs', desc: 'two to five alternative approaches, one per tab', skeleton: '=== 方案 A\n…\n=== 方案 B\n…', ask: 'The text itself lays out two or more named alternative approaches, each with its own details', min: 0.85, requires: [] },

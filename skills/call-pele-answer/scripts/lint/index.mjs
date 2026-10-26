@@ -2,6 +2,7 @@
 // (e.g. "every number in a finance page cites a source") the same way.
 import { walk } from '../core/markdown.mjs';
 import { lintProse, lintRouting, normLang, detectLang } from './rules.mjs';
+import { tableShape } from '../core/tableshape.mjs';
 
 export function proseUnits(nodes) {
   const units = [];
@@ -34,10 +35,37 @@ export default {
           lead: doc.lead.map(n => n.text || '').join('\n'),
           panels: doc.panels.map(p => {
             const fences = []; walk(p.nodes, n => { if (n.kind === 'fence') fences.push({ type: n.form || 'code', line: n.line, edges: n.data?.edges || 0, kind: n.data?.kind, src: n.data?.src || '' }); });
-            return { title: p.title, line: p.line, prose: proseUnits(p.nodes), tables: p.nodes.filter(n => n.kind === 'table').map(t => ({ line: t.line, cols: t.head.length, rows: t.rows.length })), blocks: fences };
+            return { title: p.title, line: p.line, prose: proseUnits(p.nodes), tables: p.nodes.filter(n => n.kind === 'table').map(t => ({ line: t.line, cols: t.head.length, rows: t.rows.length, shape: tableShape(t) })), blocks: fences };
           }),
         };
         for (const f of lintRouting(legacy)) report(...f);
+      },
+    });
+    api.rule({
+      id: 'tables', describe: '整页以表格为主（只有表格的块 >1 且没有 pe:use 标记就不出页）、表格形状不是横向对照、同一数字在多块重复',
+      check(doc, report, ctx) {
+        const marked = new Set();
+        for (const part of (ctx.draft || '').split(/^(?=##\s)/m)) { const t = part.match(/^##\s+(.*)$/m)?.[1].trim(); if (t && /<!--\s*pe:use\s+[^>]*\btable\b/.test(part)) marked.add(t); }
+        const visualOf = nodes => { let v = false; walk(nodes, n => { if (n.kind === 'fence' && n.form && !['callout', 'code', 'views', 'tabs'].includes(n.form)) v = true; }); return v; };
+        const tablesOf = nodes => { const ts = []; walk(nodes, n => { if (n.kind === 'table') ts.push(n); }); return ts; };
+        const only = doc.panels.filter(p => tablesOf(p.nodes).length && !visualOf(p.nodes));
+        const unmarked = only.filter(p => !marked.has(p.title));
+        if (only.length > 1 && unmarked.length) {
+          const hint = unmarked.map(p => { const sh = tablesOf(p.nodes).map(tableShape); const s = sh.find(x => x.kind !== 'comparison' && x.use.length) || sh.find(x => x.kind !== 'comparison') || sh[0]; return s.kind === 'comparison' ? `「${p.title}」是真对照（${s.why}），保留就加标记` : `「${p.title}」${s.why}${s.use.length ? '，可改 ' + s.use.join('/') : ''}`; }).join('；');
+          ctx.error(unmarked[0].line, 'route/table-heavy', `${only.length} 块只有表格：${hint}`, '先跑 pe options 看每块的候选和“接近门槛”，用 pe assemble 换成别的组件；真要保留表格，就用 pe assemble --use table（会留下 <!-- pe:use table --> 标记）');
+        }
+        for (const p of doc.panels) for (const t of tablesOf(p.nodes)) {
+          const sh = tableShape(t);
+          if (sh.kind === 'numbers') report(t.line, 'route/number-table', `「${p.title}」把互不相干的数字拼成一张表`, '每个数字放回讲它的那块，一个事实只写一次');
+          else if (['sequence', 'placed', 'states', 'options'].includes(sh.kind) && t.head.length >= 3) report(t.line, 'route/table-shape', `「${p.title}」的表格${sh.why}，不是横向对照`, `改用 ${sh.use.join(' / ')}（pe assemble --use ${sh.use[0]}）`);
+        }
+        // the same number with a unit in two blocks: a fact written twice
+        const NUM = /(?<![\w.])\d+(?:\.\d+)?\s*(?:%|ms|秒|分钟|小时|天|次|条|元|美元|万|亿|KB|MB|GB|倍)(?![\w])/g;
+        const textOf = nodes => { let t = ''; walk(nodes, n => { if (n.kind === 'fence' && n.form === 'code') return; if (n.text) t += n.text + '\n'; if (n.kind === 'table') t += [n.head, ...n.rows].flat().join(' ') + '\n'; }); return t; };
+        const where = new Map();
+        doc.panels.forEach(p => { for (const m of new Set((textOf(p.nodes).match(NUM) || []).map(x => x.replace(/\s/g, '')))) where.set(m, [...(where.get(m) || []), p]); });
+        const dup = [...where].filter(([, ps]) => ps.length >= 2);
+        if (dup.length) report(dup[0][1][1].line, 'route/dup-fact', `${dup.slice(0, 4).map(([n, ps]) => `${n}（${ps.map(p => '「' + p.title + '」').join('、')}）`).join('，')} 在多块重复`, '只在讲它的那块写一次，其他块引用结论或删掉');
       },
     });
     api.rule({

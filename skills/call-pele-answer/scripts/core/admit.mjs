@@ -9,6 +9,7 @@ import { readFileSync, appendFileSync, mkdirSync, writeFileSync, existsSync } fr
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { CHECKS } from './components.mjs';
+import { deformat, tablesIn, tableShape } from './tableshape.mjs';
 
 export const STATE_DIR = join(homedir(), '.call-pele-answer');
 export const ADMISSION = join(STATE_DIR, 'admission.json');
@@ -18,19 +19,22 @@ const readJson = p => { try { return JSON.parse(readFileSync(p, 'utf8')); } catc
 const readLines = p => { try { return readFileSync(p, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)); } catch { return []; } };
 const append = (p, o) => { try { mkdirSync(dirname(p), { recursive: true }); appendFileSync(p, JSON.stringify(o) + '\n'); } catch {} };
 
-function hard(c, text) {
+function hard(c, text, raw) {
   const ev = [];
-  for (const r of c.requires || []) { const fn = typeof r === 'function' ? r : CHECKS[r]; if (!fn) continue; const e = fn(text); if (!e) return null; ev.push(e); }
+  for (const r of c.requires || []) { const fn = typeof r === 'function' ? r : CHECKS[r]; if (!fn) continue; const e = fn(text, raw); if (!e) return null; ev.push(e); }
   return ev;
 }
 
 export async function admit(blocks, components, adapter, { overrides = readJson(ADMISSION), log = true } = {}) {
-  const pre = blocks.map(b => components.map(c => ({ c, ev: hard(c, b.text) })).filter(x => x.ev));
+  // judge content, not markup: a table already in the draft is turned back into facts first, so it is
+  // never its own evidence for `table`
+  const flat = blocks.map(b => deformat(b.text));
+  const pre = blocks.map((b, i) => components.map(c => ({ c, ev: hard(c, flat[i], b.text) })).filter(x => x.ev));
   let answers = null, note = null;
   if (adapter) {
     const questions = {};
     for (const c of components) if (c.ask) questions[`cmp_${c.name}`] = { type: 'noul', instructions: c.ask };
-    try { answers = await adapter.ask(blocks.map(b => b.text), questions); } catch (e) { note = `组件准入没有 JEV（${e.message}），只用脚本条件`; }
+    try { answers = await adapter.ask(flat, questions); } catch (e) { note = `组件准入没有 JEV（${e.message}），只用脚本条件`; }
   }
   blocks.forEach((b, i) => {
     const opts = [], near = [];
@@ -43,6 +47,7 @@ export async function admit(blocks, components, adapter, { overrides = readJson(
     }
     b.options = opts.sort((x, y) => (y.p ?? 0) - (x.p ?? 0));
     b.near = near.sort((x, y) => y.p - x.p); // conditions met, JEV just under the bar: the agent may still use one
+    b.tables = tablesIn(b.text).map(t => ({ rows: t.rows.length, cols: t.head.length, ...tableShape(t) }));
   });
   if (log) append(OFFERS, { ts: Date.now(), blocks: blocks.map(b => ({ title: b.title || '', options: b.options.map(o => o.name) })) });
   return note;
@@ -115,6 +120,7 @@ export function assemble(draft, { block, use, as = 'views' }, components) {
   let out;
   if (as === 'stack') out = [body, ...use.map(n => fenceOf(byName.get(n), '```'))].filter(Boolean).join('\n\n');
   else out = '```views\n' + [...use.map(n => `=== ${n}\n${fenceOf(byName.get(n), '~~~')}`), `=== 原文\n${body.replace(/```/g, '~~~')}`].join('\n') + '\n```';
-  parts[i] = `${head}\n${out}\n\n`;
+  // the marker records a deliberate choice: lint lets a marked table-only block through table-heavy
+  parts[i] = `${head}\n<!-- pe:use ${use.join(',')} -->\n${out}\n\n`;
   return parts.join('');
 }
