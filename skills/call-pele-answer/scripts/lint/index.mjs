@@ -84,6 +84,10 @@ export default {
           if (stats.length >= 2 && !/(来源|出处|据|引自|示意|估算|估计|约|大约|左右|未核实|报告|论文|官方|文档|source|estimate|approx|~)/i.test(prose))
             report(p.line, 'route/unsourced-number', `「${p.title}」有 ${stats.length} 个具体数字没写来源（如 ${stats.slice(0, 2).join('、')}）`, '同一块里写出来源，或标“示意/估算”；写不出就改成定性说法');
         }
+        // page level: every visual is a flowchart or a table on a page of 4+ blocks: other forms were probably not considered
+        { const kinds = new Set(); let tables = 0;
+          walk(doc.panels.flatMap(p => p.nodes), n => { if (n.kind === 'fence' && n.form === 'mermaid') kinds.add(((n.body || []).join('\n').trim().split(/\s/)[0] || '').toLowerCase().replace(/^graph$/, 'flowchart')); if (n.kind === 'table') tables++; });
+          if (doc.panels.length >= 4 && [...kinds].every(k => k === 'flowchart')) report(doc.panels[0]?.line || 1, 'route/monotone-forms', `${doc.panels.length} 块只用了${kinds.size ? '流程图' : ''}${kinds.size && tables ? '和' : ''}${tables ? '表格' : ''}`, '逐块再问一遍：跨角色先后→sequenceDiagram，状态/生命周期→stateDiagram-v2，目录→treeView-beta，同一内容两种看法→views；真不适用就保留'); }
         // page level: repeated 看哪里 hints, unexplained acronyms (zh pages)
         const all = [textOf(doc.lead), ...doc.panels.map(p => p.title + '\n' + textOf(p.nodes.filter(n => n.kind !== 'fence' || ['tabs', 'steps', 'slider', 'views', 'callout'].includes(n.form))))].join('\n');
         const hints = (all.match(/看哪里/g) || []).length;
