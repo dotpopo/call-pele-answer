@@ -73,16 +73,19 @@ async function route(engine, file, opts) {
   const out = opts.o ? resolve(opts.o) : join(tmpdir(), `call-pele-answer-route-${Date.now()}.md`);
   writeFileSync(out, res.draft);
   console.log(`route ${res.blocks.length} 块 · ${res.by} · ${res.ms} ms`);
-  res.blocks.forEach((b, i) => console.log(`  ${String(i + 1).padStart(2)} ${(b.title || b.text.slice(0, 18)).padEnd(18)} → ${b.family}${b.type && b.family !== 'prose' ? '/' + b.type : ''} (${b.confidence.toFixed(2)})${b.alternatives?.length ? '  alt: ' + b.alternatives.join(',') : ''}${b.gated ? '  · ' + b.gated : ''}${b.recomposed ? '  · ' + b.recomposed : ''}`));
+  res.blocks.forEach((b, i) => console.log(`  ${String(i + 1).padStart(2)} ${(b.title || b.text.slice(0, 18)).padEnd(18)} → ${b.family}${b.type && b.family !== 'prose' ? '/' + b.type : ''} (${b.confidence.toFixed(2)})${b.alternatives?.length ? '  alt: ' + b.alternatives.join(',') : ''}${b.gated ? '  · ' + b.gated : ''}${b.recomposed ? '  · ' + b.recomposed : ''}${(b.combo || []).length >= 2 ? '  组合: ' + b.combo.map(formName).join('+') : ''}`));
   console.log(`  draft: ${out}`);
   if (opts.render) return build(engine, out, { ...opts, o: typeof opts.render === 'string' ? opts.render : undefined });
   return 0;
 }
 
+const FORM_NAME = { sequence: 'sequenceDiagram', state: 'stateDiagram-v2', hierarchy: 'treeView/mindmap', table: '表格', steps: '流程图/编号步骤', structure: '架构图', timeline: 'timeline', chart: '数据图', callout: 'callout', tabs: 'tabs', slider: 'slider', landscape: 'wardley/cynefin', grammar: 'railroad' };
+const formName = f => FORM_NAME[f] || f;
 async function answer(engine, file, opts) {
   const res = await engine.route(readInput(file), { router: opts.router || undefined, policy: opts.device ? { device: opts.device } : {}, auto: true });
   res.notes.forEach(n => console.error('! ' + n));
   console.log(`route ${res.blocks.length} 块 · ${res.by} · ${res.ms} ms`);
+  res.blocks.filter(b => (b.combo || []).length >= 2).forEach(b => console.log(`  + 「${b.title || b.text.slice(0, 18)}」建议组合：${b.combo.map(formName).join(' + ')}  （没用上的写进 views 或同块补一个组件）`));
   res.blocks.filter(b => b.underived).forEach(b => console.log(`  ! 「${b.title || b.text.slice(0, 18)}」路由为 ${b.family}${b.type ? '/' + b.type : ''}，一遍模式没法自动生成，仍是文字；要图就在这块手写对应围栏`));
   const tmp = join(tmpdir(), `call-pele-answer-answer-${Date.now()}.md`);
   writeFileSync(tmp, res.draft);

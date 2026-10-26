@@ -6,6 +6,27 @@
 //   local   keyword rules, offline
 import { FAMILIES, TYPES } from './catalog.mjs';
 export const MIN_CONF = 0.55;
+export const FACET_MIN = 0.8;          // JEV answers yes/no generously; below this a facet is noise
+export const FACET_MIN_CALLOUT = 0.7;
+export const FACETS = {
+  sequence: 'Two or more named actors or components pass requests, messages or results to each other in a time order',
+  state: 'One thing moves through named states or a lifecycle, such as created, running, waiting, done or expired',
+  hierarchy: 'The text lists a directory or folder tree, or a topic broken into nested parts',
+  table: 'Several items are described along the same attributes, so they could be compared side by side in a table',
+  steps: 'The text describes an ordered procedure or a decision path with conditions',
+  structure: 'The text names the parts of a system and how they connect to each other',
+  timeline: 'The text gives dated events, versions or a schedule',
+  chart: 'The text gives three or more concrete numbers that measure the same thing',
+  callout: 'There is one warning, hard limit or key takeaway the reader must not miss',
+};
+// local facet cues: a family counts as a facet when its cues match at least twice
+export function facetsLocal(text) {
+  const out = {};
+  for (const [fam, rxs] of Object.entries(CUES)) { if (!FACETS[fam]) continue; const n = rxs.reduce((k, rx) => k + (text.match(rx) || []).length, 0); if (n >= 2) out[fam] = Math.min(0.9, 0.5 + 0.1 * n); }
+  if (/(不要|务必|注意|必须|最多|至少|不会|从不)/.test(text)) out.callout = 0.65;
+  if (/^\s*\|.*\|\s*$/m.test(text)) out.table = Math.max(out.table || 0, 0.8);
+  return out;
+}
 // Families whose picture carries structure that prose hides (nesting, links, positions). They clear a lower bar.
 export const STRUCTURAL = new Set(['hierarchy', 'structure', 'state', 'sequence', 'landscape', 'grammar']);
 export const MIN_CONF_STRUCT = 0.45;
@@ -56,6 +77,9 @@ export function questions(level = 'full') {
   q.cites_source = { type: 'noul', instructions: 'The text names where its numbers come from' };
   q.has_branches = { type: 'noul', instructions: 'The text describes a condition or branch, such as if/else or success/failure' };
   q.alternatives = { type: 'noul', instructions: 'The text lays out two or more named alternative approaches or options, each with its own details' };
+  // facets: independent yes/no questions, so one block can carry several forms (the family question is a
+  // single choice and can only name one). compose() turns the confident ones into a suggested combination.
+  for (const [fam, ins] of Object.entries(FACETS)) q[`facet_${fam}`] = { type: 'noul', instructions: ins };
   q.complexity = { type: 'score', instructions: 'How hard this block is to follow as plain text', criteria: ['one simple idea', 'a few linked ideas', 'many linked parts'] };
   return q;
 }
@@ -79,11 +103,13 @@ function apply(b, a, { gates = true, refamily = true } = {}) {
   if (refamily) { setFam(b, a.family.choice, a.family.confidence); b.scores = a.family.probabilities || { [a.family.choice]: a.family.confidence }; }
   b.type = typeOf(b, f => a[`${f}_type`]?.choice);
   if (gates) gate(b, a);
+  const f = {}; for (const fam of Object.keys(FACETS)) { const p = a[`facet_${fam}`]?.noul; if (p != null && p >= (fam === 'callout' ? FACET_MIN_CALLOUT : FACET_MIN)) f[fam] = +p.toFixed(2); }
+  if (Object.keys(f).length) b.facets = f;
 }
 
 export async function routeLocal(texts) {
   const blocks = blank(texts);
-  blocks.forEach(b => { const r = classifyLocal(b.text); setFam(b, r.label, r.confidence); b.scores = { [r.label]: r.confidence }; b.type = typeOf(b, () => null); });
+  blocks.forEach(b => { const r = classifyLocal(b.text); setFam(b, r.label, r.confidence); b.scores = { [r.label]: r.confidence }; b.type = typeOf(b, () => null); b.facets = facetsLocal(b.text); });
   return { blocks, by: 'local' };
 }
 

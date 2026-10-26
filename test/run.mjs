@@ -51,6 +51,10 @@ t('备选形式进入 alternatives', c3[0].alternatives.includes('table'));
 
 const c4 = compose([{ ...B(long2, { chart: 0.51 }), family: 'prose' }]);
 t('组合器不把路由器留作文字的块升级（0.51 < 0.55）', c4[0].family === 'prose');
+const c5 = compose([{ ...B(long2, { structure: 0.7, table: 0.2 }), type: 'flowchart', facets: { sequence: 0.96, steps: 0.92, table: 0.88 } }]);
+t('多形式组合：主形式 + 独立 facet，画法相同的只算一次', c5[0].combo.join() === 'structure,sequence,table');
+const c6 = compose([{ ...B(long2, { steps: 0.9 }), facets: { chart: 0.9 }, signals: { numbers: 0.2 } }]);
+t('没有真实数字时数据图不进组合', !c6[0].combo.includes('chart'));
 { const sa = splitAnswer('---\ntitle: T\nsubtitle: S\n---\n结论。\n\n## 运行\n\n```steps\n第一拍，客户端调用。\n---\n第二拍，返回结果。\n```\n');
   const d = scaffold({ title: sa.title, frontMatter: sa.frontMatter, lead: sa.lead, blocks: sa.blocks.map(b => ({ ...b, family: 'steps', confidence: 0.9, alternatives: [] })), auto: true });
   t('pe answer：已写成围栏的块原样保留、不重复', (d.match(/```steps/g) || []).length === 1 && !/^1\. ```/m.test(d));
