@@ -58,6 +58,7 @@ export function compose(blocks, policy = {}) {
 // ---------- derivers ----------
 const q = s => `"${String(s).replace(/"/g, "'").trim()}"`;
 const clean = s => String(s).replace(/^[，,。；;：:\s]+|[，,。；;：:\s]+$/g, '').trim();
+const isList = t => /^\s*(\d+[.)]|[-*+])\s+\S/m.test(t);
 const id = s => s.replace(/[^\w\u4e00-\u9fa5]/g, '');
 
 const extract = {
@@ -70,7 +71,7 @@ const extract = {
     for (const m of t.matchAll(/([\u4e00-\u9fa5]{2,6})(超时|失败|取消后?)则\s*([\u4e00-\u9fa5]{2,6})/g)) out.push([m[1], m[3], m[2]]);
     return out;
   },
-  steps: t => t.split(/(?:首先|先|然后|再|接着|随后|最后|，|,|；|;|。)/).map(clean).filter(s => s.length >= 2),
+  steps: t => /^\s*(\d+[.)]|[-*+])\s+\S/m.test(t) ? t.split('\n').filter(l => /^\s*(\d+[.)]|[-*+])\s+\S/.test(l)).map(l => clean(l.replace(/^\s*(\d+[.)]|[-*+])\s+/, '').replace(/`/g, '').split(/[，,；;：:（(]/)[0])) : t.split(/(?:首先|先|然后|再|接着|随后|最后|，|,|；|;|。)/).map(clean).filter(s => s.length >= 2),
 };
 
 // Each deriver: (block) → { label, md } | null. label names the view in the switcher.
@@ -92,7 +93,7 @@ export const DERIVERS = {
   ],
   steps: [
     // branches need judgment about which step leads where: those stay with the model's skeleton
-    b => { const s = extract.steps(b.text); return s.length >= 3 && !/(失败|否则|如果|成功|没有.{0,4}就)/.test(b.text) ? { label: '步骤', md: s.map((x, k) => `${k + 1}. ${x}`).join('\n') } : null; },
+    b => { const s = extract.steps(b.text); return s.length >= 3 && !isList(b.text) && !/(失败|否则|如果|成功|没有.{0,4}就)/.test(b.text) ? { label: '步骤', md: s.map((x, k) => `${k + 1}. ${x}`).join('\n') } : null; },
     b => { const s = extract.steps(b.text); return s.length >= 3 && s.length <= 8 && !/(失败|否则|如果|成功|没有.{0,4}就)/.test(b.text) ? { label: '流程图', md: ['```mermaid', 'flowchart LR', ...s.map((x, k) => `  S${k}[${q(x)}]`), '  ' + s.map((_, k) => `S${k}`).join(' --> '), '```'].join('\n') } : null; },
   ],
 };
@@ -110,12 +111,14 @@ export function scaffold({ title, lead, blocks, derivers = DERIVERS, policy = {}
   blocks.forEach((b, i) => {
     const tag = [`${b.family}${b.type && b.family !== 'prose' ? '/' + b.type : ''} ${b.confidence.toFixed(2)}`, b.gated, b.recomposed].filter(Boolean).join(' · ');
     out.push(`## ${b.title || `块 ${i + 1}`}`); if (!auto) out.push(`<!-- route: ${tag} -->`);
-    // a block the author already wrote in Pele form (fence, table or list) is kept verbatim: deriving from it
+    // a block the author already wrote in Pele form (fence or table) is kept verbatim: deriving from it
     // would read fence lines as prose and duplicate the content
-    const authored = /^\s*(```|~~~)/m.test(b.text) || /^\s*\|.*\|\s*$/m.test(b.text) || /^\s*(\d+[.)]|[-*+])\s+\S/m.test(b.text);
+    const authored = /^\s*(```|~~~)/m.test(b.text) || /^\s*\|.*\|\s*$/m.test(b.text);
     const views = b.family === 'prose' || authored ? [] : derive(b, derivers).slice(0, maxViews - 1);
     const safeText = b.text.replace(/-->/g, '→');
-    if (views.length >= 2) {
+    // one-pass mode: a single derived view never sits next to the same text (that reads as duplication);
+    // the reader switches between the component and the original instead
+    if (views.length >= 2 || (auto && views.length === 1 && !['timeline', 'chart'].includes(b.family))) {
       out.push('```views', ...views.flatMap(v => [`=== ${v.label}`, v.md.replace(/```/g, '~~~')]), '=== 原文', b.text, '```', '');
     } else if (views.length === 1) {
       out.push(views[0].md, '', ['timeline', 'chart'].includes(b.family) ? `<!-- 原文：${safeText} -->` : b.text, '');
