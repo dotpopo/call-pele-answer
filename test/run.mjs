@@ -3,7 +3,7 @@ import { lintProse, lintRouting, stripSpans } from '../skills/call-pele-answer/s
 import { createEngine } from '../skills/call-pele-answer/scripts/core/engine.mjs';
 import { createRegistry } from '../skills/call-pele-answer/scripts/core/registry.mjs';
 import { nativeAdapter, shimAdapter } from '../skills/call-pele-answer/scripts/routers/systemone.mjs';
-import { compose } from '../skills/call-pele-answer/scripts/core/compose.mjs';
+import { compose, scaffold, splitAnswer } from '../skills/call-pele-answer/scripts/core/compose.mjs';
 import { createServer } from 'node:http';
 import { execFileSync } from 'node:child_process';
 import { writeFileSync, readFileSync, mkdtempSync } from 'node:fs';
@@ -51,6 +51,10 @@ t('备选形式进入 alternatives', c3[0].alternatives.includes('table'));
 
 const c4 = compose([{ ...B(long2, { chart: 0.51 }), family: 'prose' }]);
 t('组合器不把路由器留作文字的块升级（0.51 < 0.55）', c4[0].family === 'prose');
+{ const sa = splitAnswer('---\ntitle: T\nsubtitle: S\n---\n结论。\n\n## 运行\n\n```steps\n第一拍，客户端调用。\n---\n第二拍，返回结果。\n```\n');
+  const d = scaffold({ title: sa.title, frontMatter: sa.frontMatter, lead: sa.lead, blocks: sa.blocks.map(b => ({ ...b, family: 'steps', confidence: 0.9, alternatives: [] })), auto: true });
+  t('pe answer：已写成围栏的块原样保留、不重复', (d.match(/```steps/g) || []).length === 1 && !/^1\. ```/m.test(d));
+  t('pe answer：保留原 front matter（subtitle）', /subtitle: S/.test(d)); }
 console.log('— 注册表与插件');
 const reg = createRegistry();
 let threw = false; try { reg.use({ name: 'x', apiVersion: 99, setup() {} }); } catch { threw = true; }

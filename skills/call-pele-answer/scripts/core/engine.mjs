@@ -92,7 +92,7 @@ class Engine {
     T.span('compose', () => compose(res.blocks, P));
     const derivers = { ...DERIVERS };
     for (const [fam, fns] of Object.entries(this.registry.derivers())) derivers[fam] = [...(derivers[fam] || []), ...fns];
-    const draft = T.span('scaffold', () => scaffold({ title: ans.title, lead: ans.lead, blocks: res.blocks, derivers, policy: P, auto }));
+    const draft = T.span('scaffold', () => scaffold({ title: ans.title, frontMatter: auto ? ans.frontMatter : null, lead: ans.lead, blocks: res.blocks, derivers, policy: P, auto }));
     T.set('by', res.by); T.set('families', res.blocks.map(b => b.family).join(','));
     T.count('todo', (draft.match(/<!-- TODO/g) || []).length);
     return { draft, blocks: res.blocks, by: res.by, ms: Date.now() - t0, notes };

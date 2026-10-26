@@ -104,13 +104,16 @@ export function derive(b, derivers = DERIVERS) {
 }
 
 // auto: the draft is rendered as-is (one-pass mode) — no TODO notes; blocks without a safe derivation stay prose.
-export function scaffold({ title, lead, blocks, derivers = DERIVERS, policy = {}, auto = false }) {
+export function scaffold({ title, lead, blocks, derivers = DERIVERS, policy = {}, auto = false, frontMatter = null }) {
   const maxViews = policy.maxViews ?? DEFAULT_POLICY.maxViews;
-  const out = ['---', `title: ${title || '解释'}`, '---', lead || '（在这里写 1–2 句核心结论）', ''];
+  const out = [...(frontMatter ? ['---', frontMatter, '---'] : ['---', `title: ${title || '解释'}`, '---']), lead || '（在这里写 1–2 句核心结论）', ''];
   blocks.forEach((b, i) => {
     const tag = [`${b.family}${b.type && b.family !== 'prose' ? '/' + b.type : ''} ${b.confidence.toFixed(2)}`, b.gated, b.recomposed].filter(Boolean).join(' · ');
     out.push(`## ${b.title || `块 ${i + 1}`}`); if (!auto) out.push(`<!-- route: ${tag} -->`);
-    const views = b.family === 'prose' ? [] : derive(b, derivers).slice(0, maxViews - 1);
+    // a block the author already wrote in Pele form (fence, table or list) is kept verbatim: deriving from it
+    // would read fence lines as prose and duplicate the content
+    const authored = /^\s*(```|~~~)/m.test(b.text) || /^\s*\|.*\|\s*$/m.test(b.text) || /^\s*(\d+[.)]|[-*+])\s+\S/m.test(b.text);
+    const views = b.family === 'prose' || authored ? [] : derive(b, derivers).slice(0, maxViews - 1);
     const safeText = b.text.replace(/-->/g, '→');
     if (views.length >= 2) {
       out.push('```views', ...views.flatMap(v => [`=== ${v.label}`, v.md.replace(/```/g, '~~~')]), '=== 原文', b.text, '```', '');
@@ -134,10 +137,11 @@ export function scaffold({ title, lead, blocks, derivers = DERIVERS, policy = {}
 export function splitAnswer(text) {
   const src = text.replace(/\r\n/g, '\n').replace(/^---\n[\s\S]*?\n---\n/, '');
   const titleM = text.match(/^title:\s*(.+)$/m);
+  const frontMatter = text.replace(/\r\n/g, '\n').match(/^---\n([\s\S]*?)\n---\n/)?.[1] || null;
   if (/^##\s/m.test(src)) {
     const [head, ...secs] = src.split(/^##\s+/m);
-    return { title: titleM?.[1], lead: head.trim(), blocks: secs.map(s => { const [t, ...b] = s.split('\n'); return { title: t.trim(), text: b.join('\n').trim() }; }).filter(b => b.text) };
+    return { title: titleM?.[1], frontMatter, lead: head.trim(), blocks: secs.map(s => { const [t, ...b] = s.split('\n'); return { title: t.trim(), text: b.join('\n').trim() }; }).filter(b => b.text) };
   }
   const paras = src.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
-  return { title: titleM?.[1], lead: paras[0] || '', blocks: paras.slice(1).map(p => ({ title: null, text: p })) };
+  return { title: titleM?.[1], frontMatter, lead: paras[0] || '', blocks: paras.slice(1).map(p => ({ title: null, text: p })) };
 }

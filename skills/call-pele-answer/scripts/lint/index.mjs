@@ -50,7 +50,8 @@ export default {
           walk(p.nodes, n => {
             if (n.kind !== 'fence' || !['tabs', 'slider', 'steps'].includes(n.form) || !n.children?.length) return;
             const kids = n.children.map(c => c.nodes || []);
-            if (kids.every(k => !hasVisual(k) && textOf(k).trim().length <= 160 && !/\d/.test(textOf(k).replace(/\d+[.、)]/g, ''))))
+            const noDigits = k => !/\d/.test(textOf(k).replace(/\d+[.、)]/g, ''));
+            if (kids.every(k => !hasVisual(k) && (n.form !== 'slider' || noDigits(k) || textOf(k).trim().length <= 160)))
               report(n.line, 'route/decorative-interaction', `${n.form} 每一档只换一小段文字`, '改成列表或表格；交互只用在图或数字随档位变化时');
           });
           // 2. a diagram that redraws a table in the same block
@@ -63,11 +64,41 @@ export default {
             if (labels.length >= 4 && hit.length / labels.length >= 0.7)
               report(n.line, 'route/duplicate-figure', `图里 ${hit.length}/${labels.length} 个标签已在同块表格里`, '删掉图或表其一；图只画表格表达不了的关系');
           });
+          // 2b. a diagram that is only a grouped or linear list: mindmap, or a flowchart chain with no branch or edge label
+          walk(p.nodes, n => {
+            if (n.kind !== 'fence' || n.form !== 'mermaid') return;
+            const src = (n.body || []).join('\n');
+            const kind = (src.trim().split(/\s/)[0] || '').toLowerCase();
+            if (kind === 'mindmap') { report(n.line, 'route/list-diagram', 'mindmap 只是把要点分组成树', '改成分组列表；只有分支之间有关系、过程或量级时才画图'); return; }
+            if (!/^(flowchart|graph)$/.test(kind) || /subgraph|-->\s*\||--\s*[^->\s][^>]*-->|-\.|==>/.test(src)) return;
+            const edges = [...src.matchAll(/(\w+)\s*(?:\[[^\]]*\]|\([^)]*\)|\{[^}]*\})?\s*-->\s*(\w+)/g)].map(m => [m[1], m[2]]);
+            const nodes = new Set(edges.flat()); if (nodes.size < 4) return;
+            const deg = (i) => { const c = {}; edges.forEach(e => c[e[i]] = (c[e[i]] || 0) + 1); return Math.max(...Object.values(c)); };
+            if (deg(0) <= 1 && deg(1) <= 1) report(n.line, 'route/list-diagram', `flowchart 是 ${nodes.size} 个方框的单链，没有分支或条件`, '改成编号列表；图要表达分支、条件、回路或并行');
+          });
+          // 2c. boilerplate copied from the skill or repeated reading hints
+          walk(p.nodes, n => { if (n.text && /读者会明白/.test(n.text)) report(n.line, 'route/boilerplate', '正文出现“读者会明白”套话', '删掉这句；块标题本身写清读者会明白什么'); });
           // 3. specific statistics with no source / 示意 / 估算 marker in the same block
           const prose = textOf(p.nodes.filter(n => n.kind !== 'fence'));
           const stats = prose.match(/[>≥<≤约]?\s?\d[\d,.]*\s?(%|％|倍|亿|万(?![一个])|美元|元|小时|GB|TB|ms\b)|[$¥€]\s?\d[\d,.]*\s?[BMK亿万]?/g) || [];
           if (stats.length >= 2 && !/(来源|出处|据|引自|示意|估算|估计|约|大约|左右|未核实|报告|论文|官方|文档|source|estimate|approx|~)/i.test(prose))
             report(p.line, 'route/unsourced-number', `「${p.title}」有 ${stats.length} 个具体数字没写来源（如 ${stats.slice(0, 2).join('、')}）`, '同一块里写出来源，或标“示意/估算”；写不出就改成定性说法');
+        }
+        // page level: repeated 看哪里 hints, unexplained acronyms (zh pages)
+        const all = [textOf(doc.lead), ...doc.panels.map(p => p.title + '\n' + textOf(p.nodes.filter(n => n.kind !== 'fence' || ['tabs', 'steps', 'slider', 'views', 'callout'].includes(n.form))))].join('\n');
+        const hints = (all.match(/看哪里/g) || []).length;
+        if (hints >= 2) report(doc.panels[0]?.line || 1, 'route/boilerplate', `“看哪里”提示出现 ${hints} 次`, '只给最复杂的一张图留一句，写成普通句子，不用“看哪里：”标签');
+        if (docLang(doc) === 'zh') {
+          const common = new Set('AI API APP HTML CSS URL PDF CPU GPU USB ID OK PC TV CEO GDP CPI PPT VS FAQ DIY VIP GPS WIFI SQL JSON HTTP HTTPS IT UI UX PS NBA MBA PM AM TCP IP DNS CDN LLM GPT RAM ROM SSD HDD BMI DNA RNA CO2 IOS UTC FPS QR'.split(' '));
+          const seen = new Map();
+          for (const m of all.matchAll(/(?<![A-Za-z])([A-Z][A-Z0-9]{1,7}(?:-[A-Z0-9]+)?)(?![A-Za-z])/g)) {
+            const a = m[1]; if (common.has(a) || /^[A-Z]\d+$/.test(a) || (a.match(/[A-Z]/g) || []).length < 2) continue;
+            const around = all.slice(Math.max(0, m.index - 2), m.index + a.length + 2);
+            const explained = /[（(]/.test(around.slice(-2)) || /[（(]$/.test(all.slice(Math.max(0, m.index - 1), m.index)) || /[\u4e00-\u9fa5][（(]$/.test(all.slice(Math.max(0, m.index - 2), m.index));
+            if (!seen.has(a)) seen.set(a, explained); else if (explained) seen.set(a, true);
+          }
+          const bare = [...seen].filter(([, e]) => !e).map(([a]) => a);
+          if (bare.length >= 3) report(doc.panels[0]?.line || 1, 'route/unexplained-term', `${bare.length} 个缩写没解释：${bare.slice(0, 6).join('、')}`, '第一次出现时写“中文名（缩写）”或在括号里用一句话解释；读者用不到的就删');
         }
       },
     });
