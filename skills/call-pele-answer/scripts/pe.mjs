@@ -6,6 +6,9 @@
 //   pe answer <answer.md|-> [-o page.html] [--router …]   one pass: route + derive + render, no second writing pass
 //   --annotate on|off  批注开关（默认开；也可配置 "annotate": false，或 PE_ANNOTATE=0，或稿件 annotate: off）
 //   --palette on|off   调色器开关（默认开；也可在配置写 "palette": false，或 PE_PALETTE=0，或稿件 palette: off）
+//   pe options <answer.md|-> [--json]           per block: components whose admission conditions pass, with evidence
+//   pe assemble <draft.md> --block <n|title> --use a,b[,c] [--as views|stack] [-o out.md]   insert their skeletons
+//   pe tune                                      adjust admission thresholds from what was offered vs used
 //   pe stats  [--last 50] [--json]               where the time goes (runs + agent hooks) and what to change
 //   pe patch  <page.html> --panel "<title>"  < section.md
 //   pe info                                      forms, routers, adapters, themes, outputs, rules, plugins
@@ -17,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { createEngine, USER_CONFIG } from './core/engine.mjs';
 import { createTrace } from './core/trace.mjs';
 import { stats } from './core/stats.mjs';
+import { assemble as assembleDraft, tune as tuneAdmission } from './core/admit.mjs';
 
 const fmt = ([l, r, m, f]) => `L${l} [${r}] ${m}${f ? `  →  ${f}` : ''}`;
 const readInput = p => (p === '-' || !p ? readFileSync(0, 'utf8') : readFileSync(p, 'utf8'));
@@ -73,19 +77,45 @@ async function route(engine, file, opts) {
   const out = opts.o ? resolve(opts.o) : join(tmpdir(), `call-pele-answer-route-${Date.now()}.md`);
   writeFileSync(out, res.draft);
   console.log(`route ${res.blocks.length} 块 · ${res.by} · ${res.ms} ms`);
-  res.blocks.forEach((b, i) => console.log(`  ${String(i + 1).padStart(2)} ${(b.title || b.text.slice(0, 18)).padEnd(18)} → ${b.family}${b.type && b.family !== 'prose' ? '/' + b.type : ''} (${b.confidence.toFixed(2)})${b.alternatives?.length ? '  alt: ' + b.alternatives.join(',') : ''}${b.gated ? '  · ' + b.gated : ''}${b.recomposed ? '  · ' + b.recomposed : ''}${(b.combo || []).length >= 2 ? '  组合: ' + b.combo.map(formName).join('+') : ''}`));
+  res.blocks.forEach((b, i) => console.log(`  ${String(i + 1).padStart(2)} ${(b.title || b.text.slice(0, 18)).padEnd(18)} → ${b.family}${b.type && b.family !== 'prose' ? '/' + b.type : ''} (${b.confidence.toFixed(2)})${b.alternatives?.length ? '  alt: ' + b.alternatives.join(',') : ''}${b.gated ? '  · ' + b.gated : ''}${b.recomposed ? '  · ' + b.recomposed : ''}`));
   console.log(`  draft: ${out}`);
   if (opts.render) return build(engine, out, { ...opts, o: typeof opts.render === 'string' ? opts.render : undefined });
   return 0;
 }
 
-const FORM_NAME = { sequence: 'sequenceDiagram', state: 'stateDiagram-v2', hierarchy: 'treeView/mindmap', table: '表格', steps: '流程图/编号步骤', structure: '架构图', timeline: 'timeline', chart: '数据图', callout: 'callout', tabs: 'tabs', slider: 'slider', landscape: 'wardley/cynefin', grammar: 'railroad' };
-const formName = f => FORM_NAME[f] || f;
+const showOptions = (blocks, full) => blocks.forEach((b, i) => {
+  const o = b.options || [];
+  console.log(`  ${String(i + 1).padStart(2)} ${(b.title || b.text.slice(0, 18))}${o.length ? '' : '  —  无组件通过，写文字'}`);
+  if (full) o.forEach(x => console.log(`       ${x.name.padEnd(16)} ${x.p == null ? ' -- ' : x.p.toFixed(2)}  ${x.evidence ? x.evidence + ' · ' : ''}${x.desc}`));
+  else if (o.length) console.log(`     可选：${o.map(x => x.name).join(' · ')}`);
+  if (full && b.near?.length) console.log(`       接近门槛：${b.near.map(x => `${x.name} ${x.p}/${x.min}`).join(' · ')}`);
+});
+async function options(engine, file, opts) {
+  const res = await engine.route(readInput(file), { router: opts.router || undefined });
+  res.notes.forEach(n => console.error('! ' + n));
+  if (opts.json) { console.log(JSON.stringify(res.blocks.map(b => ({ title: b.title, options: b.options, near: b.near })), null, 2)); return 0; }
+  console.log(`options ${res.blocks.length} 块 · ${res.by} · ${res.ms} ms  （组合由你定：pe assemble --block n --use a,b --as views|stack）`);
+  showOptions(res.blocks, true);
+  return 0;
+}
+function assemble(engine, file, opts) {
+  if (!file || !opts.block || !opts.use) { console.error('✗ 用法：pe assemble <draft.md> --block <n|标题> --use a,b[,c] [--as views|stack] [-o out.md]'); return 2; }
+  const out = assembleDraft(readFileSync(file, 'utf8'), { block: opts.block, use: String(opts.use).split(',').map(s => s.trim()).filter(Boolean), as: opts.as || 'views' }, engine.registry.components());
+  const dest = opts.o ? resolve(opts.o) : resolve(file);
+  writeFileSync(dest, out); console.log(`✓ ${dest}  （骨架已放入，换成真实内容后 pe answer）`); return 0;
+}
+function tune(engine) {
+  const { stat, changes } = tuneAdmission(engine.registry.components());
+  const seen = Object.entries(stat).filter(([, s]) => s.offered || s.missed);
+  seen.forEach(([n, s]) => console.log(`  ${n.padEnd(16)} 提供 ${s.offered} · 用了 ${s.used} · 没提供却用了 ${s.missed}`));
+  console.log(changes.length ? changes.map(c => `✓ ${c.name} 门槛 ${c.from} → ${c.to}`).join('\n') : '门槛不变（样本不足或使用率正常）');
+  return 0;
+}
 async function answer(engine, file, opts) {
   const res = await engine.route(readInput(file), { router: opts.router || undefined, policy: opts.device ? { device: opts.device } : {}, auto: true });
   res.notes.forEach(n => console.error('! ' + n));
   console.log(`route ${res.blocks.length} 块 · ${res.by} · ${res.ms} ms`);
-  res.blocks.filter(b => (b.combo || []).length >= 2).forEach(b => console.log(`  + 「${b.title || b.text.slice(0, 18)}」建议组合：${b.combo.map(formName).join(' + ')}  （没用上的写进 views 或同块补一个组件）`));
+  console.log('  组件候选（组合由你定；pe options 看证据，pe assemble 拼骨架）：'); showOptions(res.blocks, false);
   res.blocks.filter(b => b.underived).forEach(b => console.log(`  ! 「${b.title || b.text.slice(0, 18)}」路由为 ${b.family}${b.type ? '/' + b.type : ''}，一遍模式没法自动生成，仍是文字；要图就在这块手写对应围栏`));
   const tmp = join(tmpdir(), `call-pele-answer-answer-${Date.now()}.md`);
   writeFileSync(tmp, res.draft);
@@ -122,7 +152,7 @@ function config(engine, action, pos) {
 async function main(argv) {
   const [cmd, ...rest] = argv;
   const { opts, pos } = parseArgs(rest);
-  if (!cmd || cmd === 'help' || cmd === '-h') { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 11).join('\n')); return 0; }
+  if (!cmd || cmd === 'help' || cmd === '-h') { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 15).join('\n')); return 0; }
   if (cmd === 'stats') return stats(opts);
   const trace = createTrace(cmd);
   const engine = await createEngine({ trace });
@@ -136,6 +166,9 @@ async function run(cmd, engine, opts, pos) {
     case 'render': return build(engine, pos[0], opts);
     case 'check': return build(engine, pos[0], opts, { checkOnly: true });
     case 'route': return route(engine, pos[0], opts);
+    case 'options': return options(engine, pos[0], opts);
+    case 'assemble': return assemble(engine, pos[0], opts);
+    case 'tune': return tune(engine);
     case 'patch': return patch(engine, pos[0], opts);
     case 'info': console.log(JSON.stringify(engine.info(), null, 2)); return 0;
     case 'config': return config(engine, pos[0], pos.slice(1));

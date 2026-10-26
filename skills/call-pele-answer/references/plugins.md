@@ -127,3 +127,19 @@ export default { name: 'my-notes', apiVersion: 1, setup(api) {
 ```
 
 内置：疑问（钴蓝）/ 建议（芥末）/ 认可（薄荷）/ 顾虑（番茄）。同名覆盖。复制出的批注写类型的 label，所以 Agent 读到的是「[错字]」。
+
+## 组件（component）
+
+```js
+api.component({
+  name: 'myChart',            // pe assemble --use 用的名字
+  desc: '一句话：它展示什么',
+  fence: 'mermaid',           // 或 table / callout / steps / 你的围栏名
+  skeleton: 'xychart ...',    // 最小骨架，agent 替换
+  ask: 'The text itself contains …',  // JEV 是/否问题（软条件）
+  min: 0.85,                  // JEV 门槛；万金油形状设高
+  requires: ['numbers3', t => /关键词/.test(t) ? '证据' : null],  // 硬条件，全部通过才问 JEV
+});
+```
+
+注册后自动进入 `pe options` 的候选，不需要声明它和谁组合；组合由写回答的 agent 决定。内置硬条件见 `scripts/core/components.mjs` 的 `CHECKS`。

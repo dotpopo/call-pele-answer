@@ -49,15 +49,6 @@ export function compose(blocks, policy = {}) {
     if (pick !== b.family && TYPES[pick]) b.type = Object.keys(TYPES[pick])[0];
     b.family = pick;
     b.alternatives = ranked.filter(r => r.family !== pick && r.score >= 0.25).map(r => r.family);
-    // suggested combination: the pick plus facets the router saw independently, then strong alternatives.
-    // a data chart joins only when the router saw real numbers.
-    const extra = Object.entries(b.facets || {}).sort((x, y) => y[1] - x[1]).map(([f]) => f)
-      .filter(f => f !== pick && !(f === 'chart' && (b.signals?.numbers ?? 1) < 0.5));
-    // two families that draw the same picture (steps and structure are both flowcharts) count once
-    const look = f => (f === 'steps' || f === 'structure' ? 'flow' : f);
-    const seen = new Set(); b.combo = [];
-    for (const f of [pick, ...extra, ...b.alternatives]) { if (f === 'prose' || seen.has(look(f))) continue; seen.add(look(f)); b.combo.push(f); }
-    b.combo = b.combo.slice(0, 3);
     if (INTERACTIVE.has(pick)) interactive++;
     prev = pick;
   }
@@ -109,7 +100,7 @@ export const DERIVERS = {
 
 export function derive(b, derivers = DERIVERS) {
   const views = [];
-  for (const fam of [...new Set([b.family, ...(b.combo || []), ...(b.alternatives || [])])]) for (const d of derivers[fam] || []) { const v = d(b); if (v && !views.some(x => x.label === v.label)) views.push(v); }
+  for (const fam of [b.family, ...(b.alternatives || [])]) for (const d of derivers[fam] || []) { const v = d(b); if (v && !views.some(x => x.label === v.label)) views.push(v); }
   return views;
 }
 

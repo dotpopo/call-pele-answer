@@ -17,6 +17,8 @@ import theme from '../themes/pele.mjs';
 import palettes from '../themes/palettes.mjs';
 import outputs from '../outputs/index.mjs';
 import rules, { docLang } from '../lint/index.mjs';
+import components from './components.mjs';
+import { admit, logUsage } from './admit.mjs';
 
 export const USER_CONFIG = join(homedir(), '.call-pele-answer', 'config.json');
 const OLD_USER_CONFIG = join(homedir(), '.pele-explain', 'config.json'); // read once if the new one is missing
@@ -48,7 +50,7 @@ export function loadConfig(cwd = process.cwd()) {
 export async function createEngine({ cwd = process.cwd(), config, trace = NOTRACE } = {}) {
   const cfg = config || trace.span('config', () => loadConfig(cwd));
   const reg = createRegistry();
-  trace.span('builtins', () => { for (const p of [forms, routers, theme, palettes, outputs, rules]) reg.use(p); });
+  trace.span('builtins', () => { for (const p of [forms, routers, theme, palettes, outputs, rules, components]) reg.use(p); });
   // declarative adapters and routers from config: no code needed to plug in a new System One provider
   for (const a of cfg.adapters) reg.api.adapter((a.kind === 'shim' ? shimAdapter : nativeAdapter)(a));
   for (const r of cfg.routers) reg.api.routerSpec(r);
@@ -74,7 +76,7 @@ class Engine {
   }
 
   // Walk the fallback chain until a router answers; local always answers.
-  async route(answer, { router = this.config.router, policy = {}, auto = false } = {}) {
+  async route(answer, { router = this.config.router, policy = {}, auto = false, options = true } = {}) {
     const T = this.trace;
     const t0 = Date.now(); const ans = T.span('split', () => splitAnswer(answer)); const notes = [];
     const texts = ans.blocks.map(b => b.text);
@@ -90,6 +92,12 @@ class Engine {
     res.blocks.forEach((b, i) => (b.title = ans.blocks[i].title));
     const P = { ...this.config.policy, ...policy };
     T.span('compose', () => compose(res.blocks, P));
+    // component options: every registered component whose conditions pass, for the agent to combine
+    if (options) {
+      const an = res.by === 'local' ? null : this.registry.adapters.get(process.env.TYPESAFE_API_KEY ? 'typesafe' : 'classifier-systemone');
+      const note = await T.span('admit', () => admit(res.blocks, this.registry.components(), an, { log: !process.env.PE_NO_LOG }));
+      if (note) notes.push(note);
+    }
     const derivers = { ...DERIVERS };
     for (const [fam, fns] of Object.entries(this.registry.derivers())) derivers[fam] = [...(derivers[fam] || []), ...fns];
     const draft = T.span('scaffold', () => scaffold({ title: ans.title, frontMatter: auto ? ans.frontMatter : null, lead: ans.lead, blocks: res.blocks, derivers, policy: P, auto }));
@@ -101,6 +109,7 @@ class Engine {
   build(draft, { output = this.config.output, theme = this.config.theme, ste = this.config.ste, palette = this.config.palette, annotate = this.config.annotate, mode, lean } = {}) {
     const T = this.trace;
     const { doc, errors, warns, embedded } = T.span('parse', () => parseDraft(draft, this.registry, T));
+    if (!process.env.PE_NO_LOG && !errors.length) logUsage(draft, this.registry.components());
     const found = [...warns];
     const report = (l, r, m, f) => found.push([l, r, m, f]);
     const ctx = { registry: this.registry, ste };

@@ -1,4 +1,5 @@
 // node test/run.mjs — offline: remote adapters are tested against a local mock server.
+process.env.PE_NO_LOG = '1';
 import { lintProse, lintRouting, stripSpans } from '../skills/call-pele-answer/scripts/lint/rules.mjs';
 import { createEngine } from '../skills/call-pele-answer/scripts/core/engine.mjs';
 import { createRegistry } from '../skills/call-pele-answer/scripts/core/registry.mjs';
@@ -51,10 +52,27 @@ t('备选形式进入 alternatives', c3[0].alternatives.includes('table'));
 
 const c4 = compose([{ ...B(long2, { chart: 0.51 }), family: 'prose' }]);
 t('组合器不把路由器留作文字的块升级（0.51 < 0.55）', c4[0].family === 'prose');
-const c5 = compose([{ ...B(long2, { structure: 0.7, table: 0.2 }), type: 'flowchart', facets: { sequence: 0.96, steps: 0.92, table: 0.88 } }]);
-t('多形式组合：主形式 + 独立 facet，画法相同的只算一次', c5[0].combo.join() === 'structure,sequence,table');
-const c6 = compose([{ ...B(long2, { steps: 0.9 }), facets: { chart: 0.9 }, signals: { numbers: 0.2 } }]);
-t('没有真实数字时数据图不进组合', !c6[0].combo.includes('chart'));
+const { admit, assemble, usedComponents } = await import('../skills/call-pele-answer/scripts/core/admit.mjs');
+const { BUILTIN_COMPONENTS: COMPS } = await import('../skills/call-pele-answer/scripts/core/components.mjs');
+const fakeJev = p => ({ ask: async (texts, qs) => texts.map(() => Object.fromEntries(Object.keys(qs).map(k => [k, { noul: p[k.slice(4)] ?? 0.99 }]))) });
+const ab = [{ title: '份额', text: '甲占 40%，乙占 35%，丙占 25%。' }, { title: '流程', text: '客户端发送请求给网关，网关调用服务后返回结果。' }];
+await admit(ab, COMPS, fakeJev({}), { overrides: {}, log: false });
+t('准入：硬条件挡住没有百分比的饼图', ab[0].options.some(o => o.name === 'pie') && !ab[1].options.some(o => o.name === 'pie'));
+t('准入：有来回传递才提供时序图', ab[1].options.some(o => o.name === 'sequenceDiagram') && !ab[0].options.some(o => o.name === 'sequenceDiagram'));
+const ab2 = [{ title: 'x', text: '客户端发送请求给网关，网关调用服务后返回结果。' }];
+await admit(ab2, COMPS, fakeJev({ sequenceDiagram: 0.5 }), { overrides: {}, log: false });
+t('准入：JEV 低于门槛不提供', !ab2[0].options.some(o => o.name === 'sequenceDiagram'));
+await admit(ab2, COMPS, fakeJev({ sequenceDiagram: 0.5 }), { overrides: { sequenceDiagram: 0.4 }, log: false });
+t('准入：门槛可被调参覆盖', ab2[0].options.some(o => o.name === 'sequenceDiagram'));
+const ab3 = [{ title: 'x', text: '客户端发送请求给网关，网关调用服务后返回结果。' }];
+await admit(ab3, COMPS, null, { overrides: {}, log: false });
+t('准入：离线只提供脚本能担保的组件', ab3[0].options.length > 0 && !ab3[0].options.some(o => o.name === 'flowchart'));
+const dr = '# T\n\n## 甲\n正文一句。\n\n## 乙\n另一句。\n';
+const av = assemble(dr, { block: 1, use: ['sequenceDiagram', 'table'], as: 'views' }, COMPS);
+t('拼装 views：组件在前，原文在最后', /```views\n=== sequenceDiagram\n~~~mermaid\nsequenceDiagram[\s\S]*=== table[\s\S]*=== 原文\n正文一句。/.test(av) && av.includes('## 乙\n另一句。'));
+const as = assemble(dr, { block: '乙', use: ['callout'], as: 'stack' }, COMPS);
+t('拼装 stack：正文后追加组件', /## 乙\n另一句。\n\n```callout\n/.test(as));
+t('使用识别：mermaid 首词、表格、围栏', usedComponents('~~~mermaid\nstateDiagram-v2\n  a-->b\n~~~\n| a | b |\n|---|---|\n| 1 | 2 |\n```callout\nx\n```', COMPS).sort().join() === 'callout,stateDiagram,table');
 { const sa = splitAnswer('---\ntitle: T\nsubtitle: S\n---\n结论。\n\n## 运行\n\n```steps\n第一拍，客户端调用。\n---\n第二拍，返回结果。\n```\n');
   const d = scaffold({ title: sa.title, frontMatter: sa.frontMatter, lead: sa.lead, blocks: sa.blocks.map(b => ({ ...b, family: 'steps', confidence: 0.9, alternatives: [] })), auto: true });
   t('pe answer：已写成围栏的块原样保留、不重复', (d.match(/```steps/g) || []).length === 1 && !/^1\. ```/m.test(d));
