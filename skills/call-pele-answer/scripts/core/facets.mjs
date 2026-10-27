@@ -93,6 +93,27 @@ export const RULES = {
 // Specific forms outrank generic ones; first match is the primary.
 export const PRIORITY = ['packet','gitGraph','treeView','erDiagram','classDiagram','railroad','wardley','cynefin','eventmodeling','requirement','c4','usecase','journey','kanban','agentflow','ishikawa','gantt','timeline','sankey','treemap','pie','radar','quadrant','venn','line','bar','swimlane','sequenceDiagram','stateDiagram','architecture','block','slider','table','tabs','flowchart','mindmap','code','steps','callout'];
 // Lexical facts code can check exactly; JEV is not asked to count or parse.
+// Parents that carry two or more sub-items: an indented list under a list item, or a list under a heading or a
+// "label：" line. A hierarchy is what a mindmap or tree shows that a flat list cannot.
+export function branchingParents(t) {
+  const lines = t.split('\n'); let n = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i], ind = l.match(/^\s*/)[0].length;
+    const item = /^\s*([-*]|\d+[.)])\s/.test(l);
+    if (!(/^\s*#{2,6}\s/.test(l) || /[:：]\s*$/.test(l) || item)) continue;
+    let kids = 0;
+    for (let j = i + 1; j < lines.length; j++) {
+      const m = lines[j], mi = m.match(/^\s*/)[0].length;
+      if (/^\s*#{2,6}\s/.test(m)) break;
+      if (/^\s*([-*]|\d+[.)])\s/.test(m) && (mi > ind || !item)) kids++;
+      else if (m.trim()) break;
+    }
+    if (kids >= 2) n++;
+  }
+  // inline: "所有权（借用、生命周期）、类型系统（trait、泛型）" — a part followed by its sub-parts in brackets
+  n += (t.match(/[^，。；、\s（(]{1,20}[（(][^）)]*[、,，][^）)]*[）)]/g) || []).length;
+  return n;
+}
 // the most numbers that share one unit ("72 美元 … 68 美元 … 65 美元" → 3)
 const sameUnit = t => { const c = {}; for (const m of t.matchAll(/\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
 const nums = t => (t.match(/\d+(?:\.\d+)?/g) || []).length;
@@ -101,7 +122,7 @@ export const HARD = {
   gantt: t => /\d+\s*(天|周|个?月|小时|days?|weeks?)/.test(t),
   pie: t => (t.match(/\d+(?:\.\d+)?\s*%/g) || []).length >= 2,
   radar: t => nums(t) >= 6,
-  sankey: t => nums(t) >= 3, treemap: t => nums(t) >= 3, bar: t => sameUnit(t) >= 3,
+  sankey: t => nums(t) >= 3, bar: t => sameUnit(t) >= 3,
   // a line needs at least three points on a time axis written out in the text
   line: t => (t.match(/(1[5-9]|20)\d{2}\s*年?|\d{1,2}\s*月|第\s*\d+\s*(天|周|月|轮|季度?)|Q[1-4]\b|\b\d{1,2}:\d{2}\b|周[一二三四五六日]|(day|week|month)\s*\d+/gi) || []).length >= 3, quadrant: t => true,
   packet: t => /\d+\s*(位|字节|bits?|bytes?)/i.test(t),
@@ -109,6 +130,9 @@ export const HARD = {
   slider: t => /(越.{1,8}越|从\s*\S+\s*(调|升|降|涨|增|减)到|the (larger|higher|more|smaller|lower)|as .{1,20} (increases|grows|shrinks))/i.test(t) && nums(t) >= 2,
   // alternatives are named as such: 方案 A / 可以选 X，也可以选 Y / option
   tabs: t => /(方案|选项|做法|路线|可以选|也可以|还是|或者|二选一|option|alternative|approach|either)/i.test(t),
+  // a mindmap shows a hierarchy: two or more parts that each have their own sub-points
+  mindmap: t => branchingParents(t) >= 2,
+  treemap: t => branchingParents(t) >= 1 && nums(t) >= 3,
   // forms bound to a domain vocabulary: the text must use that vocabulary
   requirement: t => /(需求|验收|REQ-|requirement|shall\b)/i.test(t),
   railroad: t => /(语法|文法|BNF|正则|产生式|开头|后面跟|分隔|可以是|syntax|grammar|token)/i.test(t),
