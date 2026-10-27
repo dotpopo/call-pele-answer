@@ -15,3 +15,13 @@ Prose wrongly drawn (of 33): 17, 15, 11, 11 (process forms 7,6,4,4). Drawables l
 flowchart on a one-line condition (019#6); sequenceDiagram on a prose explanation (025#2); tabs (028#6),
 mindmap (035#3 time buckets), code (038#5 fill-in form), block (064#5), table (084#5), line (098#4), treemap (011#1);
 missed table 063#4 (定义/怎么用/健康信号).
+
+## Round 6 — minimum evidence per form (2026-10-27 17:50; final folded into tuning, no untouched set left)
+Expert framing (Ng error analysis / selective prediction): the 12 "single" errors share one cause — JEV answers
+"does the text mention X" (one 30%, one inline `winver`, one SYN), not "is X how the whole block is organized".
+A drawing is the riskier error (prose is the safe abstain), so each form now needs its own minimum evidence in code:
+flowchart in prose ≥3 ordering/branch words (list: jump/loop + ≥3 units); sequenceDiagram ≥3 messages (arrows/exchange verbs);
+code = fence, ≥2 statement lines, or a shell command in prose; tabs = ≥2 named alternatives; line = ≥3 distinct time points;
+steps not on a checklist ("- [ ]") or a ranked list ("按优先级"); mindmap not on time buckets.
+real .925→.935, runs .921→.933, fresh .901→.951, final .833→.931, synthetic .927 unchanged.
+All 424 real blocks: top1 90.3%→93.6%; wrongly drawn 31→18 of 201 prose; left as text 11→11.

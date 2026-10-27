@@ -83,7 +83,7 @@ export const RULES = {
   requirement: s => Y(s,'requirements'),
   eventmodeling: s => Y(s,'events_commands'),
   packet: s => Y(s,'bit_layout'),
-  mindmap: s => Y(s,'subtopics') && !Y(s,'steps'),
+  mindmap: s => Y(s,'subtopics') && !Y(s,'steps') && !(s.time_buckets >= 0.85),
   treeView: s => Y(s,'file_tree'),
   treemap: s => Y(s,'nested_parts') && Y(s,'part_sizes') && !Y(s,'percentages'),
   ishikawa: s => Y(s,'causes'),
@@ -142,6 +142,8 @@ export const crossRef = t => /(回到|返回|退回|跳到|跳回|重复)(第\s*
 const COUNTERS = new Set('块个项页次题条处份张名人轮步种类位件段行列组批篇章节号年根台'.split(''));
 // thresholds (≥90 cm) and range ends (18.5–23.9) are limits, not magnitudes to compare
 const sameUnit = t => { const c = {}; for (const m of t.matchAll(/(?<![≥≤<>＜＞~–\-\d.])\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) if (!COUNTERS.has(m[1]) && !/^\s*[–~-]/.test(t.slice(m.index + m[0].length - m[1].length - 1, m.index + m[0].length))) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
+// sentences or list items: the nodes a diagram would have
+const units = t => t.split(/[。！？!?；;\n]+/).filter(x => x.replace(/[>*\s#-]/g, '').length >= 4).length;
 const nums = t => (t.match(/\d+(?:\.\d+)?/g) || []).length;
 export const HARD = {
   // a timeline needs three or more distinct dates, each carrying its own event
@@ -153,19 +155,27 @@ export const HARD = {
   radar: t => nums(t) >= 6,
   sankey: t => nums(t) >= 3, bar: t => sameUnit(t) >= 3,
   // a line needs at least three points on a time axis written out in the text
-  line: t => (t.match(/(1[5-9]|20)\d{2}\s*年?|\d{1,2}\s*月|第\s*\d+\s*(天|周|月|轮|季度?)|Q[1-4]\b|\b\d{1,2}:\d{2}\b|周[一二三四五六日]|(day|week|month)\s*\d+/gi) || []).length >= 3, quadrant: t => true,
+  line: t => new Set(t.match(/(1[5-9]|20)\d{2}\s*年?|\d{1,2}\s*月|第\s*\d+\s*(天|周|月|轮|季度?)|Q[1-4]\b|\b\d{1,2}:\d{2}\b|周[一二三四五六日]|(day|week|month)\s*\d+/gi) || []).size >= 3, quadrant: t => true,
   packet: t => /\d+\s*(位|字节|bits?|bytes?)/i.test(t),
   // a parameter sweep says how far it moves: "越 X 越 Y" or "从 A 调到 B" with the numbers
   // a slider shows one parameter's effect; a list of several actions is not one parameter
   slider: t => !listShaped(t) && /(越.{1,8}越|从\s*\S+\s*(调|升|降|涨|增|减)到|the (larger|higher|more|smaller|lower)|as .{1,20} (increases|grows|shrinks))/i.test(t) && nums(t) >= 2,
   // alternatives are named as such: 方案 A / 可以选 X，也可以选 Y / option
-  tabs: t => /(方案|选项|做法|路线|可以选|也可以|还是|或者|二选一|option|alternative|approach|either)/i.test(t),
+  // tabs need two or more named alternatives, not one mention of the word 方案
+  tabs: t => /(方案|选项|做法|路线|option|plan)\s*[A-DＡ-Ｄ一二三1-3①-③]|可以选.{1,30}也可以|二选一|either\b.{1,40}\bor\b/i.test(t) || (t.match(/(方案|选项|做法|路线|option|alternative|approach)/gi) || []).length >= 2,
   // a list whose branches stay inside its own items is still a list: draw a flow only when items jump or loop
-  flowchart: t => !listShaped(t) || crossRef(t),
+  // ...and a flow has three or more nodes: one sentence with one condition is a sentence
+  // in prose the order must be written: arrows or ordering / branching words
+  flowchart: t => listShaped(t) ? crossRef(t) && units(t) >= 3 : (t.match(/→|->|⟶|先|再|然后|接着|随后|最后|才|就|则|如果|若|否则|一旦|是否|失败时|成功后|之后|then|if\b|otherwise/gi) || []).length >= 3,
   swimlane: t => !listShaped(t) || crossRef(t),
   stateDiagram: t => !listShaped(t) || crossRef(t),
+  // a checklist is ticked in any order, and a ranked list ("按优先级") orders by importance, not by time
   // steps need three or more actions written in order: a list, or ordering words in prose
-  steps: t => (t.match(/^\s*([-*]|\d+[.)])\s/gm) || []).length >= 3 || (t.match(/(先|再|然后|接着|随后|最后|第[一二三四五六]步|first|then|next|finally)/gi) || []).length >= 2 || /分\s*[\d一二三四五六七八九十]+\s*步/.test(t),
+  steps: t => !/^\s*[-*]\s*\[[ xX]\]/m.test(t) && !/(按|依)?优先级[)）]?\s*[:：]|按重要性|Top\s*\d/i.test(t) && ((t.match(/^\s*([-*]|\d+[.)])\s/gm) || []).length >= 3 || (t.match(/(先|再|然后|接着|随后|最后|第[一二三四五六]步|first|then|next|finally)/gi) || []).length >= 2 || /分\s*[\d一二三四五六七八九十]+\s*步/.test(t)),
+  // a sequence diagram needs three or more messages passed between parties, written as arrows or exchange verbs
+  sequenceDiagram: t => (t.match(/→|->|⟶|发(?![生现展布表明挥])|回(?=\s*[A-Za-z])|发送|发给|发出|回复|回传|返回|请求|响应|应答|reply|send|request|respond/gi) || []).length >= 3,
+  // code is code: a fenced block or two or more lines of statements, not a command named inline
+  code: t => /```/.test(t) || (!listShaped(t) && /\b(npm|pnpm|yarn|pip3?|git|docker|curl|node|python3?|cargo|go)\s+[\w-]|&&|\b[A-Z_]{3,}=\S/.test(t)) || t.split('\n').filter(l => /^\s*[\w.\[\]]+\s*(=|\(|\{)|;\s*$|^\s*(def|function|import|from|class|return|const|let|var)\b/.test(l) && !/^\s*([-*]|\d+[.)])\s/.test(l)).length >= 2 || /^\s*[\w.]+\s*=\s*.*("""|'''|\(\s*$)/m.test(t),
   // a mindmap shows a hierarchy: two or more parts that each have their own sub-points
   mindmap: t => branchingParents(t) >= 2,
   treemap: t => branchingParents(t) >= 1 && sameUnit(t) >= 3,
