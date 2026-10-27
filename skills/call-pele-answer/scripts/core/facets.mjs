@@ -132,7 +132,9 @@ export const listShaped = t => { const ls = t.split('\n').filter(l => l.trim());
 // An item points at another item: a jump or a loop that a list cannot draw.
 export const crossRef = t => /(回到|返回|退回|跳到|跳回|重复)(第\s*\d+\s*步|步骤|上一步|前一步|开头|起点|[A-Z①-⑨]\b)?|再走一遍|go back to|return to step|repeat from/i.test(t);
 // the most numbers that share one unit ("72 美元 … 68 美元 … 65 美元" → 3)
-const sameUnit = t => { const c = {}; for (const m of t.matchAll(/\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
+// Counting words (块、个、项…) count things, they are not a measure to compare on a bar.
+const COUNTERS = new Set('块个项页次题条处份张名人轮步种类位件段行列组批篇章节'.split(''));
+const sameUnit = t => { const c = {}; for (const m of t.matchAll(/\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) if (!COUNTERS.has(m[1])) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
 const nums = t => (t.match(/\d+(?:\.\d+)?/g) || []).length;
 export const HARD = {
   timeline: t => (t.match(/(1[5-9]|20)\d{2}\s*年|\d{4}-\d{2}/g) || []).length >= 2,
