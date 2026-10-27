@@ -55,7 +55,11 @@ export const FACETS = {
   system_parts: N('Does the text name components of a software or hardware system and which connects to which?'),
 };
 export const YES = 0.7;
-const Y = (s, k) => s[k] >= YES;
+// Forms with a narrow vocabulary need a clearer yes: JEV says "yes" readily on long text, and a wrong
+// specialised diagram costs the reader more than a missed one.
+export const STRICT = +(process.env.PE_STRICT || 0.85);
+const NARROW = new Set(['usecase','requirements','events_commands','bit_layout','causes','dated_events','task_durations','git','flows_amounts','scores_criteria','two_axes','sets_overlap','evolution','domains','grammar','parameter','agent_tools','modules_grid','external_systems','users','warning','role_actions']);
+const Y = (s, k) => s[k] >= (NARROW.has(k) ? STRICT : YES);
 // 每个组件 = 原子判断的布尔组合（代码里，可审、可测）
 export const RULES = {
   flowchart: s => (Y(s,'steps') && Y(s,'decision')) || (Y(s,'system_parts') && !Y(s,'infra')),
