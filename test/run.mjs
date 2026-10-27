@@ -72,6 +72,20 @@ const av = assemble(dr, { block: 1, use: ['sequenceDiagram', 'table'], as: 'view
 t('拼装 views：组件在前，原文在最后', /```views\n=== sequenceDiagram\n~~~mermaid\nsequenceDiagram[\s\S]*=== table[\s\S]*=== 原文\n正文一句。/.test(av) && av.includes('## 乙\n另一句。'));
 const as = assemble(dr, { block: '乙', use: ['callout'], as: 'stack' }, COMPS);
 t('拼装 stack：正文后追加组件', /## 乙\n<!-- pe:use callout -->\n另一句。\n\n```callout\n/.test(as));
+const ab4 = [{ title: 'x', text: '客户端发送请求给网关，网关调用服务后返回结果。' }];
+await admit(ab4, COMPS, fakeJev({}), { overrides: {}, log: false });
+t('准入：JEV 通过的组件超过 3 个时不丢，挪到可选', ab4[0].recommended.length <= 3 && ab4[0].options.length === ab4[0].recommended.length + ab4[0].possible.length && ab4[0].options.length > 3);
+{ const { DERIVERS } = await import('../skills/call-pele-answer/scripts/core/compose.mjs');
+  const d = DERIVERS.steps.map(f => f({ text: '先登录，然后提交，失败则重试，最后退出。' })).filter(Boolean);
+  t('派生：带“失败则”的步骤不画成直线流程图', !d.some(v => v.label === '流程图'));
+  const days = '**第1天：** 读文档\n\n**第2天：** 写代码\n\n**第3天：** 复盘';
+  const tl = DERIVERS.timeline.map(f => f({ text: days })).filter(Boolean);
+  t('派生：逐天计划成时间线，标签按天数', tl[0]?.label === '3 天计划' && !/学习计划/.test(tl[0].md)); }
+{ const { createEngine } = await import('../skills/call-pele-answer/scripts/core/engine.mjs');
+  const eg = await createEngine({});
+  const doc = '# T\n\n结论一句。\n\n## 只有文字\n就一句话。\n';
+  const loose = eg.build(doc, { output: 'markdown' }), tight = eg.build(doc, { output: 'markdown', strict: true });
+  t('--strict：有 route 警告就不出页，平时照常出', !loose.errors.length && tight.errors.length > 0 && tight.errors.every(e => e[1].startsWith('route/'))); }
 console.log('— 表格不再是安全默认');
 const { tableShape, deformat, tablesIn } = await import('../skills/call-pele-answer/scripts/core/tableshape.mjs');
 const shp = md => tableShape(tablesIn(md)[0]).kind;

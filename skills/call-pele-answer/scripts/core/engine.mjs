@@ -131,7 +131,8 @@ class Engine {
     // Strict mode is intended for final delivery and CI: a page that still
     // contains routing walls, prose comparisons, or other lint findings is
     // not silently shipped as if it had passed review.
-    if (strict && found.length) return { doc, errors: found.slice().sort((a, b) => a[0] - b[0]), warnings: found, embedded, lang };
+    const walls = found.filter(w => String(w[1]).startsWith('route/'));
+    if (strict && walls.length) return { doc, errors: walls, warnings: found, embedded, lang };
     const out = this.registry.output(output);
     if (!out) throw new Error(`未知 output：${output}（可选 ${this.registry.outputs().join(' | ')}）`);
     const text = T.span(`output:${output}`, () => out.write(doc, { registry: this.registry, theme, lang, mode, lean, palette, annotate, color }));

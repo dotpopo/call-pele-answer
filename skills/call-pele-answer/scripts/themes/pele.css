@@ -71,8 +71,7 @@ footer summary{cursor:pointer}
 .pe-theme{margin-left:auto;height:1.6rem;min-width:auto;padding:0 .5rem;font:11px var(--pe-mono);color:var(--pe-muted)}
 .js .pe-beat[hidden],.js .pe-stop[hidden],.js .pe-tab[hidden]{display:none}
 .nojs .pe-bar,.nojs input[type=range],.nojs .pe-tablist,.nojs .pe-theme{display:none}
-/* Alternate views stay hidden until the view controller selects them. */
-.nojs [hidden]{display:none}
+.nojs [hidden]{display:block}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 @media print{body{padding:0}.pe-bar,.pe-theme,footer details{display:none}.pe-beat[hidden],.pe-stop[hidden],.pe-tab[hidden]{display:block!important}.pe-wide{display:flex!important}.pe-narrow{display:none!important}}
 

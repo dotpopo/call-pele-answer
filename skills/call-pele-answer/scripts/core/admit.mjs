@@ -84,8 +84,10 @@ export async function admit(blocks, components, adapter, { overrides = readJson(
       else opts.push(item);
     }
     const rank = (x, y) => judged ? b.cands.indexOf(x.name) - b.cands.indexOf(y.name) : (y.p ?? 0) - (x.p ?? 0);
-    b.recommended = opts.sort(rank).slice(0, 3);
-    b.possible = possible.sort(rank).slice(0, 4);
+    // never drop an admitted component: JEV-admitted ones beyond the top 3 move to 可选
+    opts.sort(rank); possible.sort(rank);
+    b.recommended = opts.slice(0, 3);
+    b.possible = [...opts.slice(3), ...possible];
     b.evidenceOnly = evidenceOnly.sort(rank);
     // Legacy consumers still read b.options. It now excludes keyword-only
     // evidence, which was the source of the previous candidate explosion.

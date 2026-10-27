@@ -1,7 +1,12 @@
 ---
 name: call-pele-answer
+slug: call-pele-answer
+displayName: Call Pele Answer
+version: 0.5.12
 allowed-tools: Bash(node:*) Read Write
 metadata: {"openclaw":{"requires":{"bins":["node"]}}}
+summary: 把长回答按块拆开，逐块挑最合适的形式（文字、表格、30+ 种图、滑块、标签页、分步播放），生成离线交互讲解页，可调色、可批注。
+homepage: https://github.com/dotpopo/call-pele-answer
 description: >-
   把回答做成按块选形式的讲解：模型只写 Markdown，pe 逐块挑文字、表格、30+ 种图、滑块、标签页或分步，
   复杂的出一页离线 HTML（可调色、可批注）。主动、放宽使用，不必等用户开口：只要一页比纯文字更好懂就用，
@@ -30,13 +35,11 @@ license: MIT
 2. **`pe options 稿件.md`**。JEV 对所有块一次答完几十道原子是非题（约 1–2 秒），代码按规则定每块首选形式和候选，再过脚本硬条件；首选排第一，照着用即可。
 3. **只在首选不对时才改**。同一内容的不同看法用 `views`（第一个是首选，最多 3 个），不同侧面用 `stack`；只有文字就留文字。候选外的组件要能说出理由才加。
 4. **`pe assemble 稿件.md --block n --use a,b --as views|stack`**，把骨架换成真实内容，视图标签改成读者看得懂的中文。它会在块里留下 `<!-- pe:use … -->` 标记。
-5. **`pe answer 稿件.md -o <绝对路径>.html --audit`**，按输出修（见下）。最终交付前用 `--strict` 重跑；仍有 route/STE 警告时不要交付，先修稿或明确豁免。
+5. **`pe answer 稿件.md -o <绝对路径>.html --audit`**，按输出修（见下）。要卡住形式问题（CI、交付前）加 `--strict`：有 route 警告就不出页；STE 文字提示不拦。
 
 快捷模式 `pe answer` 允许一次完成路由、派生和渲染，但它不是严格验收。它会打印候选组件；加 `--audit` 会同时打印每块的实际组件与未落地候选。需要保留人工选择时，继续使用 `pe options` → `pe assemble` → `pe answer`。
 
 组件候选分三层：`推荐` 表示有明确结构证据且适合自动落地；`可选` 表示有一定证据但需要人工确认；`仅证据命中` 只记录关键词或硬条件，不再作为普通候选展示。尤其在 `local` 兜底模式下，不要把“提到文件名/存储/Agent/方法”理解为已经适合画目录、架构或类图。
-
-classifier.dev 的免费额度按 IP 计算，但官方同时规定匿名代理出口需要 funded workspace key。遇到 `403 proxy_requires_payment` 时，这不是额度耗尽（额度耗尽通常是 `429 rate_limit_day`），而是当前网络出口被识别为代理；技能应回退到 `local`，不要无限重试。
 
 **表格不是安全默认**：只有 ≥2 个选项 × ≥2 个可比属性（至少 6 格事实）才是表格。按位置排的规则 → 流程图或时序图上的标注；互不相干的数字 → 各归讲它的块；2–3 个长选项 → `tabs`；首列是步骤 → 流程图或 `steps`。整页超过一块只有表格且没有 `pe:use table` 标记时，`pe answer` 直接报 `route/table-heavy`，不出页。形式怎么选的细则和全部图类型：`references/routing.md`。
 

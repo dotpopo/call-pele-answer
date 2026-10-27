@@ -8,7 +8,7 @@
 //   --color auto|plain 自动配色开关（默认 auto：每块随机上一种背景色；plain 恢复素色。也可配置 "color": "plain"，或 PE_COLOR=plain，或稿件 color: plain）
 //   --palette on|off   调色器开关（默认开；也可在配置写 "palette": false，或 PE_PALETTE=0，或稿件 palette: off）
 //   --audit            输出每块的候选组件、实际组件和未落地候选
-//   --strict           有 lint/route 警告时不生成输出
+//   --strict           有 route 警告时不生成输出（STE 文字提示不拦）
 //   pe options <answer.md|-> [--json]           per block: components whose admission conditions pass, with evidence
 //   pe assemble <draft.md> --block <n|title> --use a,b[,c] [--as views|stack] [-o out.md]   insert their skeletons
 //   pe tune                                      adjust admission thresholds from what was offered vs used

@@ -90,7 +90,7 @@ export const DERIVERS = {
       if (b.type !== 'treeView') return null;
       const m = b.text.match(/```(?:text|plaintext|tree)?\s*\n([\s\S]*?)```/i);
       if (!m || !(/[\\/]\S|^\s{2,}\S/m.test(m[1]))) return null;
-      const body = m[1].trimEnd();
+      const body = m[1].replace(/[├└│]──?\s?|[│]/g, '  ').trimEnd(); // box-drawing art → plain indentation
       return { label: '目录树', md: ['```mermaid', 'treeView-beta', body, '```'].join('\n') };
     },
   ],
@@ -98,12 +98,12 @@ export const DERIVERS = {
     b => {
       const days = [...b.text.matchAll(/(?:^|\n)\s*\*\*第\s*([一二三四五六七八九十\d]+)\s*天：?([\s\S]*?)(?=\n\s*\*\*第\s*[一二三四五六七八九十\d]+\s*天|$)/g)]
         .map(m => [m[1], clean(m[2].replace(/\*\*/g, ''))]).filter(x => x[1]);
-      return days.length >= 3 ? { label: '七天计划', md: ['```mermaid', 'timeline', '  title 学习计划', ...days.map(([d, v]) => `  第${d}天 : ${v.slice(0, 80).replace(/:/g, '：')}`), '```'].join('\n') } : null;
+      return days.length >= 3 ? { label: `${days.length} 天计划`, md: ['```mermaid', 'timeline', ...days.map(([d, v]) => `  第${d}天 : ${v.slice(0, 80).replace(/:/g, '：')}`), '```'].join('\n') } : null;
     },
     b => {
       const days = [...b.text.matchAll(/(?:^|\n)\s*\*\*第\s*([一二三四五六七八九十\d]+)\s*天：?([\s\S]*?)(?=\n\s*\*\*第\s*[一二三四五六七八九十\d]+\s*天|$)/g)]
         .map(m => [m[1], clean(m[2].replace(/\*\*/g, ''))]).filter(x => x[1]);
-      return days.length >= 3 ? { label: '计划表', md: ['| 天数 | 练习 |', '|---|---|', ...days.map(([d, v]) => `| 第${d}天 | ${v.slice(0, 120).replace(/\|/g, '／')} |`)].join('\n') } : null;
+      return days.length >= 3 ? { label: '计划表', md: ['| 天数 | 安排 |', '|---|---|', ...days.map(([d, v]) => `| 第${d}天 | ${v.slice(0, 120).replace(/\|/g, '／')} |`)].join('\n') } : null;
     },
     b => { const ev = extract.events(b.text); return ev.length >= 2 ? { label: '时间线', md: ['```mermaid', 'timeline', ...ev.map(([y, e]) => `  ${y} : ${e.replace(/:/g, '：')}`), '```'].join('\n') } : null; },
     b => { const ev = extract.events(b.text); return ev.length >= 2 ? { label: '表格', md: ['| 时间 | 事件 |', '|---|---|', ...ev.map(([y, e]) => `| ${y} | ${e} |`)].join('\n') } : null; },
@@ -121,8 +121,8 @@ export const DERIVERS = {
   ],
   steps: [
     // branches need judgment about which step leads where: those stay with the model's skeleton
-    b => { const s = extract.steps(b.text); return s.length >= 3 && !isList(b.text) && !/(如果|否则|若.{0,4}则|失败就|成功则|没有.{0,4}就)/.test(b.text) ? { label: '步骤', md: s.map((x, k) => `${k + 1}. ${x}`).join('\n') } : null; },
-    b => { const s = extract.steps(b.text); return s.length >= 3 && s.length <= 8 && !/(如果|否则|若.{0,4}则|失败就|成功则|没有.{0,4}就)/.test(b.text) ? { label: '流程图', md: ['```mermaid', 'flowchart LR', ...s.map((x, k) => `  S${k}[${q(x)}]`), '  ' + s.map((_, k) => `S${k}`).join(' --> '), '```'].join('\n') } : null; },
+    b => { const s = extract.steps(b.text); return s.length >= 3 && !isList(b.text) && !/(失败|否则|如果|成功|若.{0,4}则|没有.{0,4}就)/.test(b.text) ? { label: '步骤', md: s.map((x, k) => `${k + 1}. ${x}`).join('\n') } : null; },
+    b => { const s = extract.steps(b.text); return s.length >= 3 && s.length <= 8 && !/(失败|否则|如果|成功|若.{0,4}则|没有.{0,4}就)/.test(b.text) ? { label: '流程图', md: ['```mermaid', 'flowchart LR', ...s.map((x, k) => `  S${k}[${q(x)}]`), '  ' + s.map((_, k) => `S${k}`).join(' --> '), '```'].join('\n') } : null; },
   ],
 };
 
