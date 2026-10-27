@@ -166,6 +166,8 @@ export const HARD = {
   treemap: t => branchingParents(t) >= 1 && sameUnit(t) >= 3,
   // a journey needs three or more stages, each with how the person feels
   journey: t => new Set(t.match(/(兴奋|烦躁|焦虑|开心|高兴|不错|烦|放松|失望|满意|沮丧|紧张|期待|愉快|生气|困惑|舒服|难受|惊喜|担心|安心|无聊|frustrat\w*|happy|anxious|relieved|annoyed|delighted)/gi) || []).size >= 3,
+  // a callout is a caution the text itself flags (⚠️, 注意：, 切勿…); a list of caveats is a list
+  callout: t => /(⚠️|❗|(^|\n)\s*>?\s*\**\s*(注意|重要|警告|风险提示|小心|warning|caution|important)\**\s*[:：]|绝对不要|切勿|务必)/i.test(t),
   kanban: t => new Set(t.match(/(待办|进行中|已完成|阻塞|待验收|todo|doing|done|in progress|backlog)/gi) || []).size >= 2,
   // forms bound to a domain vocabulary: the text must use that vocabulary
   // a requirement diagram needs numbered requirements or binding wording, not just the word 需求
