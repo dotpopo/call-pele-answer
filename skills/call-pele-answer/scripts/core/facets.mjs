@@ -1,68 +1,177 @@
 // Judgments from JEV (atomic nouls), decisions in code (rules + priority).
-const N = s => ({ type: 'noul', instructions: s });
-// 原子判断：每题只问一件可观察的事
+// Each question names the narrowest observable fact and states both sides as concrete situations
+// (TypeSafe: literal reading — put the boundary case in the criteria). The shared boundary for every
+// structure question: a word, number, date or command that only APPEARS in the block is not how the
+// block is ORGANIZED. Context every question shares lives once in the state (stateOf).
+const N = (q, yes, no) => ({ type: 'noul', instructions: q, criteria: { true: yes, false: no } });
+export const STATE_NOTE = 'block is one part of a longer written answer. A question about how block is organized asks about the whole block, not about a word, number, date or command it happens to mention.';
+export const stateOf = text => ({ about: STATE_NOTE, block: text });
 export const FACETS = {
-  steps: N('Does the text give actions done in a fixed order?'),
-  decision: N('Does the text say that different things happen under different conditions?'),
-  roles_handoff: N('Does the text say which named person, team or role does each step?'),
-  agent_tools: N('Does the text describe an AI agent that calls named tools?'),
-  messages: N('Does the text describe two or more named parties sending messages or requests to each other?'),
-  states: N('Does the text name states that one object is in at different times?'),
-  feelings: N('Does the text say how a person feels at each stage?'),
-  status_columns: N('Does the text group work items by status such as to do, doing and done?'),
-  infra: N('Does the text name infrastructure such as servers, databases or queues?'),
-  db_tables: N('Does the text name database tables or entities with their fields?'),
-  classes: N('Does the text name programming classes or types with fields or methods?'),
-  modules_grid: N('Does the text lay out modules in rows or layers?'),
-  users: N('Does the text name kinds of people who use the system?'),
-  external_systems: N('Does the text name outside systems that the described system calls?'),
-  role_actions: N('Does the text list which actions each role is allowed to do?'),
-  requirements: N('Does the text list numbered or named requirements?'),
-  events_commands: N('Does the text name events that happened in a system as a result of named commands?'),
-  bit_layout: N('Does the text give the bit or byte layout of a format?'),
-  subtopics: N('Does the text split one named topic into named parts, each with its own sub-points?'),
-  file_tree: N('Does the text show a directory or file tree?'),
-  nested_parts: N('Does the text break some of its parts into smaller sub-parts?'),
-  part_sizes: N('Does the text give a size or amount for each part of a whole?'),
-  causes: N('Does the text list several causes of one named problem?'),
-  dated_events: N('Does the text give events with dates or years?'),
-  task_durations: N('Does the text give a duration such as days or weeks for each of several tasks?'),
-  git: N('Does the text describe git branches or merges?'),
-  percentages: N('Does the text give percentages of one whole?'),
-  same_unit_numbers: N('Does the text give numbers for three or more items in the same unit?'),
-  over_time: N('Does the text give values of one measure at several points in time?'),
-  flows_amounts: N('Does the text give amounts moving from sources to destinations?'),
-  scores_criteria: N('Does the text give each item a number score on each of several criteria?'),
-  two_axes: N('Does the text rate each item as high or low on the same two named dimensions?'),
-  sets_overlap: N('Does the text say which members belong to both of two named groups?'),
-  evolution: N('Does the text place components by how mature or commoditized they are?'),
-  domains: N('Does the text sort problems by how predictable they are?'),
-  grammar: N('Does the text give grammar or syntax rules?'),
-  items_attrs: N('Does the text compare two or more items on the same two or more attributes?'),
-  warning: N('Does the text contain a warning that something bad will happen if the reader does a specific thing?'),
-  alternatives: N('Does the text present two or more named alternative approaches?'),
-  parameter: N('Does the text explain how a result changes when one parameter grows or shrinks?'),
-  code: N('Does the text contain a command or code to run or copy?'),
-  // structure a list cannot show (the draw gate for process forms)
-  loop_back: N('Does the text say that after some step the work goes back to an earlier step?'),
-  paths_merge: N('Does the text describe two different paths that later continue with the same step?'),
-  multi_branch: N('Does the text contain two or more separate checks, each deciding what happens next?'),
-  any_order: N('Could the listed items be done in any order without changing the result?'),
-  uses_previous: N('Does a later step need the result of an earlier step?'),
-  back_and_forth: N('Does work pass between the same two roles more than once?'),
-  transitions: N('Does the text say what event moves one object from one named state to another named state?'),
-  // procedure vs plan (Horn's information types; DITA task): one goal, done by the reader in order, conditions live inside a step
-  side_by_side: N('Does every item give its own value for the same two or more named attributes, so the items can be compared side by side?'),
-  one_task: N('Do the items together complete one specific task that the reader carries out step by step?'),
-  time_buckets: N('Are the items grouped by time period, phase or priority (this week, this month, first, later) rather than done in one go?'),
-  advice: N('Is the text mainly a set of separate recommendations, rules or plan items?'),
-  system_parts: N('Does the text name components of a software or hardware system and which connects to which?'),
+  steps: N('Is `block` a series of actions done one after another in a set order, by the reader or by anyone else?',
+    'Most of the block is actions in a fixed order, such as "unplug the router, wait 30 seconds, plug it back in, check the light" or "first we collect data, then we train, then we test".',
+    'The block explains, describes or recommends, and any actions in it are separate pieces of advice or a single action.'),
+  decision: N('Does `block` say that what to do next depends on which of two or more conditions holds?',
+    'The block branches on a check, such as "if the light is green, continue; if it is red, call support".',
+    'The block has no branch, or one condition appears inside a single sentence of advice or explanation.'),
+  roles_handoff: N('Does `block` assign each step of a process to a named person, team or role?',
+    'Each step has an owner, such as "sales signs the contract, legal reviews it, finance issues the invoice".',
+    'Roles are mentioned, but the block does not walk through steps that pass from one owner to the next.'),
+  agent_tools: N('Does `block` describe an AI agent deciding which named tools to call?',
+    'The block walks through an agent calling tools, such as "the agent calls search, reads the page, then calls the calculator".',
+    'The block talks about AI or tools in general without an agent calling them in turn.'),
+  messages: N('Does `block` walk through, in order, messages that two or more named parties send to each other?',
+    'Most of the block is who sends what to whom in turn, such as "the client asks for a token, the server returns it, the client sends the request with the token".',
+    'The block explains why a protocol or system behaves as it does, naming a message or request only in passing.'),
+  states: N('Does `block` name the states one object passes through over its life?',
+    'The block names an object\'s states, such as "an order is pending, then paid, then shipped, then closed".',
+    'The block describes things, steps or options rather than one object changing state.'),
+  feelings: N('Does `block` say how a person feels at each stage of an experience?',
+    'Each stage comes with a feeling, such as "booking is easy, waiting is anxious, arrival is a relief".',
+    'Feelings are not given stage by stage.'),
+  status_columns: N('Does `block` sort work items into status groups such as to do, doing and done?',
+    'Items are grouped by status, such as "to do: design; doing: backend; done: login page".',
+    'The block does not group items by work status.'),
+  infra: N('Is `block` mainly about servers, databases, queues or other infrastructure and how they connect?',
+    'The block lays out infrastructure pieces, such as "the load balancer sends traffic to two app servers that share one database".',
+    'Infrastructure is named in passing in a block about something else.'),
+  db_tables: N('Does `block` define database tables or entities with their fields?',
+    'The block lists tables with fields, such as "users: id, email; orders: id, user_id, total".',
+    'The block mentions data or a database without defining tables and fields.'),
+  classes: N('Does `block` define programming classes or types with their fields or methods?',
+    'The block lists types with members, such as "Shape has area(); Circle extends Shape with radius".',
+    'The block mentions code or types without defining their members.'),
+  modules_grid: N('Does `block` describe a software or hardware system built from modules arranged in layers or rows?',
+    'The block names the layers of a system and the modules in each, such as "UI layer: web and app; service layer: orders and payments; data layer: database and cache".',
+    'The word layer or level labels ideas, stages or management practices rather than parts of a built system.'),
+  users: N('Does `block` name the kinds of people who use a system?',
+    'The block names user groups of a system, such as "customers browse, staff fulfil orders, admins manage prices".',
+    'People are mentioned but not as user groups of a system.'),
+  external_systems: N('Does `block` name outside systems that the described system calls?',
+    'The block names external services the system depends on, such as "it calls Stripe for payments and SendGrid for email".',
+    'No outside system is named as something the system calls.'),
+  role_actions: N('Does `block` list what each kind of user is allowed to do in a software system?',
+    'The block maps users of a system to the features they may use, such as "viewers can read documents, editors can change them, admins can delete them".',
+    'The block says what job or responsibility each person, model or component has, or does not describe permissions at all.'),
+  requirements: N('Is `block` a list of numbered or named requirements that a system must meet?',
+    'The block states requirements as such, such as "R1: the system must log every login; R2: it must lock after five failures".',
+    'The block gives advice, explanation or tasks rather than requirements a system must meet.'),
+  events_commands: N('Does `block` name events in a system that result from named commands?',
+    'The block pairs commands with events, such as "PlaceOrder produces OrderPlaced, which triggers ReserveStock".',
+    'The block does not pair commands with the events they produce.'),
+  bit_layout: N('Does `block` give the bit or byte layout of a data format?',
+    'The block gives field positions and widths, such as "bits 0-3 version, bits 4-7 header length".',
+    'No bit or byte positions are given.'),
+  subtopics: N('Is `block` mainly a map of one topic broken into named parts, where the names of the parts are what the reader should take away?',
+    'The block exists to lay out the parts of a topic, each with its own sub-points, such as "Diet: less sugar, more fibre; Exercise: walk daily, lift twice a week; Sleep: same bedtime, no screens".',
+    'The block makes a point, explains how something works, or gives steps or advice, and its lists are evidence, examples or details for that; or it is one flat list; or its parts are periods of time or priorities.'),
+  file_tree: N('Does `block` show a directory or file tree?',
+    'The block shows folders and files nested inside each other.',
+    'Paths may be mentioned, but no tree of folders and files is shown.'),
+  nested_parts: N('Does `block` break some of its parts into smaller sub-parts?',
+    'Some parts of the block are divided further, such as a heading with a list under it.',
+    'The block is flat: one paragraph or one list with no level below it.'),
+  part_sizes: N('Does `block` give a size or amount for each part of one whole?',
+    'Each part of a whole has its size, such as "the budget is 50% housing, 30% food, 20% savings".',
+    'Numbers appear, but they are not the sizes of the parts of one whole.'),
+  causes: N('Is `block` a list of several causes of one named problem?',
+    'The block names one problem and lists its causes, such as "slow builds come from cold caches, large images and serial tests".',
+    'The block explains, advises or lists effects rather than listing causes of one problem.'),
+  dated_events: N('Is `block` a sequence of events ordered by their dates?',
+    'Three or more events each have their own date and the dates order the block, such as "1969 first message, 1983 TCP/IP, 1991 the web".',
+    'A date or year is background to an explanation, or only one or two dates appear.'),
+  task_durations: N('Does `block` give how long each of several tasks takes?',
+    'Several tasks each have a duration, such as "design takes two weeks, build four weeks, testing one week".',
+    'A duration appears once or describes something other than tasks.'),
+  git: N('Does `block` walk through, in order, the history of one set of git branches: where each branch starts, its commits and where it merges?',
+    'The block follows one branch history step by step, such as "branch feature from main, commit twice, merge back into main".',
+    'The block lists variants of a workflow, gives commands to choose from, or explains a branching policy without following one history.'),
+  percentages: N('Is `block` built around several percentages that are shares of one whole?',
+    'Three or more parts of one whole each get a percentage, such as "45% rent, 30% food, 25% savings".',
+    'A percentage appears as a threshold, a change or a single figure inside a sentence.'),
+  same_unit_numbers: N('Is `block` mainly a comparison of three or more items by one number in the same unit?',
+    'The point of the block is how three or more items compare on one measure, such as "Paris 2.1 million, Rome 2.8 million, Madrid 3.3 million".',
+    'Numbers are details inside separate points or rules, or they do not measure the same thing across three or more items.'),
+  over_time: N('Does `block` give values of one measure at three or more points in time?',
+    'One measure is tracked over time, such as "sales were 10 in 2021, 14 in 2022 and 19 in 2023".',
+    'Times and numbers appear, but not as one measure tracked at several points in time.'),
+  flows_amounts: N('Does `block` give amounts that move from sources to destinations?',
+    'Amounts flow between named places, such as "of 100 visitors, 60 sign up and 40 leave; of the 60, 20 pay".',
+    'No amounts move from one named place to another.'),
+  scores_criteria: N('Does `block` give each item a numeric score on each of several criteria?',
+    'Each item is scored on the same criteria, such as "A: speed 4, cost 2, quality 5; B: speed 3, cost 4, quality 3".',
+    'Items are described in words, or have one number each.'),
+  two_axes: N('Does `block` place each item as high or low on the same two named dimensions?',
+    'Every item is rated on two axes, such as "task A: high impact, low effort; task B: low impact, high effort".',
+    'Two dimensions are named, but items are not placed on both, or the block explains how to use such a grid.'),
+  sets_overlap: N('Does `block` say which members belong to both of two named groups?',
+    'The block names members in each group and in both, such as "mammals that fly: bats; birds that cannot fly: penguins".',
+    'The block does not describe overlapping groups.'),
+  evolution: N('Does `block` place components by how mature or commoditized they are?',
+    'Components are placed from custom-built to commodity, such as "the model is custom, the database is a product, electricity is a commodity".',
+    'Maturity of components is not described.'),
+  domains: N('Does `block` sort problems by how predictable cause and effect are?',
+    'Problems are sorted into clear, complicated, complex and chaotic kinds.',
+    'Problems are not sorted by predictability.'),
+  grammar: N('Does `block` give grammar or syntax rules for a language or format?',
+    'The block gives rules for what can follow what, such as "an identifier is a letter followed by letters or digits".',
+    'The block uses a language without stating its syntax rules.'),
+  items_attrs: N('Does `block` compare two or more items on the same two or more attributes?',
+    'Each item gets a value for the same attributes, such as "car: fast, expensive; bike: slow, cheap".',
+    'Items are each described in their own way, or each item has only a name and a single explanation.'),
+  warning: N('Does `block` warn the reader that something bad will happen if they do a specific thing?',
+    'The block gives a caution tied to an action, such as "do not unplug the drive while it is writing, or you will lose data".',
+    'The block gives advice, limits or risks in general without a caution tied to an action.'),
+  alternatives: N('Does `block` present two or more alternative approaches the reader chooses between?',
+    'The block names options the reader picks one of, each with its own details, such as "rent if you may move within two years; buy if you will stay longer".',
+    'The block explains one method, or uses a word like plan or option once without offering a choice.'),
+  parameter: N('Does `block` explain how a result changes when one setting grows or shrinks?',
+    'One setting drives the result, such as "the higher the learning rate, the faster training starts but the less stable it is".',
+    'Several separate actions or facts are listed rather than the effect of one setting.'),
+  code: N('Does `block` give code or a command that the reader is meant to copy and run?',
+    'The block contains code lines or a command line to type, such as "run pip install requests" or several lines of a program.',
+    'A command or function name only labels something in a list or form, and the block is about something else.'),
+  loop_back: N('Does `block` say that after some step the work goes back to an earlier step?',
+    'The block loops, such as "if the test fails, fix the code and run the test again".',
+    'The block moves forward only.'),
+  paths_merge: N('Does `block` describe two different paths that later continue with the same step?',
+    'Two branches rejoin, such as "pay by card or by bank transfer; either way, you then receive a receipt".',
+    'The block has one path, or branches that never rejoin.'),
+  multi_branch: N('Does `block` contain two or more separate checks that each decide what happens next?',
+    'At least two decision points, such as "if the file exists, open it, else create it; if it is locked, wait".',
+    'The block has at most one check, or conditions that are only part of advice.'),
+  any_order: N('Could the items in `block` be done in any order without changing the result?',
+    'The items are independent, such as a packing list or a set of tips.',
+    'Later items need earlier ones to be done first.'),
+  uses_previous: N('Does a later action in `block` need the result of an earlier action?',
+    'An action uses what an earlier one produced, such as "download the file, then open the downloaded file".',
+    'The items stand on their own, or the block contains no actions.'),
+  back_and_forth: N('Does work in `block` pass between the same two roles more than once?',
+    'The same two roles hand work back and forth, such as "the writer drafts, the editor comments, the writer revises, the editor approves".',
+    'No work passes back and forth between two roles.'),
+  transitions: N('Does `block` say which event moves one object from one named state to another?',
+    'Events change an object\'s state, such as "paying moves the order from pending to paid".',
+    'No event moves an object between named states.'),
+  side_by_side: N('Does every item in `block` give its own value for the same two or more named attributes, so the items can be compared side by side?',
+    'All items share the same attribute labels with a value each, such as "Plan A: price 10, storage 50 GB; Plan B: price 20, storage 200 GB".',
+    'Items each get a different kind of explanation, or only a name and one description.'),
+  one_task: N('Do the items in `block` together complete one specific task that the reader carries out step by step?',
+    'The items are the steps of one task with one end result, such as "install the app, sign in, connect the printer, print a test page".',
+    'The items are separate tips, checks, priorities or plan items that do not add up to one task done in one go.'),
+  time_buckets: N('Are the items in `block` grouped by time period, phase or priority?',
+    'Items sit under periods or priorities, such as "this week: …; this month: …; this year: …" or "first priority: …".',
+    'Items are not grouped by time or priority.'),
+  advice: N('Is `block` mainly a set of separate recommendations, rules or plan items?',
+    'Most of the block is independent recommendations, such as "sleep eight hours; drink water; walk daily".',
+    'The block mainly explains, describes, compares or walks through one procedure.'),
+  system_parts: N('Does `block` name the components of a software or hardware system and which connects to which?',
+    'Components and their connections are given, such as "the app calls the API, which reads from the database".',
+    'The block does not describe how the parts of a system connect.'),
 };
 export const YES = 0.7;
 // Forms with a narrow vocabulary need a clearer yes: JEV says "yes" readily on long text, and a wrong
 // specialised diagram costs the reader more than a missed one.
 export const STRICT = +(process.env.PE_STRICT || 0.85);
-const NARROW = new Set(['usecase','requirements','events_commands','bit_layout','causes','dated_events','task_durations','git','flows_amounts','scores_criteria','two_axes','sets_overlap','evolution','domains','grammar','parameter','agent_tools','modules_grid','external_systems','users','warning','role_actions']);
+const NARROW = new Set(['subtopics','part_sizes','over_time','usecase','requirements','events_commands','bit_layout','causes','dated_events','task_durations','git','flows_amounts','scores_criteria','two_axes','sets_overlap','evolution','domains','grammar','parameter','agent_tools','modules_grid','external_systems','users','warning','role_actions']);
 const Y = (s, k) => s[k] >= (NARROW.has(k) ? STRICT : YES);
 // 每个组件 = 原子判断的布尔组合（代码里，可审、可测）
 export const RULES = {
@@ -103,7 +212,7 @@ export const RULES = {
   table: s => s.side_by_side >= 0.85 || (s.side_by_side >= 0.7 && s.__grid),
   callout: s => Y(s,'warning'),
   // conditions inside a step of one task stay in that step (DITA task / Horn procedure); only a plan with branches is blocked
-  steps: s => Y(s,'steps') && (!Y(s,'decision') || (s.__list && s.one_task >= 0.85)),
+  steps: s => Y(s,'steps') && s.uses_previous >= 0.8 && (!Y(s,'decision') || s.__list),
   tabs: s => Y(s,'alternatives'),
   slider: s => Y(s,'parameter'),
   code: s => Y(s,'code'),
@@ -182,7 +291,7 @@ export const HARD = {
   // a journey needs three or more stages, each with how the person feels
   journey: t => new Set(t.match(/(兴奋|烦躁|焦虑|开心|高兴|不错|烦|放松|失望|满意|沮丧|紧张|期待|愉快|生气|困惑|舒服|难受|惊喜|担心|安心|无聊|frustrat\w*|happy|anxious|relieved|annoyed|delighted)/gi) || []).size >= 3,
   // a callout is a caution the text itself flags (⚠️, 注意：, 切勿…); a list of caveats is a list
-  callout: t => /(⚠️|❗|(^|\n)\s*>?\s*\**\s*(注意|重要|警告|风险提示|小心|warning|caution|important)\**\s*[:：]|绝对不要|切勿|务必)/i.test(t),
+  callout: t => /(⚠️|❗|(^|\n)\s*>?\s*\**\s*(注意|重要|警告|风险提示|小心|warning|caution|important)\**\s*[:：]|^\s*>?\s*\**callout\b|绝对不要|切勿|务必)/i.test(t),
   kanban: t => new Set(t.match(/(待办|进行中|已完成|阻塞|待验收|todo|doing|done|in progress|backlog)/gi) || []).size >= 2,
   // forms bound to a domain vocabulary: the text must use that vocabulary
   // a requirement diagram needs numbered requirements or binding wording, not just the word 需求
@@ -211,7 +320,7 @@ const COVERS = {
 // Three or more list items that each carry two or more values under the same attribute labels
 // ("- A：价格 3，耗时 5" / "- B：价格 4，耗时 2"): the text already has a grid's shape. Sentences in a list
 // rarely start their clauses with the same words, so a repeated label is the tell.
-export function gridShape(t) {
+export function gridShape(t, { whole = true } = {}) {
   const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || []).map(l => new Set([...l.matchAll(/[：:，,]\s*([^\s，,：:；;]{1,24})\s/g)].map(m => m[1])));
   if (items.length < 2) return false;
   // a table rewritten as a list ("- 行名：列 A 值，列 B 值") repeats the same column words across its rows;
@@ -220,7 +329,8 @@ export function gridShape(t) {
   const cols = [...count].filter(([, v]) => v >= 2).sort((x, y) => y[1] - x[1]).map(([k]) => k);
   for (let c = Math.min(cols.length, 6); c >= 2; c--) {
     const rows = items.filter(s => cols.slice(0, c).every(k => s.has(k))).length;
-    if ((rows >= 3 && c >= 2) || (rows >= 2 && c >= 3)) return true;
+    // ...and those rows are most of the list: a small grid inside a longer section does not make the block a table
+    if (((rows >= 3 && c >= 2) || (rows >= 2 && c >= 3)) && (!whole || rows >= items.length * 0.6)) return true;
   }
   return false;
 }
@@ -230,7 +340,12 @@ export const proseGrid = t => { const segs = t.split(/[；;]/).map(x => x.trim()
 export function decide(s, text = '') {
   s = { ...s, __list: listShaped(text), __grid: gridShape(text) || proseGrid(text), __arrows: (text.match(/→|->|⟶/g) || []).length };
   let cands = PRIORITY.filter(c => RULES[c](s) && (!HARD[c] || HARD[c](text)));
-  if (gridShape(text)) cands = ['table', ...cands.filter(c => c !== 'table')];
+  // the grid shape is lexical; it leads only when JEV also reads the items as compared side by side
+  // a grid that is most of the list leads; a grid inside a longer section leads only when JEV reads the block as comparing items
+  if (gridShape(text) || (gridShape(text, { whole: false }) && s.items_attrs >= 0.85)) cands = ['table', ...cands.filter(c => c !== 'table')];
+  // a block that is itself code is shown as code: redrawing a program as a flowchart hides the code it is
+  const lines = text.split('\n').filter(l => l.trim());
+  if (cands.includes('code') && lines.length >= 2 && lines.filter(l => /^\s*[\w.\[\]]+\s*(=|\(|\{)|[:;{]\s*$|^\s*(#|\/\/|def|for|if|else|elif|while|return|import|from|class|const|let|var|function)\b/.test(l) && !/^\s*([-*]|\d+[.)])\s/.test(l)).length >= lines.length * 0.6) cands = ['code', ...cands.filter(c => c !== 'code')];
   const primary = cands[0] || 'prose';
   cands = cands.filter(c => c === primary || !GENERIC[c] || !COVERS[GENERIC[c]].includes(primary));
   return { primary, cands };

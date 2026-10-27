@@ -1,7 +1,7 @@
 // draw/no-draw confusion: prose blocks wrongly drawn, drawable blocks left as text, and process forms drawn on prose
 import { readFileSync } from 'node:fs'; import { createHash } from 'node:crypto';
-import { FACETS, decide } from '../../skills/call-pele-answer/scripts/core/facets.mjs';
-const cache = JSON.parse(readFileSync(new URL('./answers.cache.json', import.meta.url))); const key = (q, t) => createHash('sha1').update(JSON.stringify([q, t])).digest('hex');
+import { FACETS, decide, stateOf } from '../../skills/call-pele-answer/scripts/core/facets.mjs';
+const cache = JSON.parse(readFileSync(new URL('./answers.cache.json', import.meta.url))); const key = (q, t) => createHash('sha1').update(JSON.stringify([q, stateOf(t)])).digest('hex');
 const split = process.argv[2] || 't'; const sets = (process.env.SET || 'real,runs').split(',');
 const PROC = ['flowchart','swimlane','stateDiagram','sequenceDiagram','agentflow','steps'];
 let P = 0, wrong = 0, wrongProc = 0, D = 0, missed = 0;

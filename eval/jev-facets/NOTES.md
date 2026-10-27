@@ -33,3 +33,22 @@ negatives SYN 025#2 .95→.07, 025#4 .90→.10, winver 038#5 .92→.19, 30% 019#
 quadrant-usage 028#6 .93→.36, 097#1 .84→.65, layers 064#5 .94→.27, 036#1 .94→.12; positives stay .87–.99.
 Caveat: examples paraphrase the failing cases (TypeSafe yellow flag). Next (asked her): rewrite all facets with
 generic criteria, rerun 424, validate on an unseen batch, then drop HARD rules that become redundant.
+
+## Round 7 — JEV-native questions (2026-10-27 18:00, her: 深刻反思如何用好 JEV, no wrongly drawn)
+Read TypeSafe docs (jaggedness: literal reading → exact condition + boundary case in criteria; keep direct evidence in code;
+autoformat cookbook: ask the narrowest observable fact, "mid-sentence" not "same paragraph"; uncertainty band).
+Changes (facets.mjs): every facet now a Noul with criteria.true/false written as generic situations (no test text);
+state = {about: STATE_NOTE, block} (shared context once: "a word/number/command it mentions is not how it is organized");
+steps "by the reader or anyone" + uses_previous ≥ .8; role_actions = permissions in a system (not responsibilities);
+git = one branch history in order (not variants/policy); subtopics = a map of a topic whose part names are the takeaway;
+same_unit_numbers = comparison is the point; NARROW += subtopics, part_sizes, over_time; gridShape needs grid rows ≥60%
+of the list, or a partial grid + JEV items_attrs ≥ .85; a block that is itself code stays code; callout marker "callout".
+Relabels (per LABELING.md): slim-eval-result#3 → prose/steps (≥3 dependent ordered steps); fresh 052#5 + callout (flagged).
+Results (wrongly drawn = prose gold drawn as a form not in gold):
+- 424 real tuning: top1 .936 → .965, wrongly drawn 18 → 0 / 201, left as text 11 → 25 (cost of strictness).
+- synthetic 82: .927 → .915.
+- new.json 52 unused, labeled first, run once BEFORE folding: v1 .923 / wrong 3 of 30; v2 .962 / wrong 1 (line on 2 time points);
+  after folding (over_time NARROW, callout marker) 1.0 / 0.
+- new2.json 30 unused, labeled first, run once, nothing folded: wrong 0 of 9 for v2 (and v1); 3 misses are blocks whose
+  answers failed (429 daily quota, resets ~08:00 CST) → rerun new2 once quota returns.
+Next: recover recall (25 left as text: flattened tables JEV can't see, plan-steps under time_buckets) without new wrongs.

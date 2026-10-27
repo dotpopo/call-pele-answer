@@ -1,12 +1,12 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { BUILTIN_ADAPTERS } from '/workspace/work/call-pele-answer/skills/call-pele-answer/scripts/routers/systemone.mjs';
-import { FACETS, decide } from '../../skills/call-pele-answer/scripts/core/facets.mjs';
+import { FACETS, decide, stateOf } from '../../skills/call-pele-answer/scripts/core/facets.mjs';
 const split = process.argv[2] || 't';
 const blocks = (process.env.SET || 'blocks').split(',').flatMap(f => JSON.parse(readFileSync(new URL('./' + f + '.json', import.meta.url)))).filter(b => split === 'all' || b.split === split);
 const CACHE = new URL('./answers.cache.json', import.meta.url);
 const cache = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE)) : {};
-const key = (q, t) => createHash('sha1').update(JSON.stringify([q, t])).digest('hex');
+const key = (q, t) => createHash('sha1').update(JSON.stringify([q, stateOf(t)])).digest('hex');
 const need = {}; let requests = 0, ms = 0, errors = 0;
 for (const b of blocks) for (const [n, q] of Object.entries(FACETS)) if (cache[key(q, b.text)] == null) (need[b.text] ??= {})[n] = q;
 const texts = Object.keys(need);
@@ -16,7 +16,7 @@ for (let k = 0; k < texts.length; k += 15) {
   const qs = Object.assign({}, ...part.map(t => need[t]));
   const a = BUILTIN_ADAPTERS.find(x => x.name === 'classifier-systemone');
   const t0 = Date.now();
-  try { const r = await a.ask(part, qs); requests++; ms += Date.now() - t0;
+  try { const r = await a.ask(part.map(stateOf), qs); requests++; ms += Date.now() - t0;
     part.forEach((tx, i) => { for (const [n, q] of Object.entries(qs)) { const v = r[i][n]?.noul; if (v == null) errors++; else cache[key(q, tx)] = v; } });
   } catch (e) { errors++; console.error('ask failed', e.message); if (/429/.test(e.message)) await new Promise(r => setTimeout(r, 30000)); }
   writeFileSync(CACHE, JSON.stringify(cache));
