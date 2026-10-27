@@ -93,13 +93,15 @@ export const RULES = {
 // Specific forms outrank generic ones; first match is the primary.
 export const PRIORITY = ['packet','gitGraph','treeView','erDiagram','classDiagram','railroad','wardley','cynefin','eventmodeling','requirement','c4','usecase','journey','kanban','agentflow','ishikawa','gantt','timeline','sankey','treemap','pie','radar','quadrant','venn','line','bar','swimlane','sequenceDiagram','stateDiagram','architecture','block','slider','table','tabs','flowchart','mindmap','code','steps','callout'];
 // Lexical facts code can check exactly; JEV is not asked to count or parse.
+// the most numbers that share one unit ("72 美元 … 68 美元 … 65 美元" → 3)
+const sameUnit = t => { const c = {}; for (const m of t.matchAll(/\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
 const nums = t => (t.match(/\d+(?:\.\d+)?/g) || []).length;
 export const HARD = {
   timeline: t => (t.match(/(1[5-9]|20)\d{2}\s*年|\d{4}-\d{2}/g) || []).length >= 2,
   gantt: t => /\d+\s*(天|周|个?月|小时|days?|weeks?)/.test(t),
   pie: t => (t.match(/\d+(?:\.\d+)?\s*%/g) || []).length >= 2,
   radar: t => nums(t) >= 6,
-  sankey: t => nums(t) >= 3, treemap: t => nums(t) >= 3, bar: t => nums(t) >= 3,
+  sankey: t => nums(t) >= 3, treemap: t => nums(t) >= 3, bar: t => sameUnit(t) >= 3,
   // a line needs at least three points on a time axis written out in the text
   line: t => (t.match(/(1[5-9]|20)\d{2}\s*年?|\d{1,2}\s*月|第\s*\d+\s*(天|周|月|轮|季度?)|Q[1-4]\b|\b\d{1,2}:\d{2}\b|周[一二三四五六日]|(day|week|month)\s*\d+/gi) || []).length >= 3, quadrant: t => true,
   packet: t => /\d+\s*(位|字节|bits?|bytes?)/i.test(t),
