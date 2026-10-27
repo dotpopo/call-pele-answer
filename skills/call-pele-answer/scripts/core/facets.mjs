@@ -189,14 +189,19 @@ const COVERS = {
 // ("- A：价格 3，耗时 5" / "- B：价格 4，耗时 2"): the text already has a grid's shape. Sentences in a list
 // rarely start their clauses with the same words, so a repeated label is the tell.
 export function gridShape(t) {
-  const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || []);
-  if (items.length < 3) return false;
-  // a table rewritten as a list ("- 行名：列 A 值，列 B 值") repeats the same column words in every item
-  const seen = new Map();
-  for (const l of items) for (const k of new Set([...l.matchAll(/[：:，,]\s*([^\s，,：:；;]{1,24})\s/g)].map(m => m[1]))) seen.set(k, (seen.get(k) || 0) + 1);
-  const need = Math.max(3, items.length - 1);
-  return [...seen.values()].filter(v => v >= need).length >= 2;
+  const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || []).map(l => new Set([...l.matchAll(/[：:，,]\s*([^\s，,：:；;]{1,24})\s/g)].map(m => m[1])));
+  if (items.length < 2) return false;
+  // a table rewritten as a list ("- 行名：列 A 值，列 B 值") repeats the same column words across its rows;
+  // grid = 3+ rows sharing 2+ column words, or 2 rows sharing 3+
+  const count = new Map(); items.forEach(s => s.forEach(k => count.set(k, (count.get(k) || 0) + 1)));
+  const cols = [...count].filter(([, v]) => v >= 2).sort((x, y) => y[1] - x[1]).map(([k]) => k);
+  for (let c = Math.min(cols.length, 6); c >= 2; c--) {
+    const rows = items.filter(s => cols.slice(0, c).every(k => s.has(k))).length;
+    if ((rows >= 3 && c >= 2) || (rows >= 2 && c >= 3)) return true;
+  }
+  return false;
 }
+
 // A comparison written in a sentence: three or more items split by "；", each giving two or more attributes.
 export const proseGrid = t => { const segs = t.split(/[；;]/).map(x => x.trim()).filter(Boolean); return segs.length >= 3 && segs.every(x => (x.match(/[、，,]/g) || []).length >= 1); };
 export function decide(s, text = '') {
