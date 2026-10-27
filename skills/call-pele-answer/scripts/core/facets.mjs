@@ -129,7 +129,7 @@ export function branchingParents(t) {
   return n;
 }
 // The text is already a list of three or more items that make up most of it.
-export const listShaped = t => { const ls = t.split('\n').filter(l => l.trim()); const it = ls.filter(l => /^\s*([-*]|\d+[.)])\s/.test(l)).length; return it >= 3 && it >= ls.length * 0.6; };
+export const listShaped = t => { const ls = t.split('\n').filter(l => l.trim()); const it = ls.filter(l => /^\s*([-*]|\d+[.)])\s/.test(l)).length; return it >= 2 && it >= ls.length * 0.6; };
 // An item points at another item: a jump or a loop that a list cannot draw.
 export const crossRef = t => /(回到|返回|退回|跳到|跳回|重复)(第\s*\d+\s*步|步骤|上一步|前一步|开头|起点|[A-Z①-⑨]\b)?|再走一遍|go back to|return to step|repeat from/i.test(t);
 // the most numbers that share one unit ("72 美元 … 68 美元 … 65 美元" → 3)
