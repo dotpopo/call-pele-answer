@@ -151,7 +151,8 @@ export const HARD = {
   line: t => (t.match(/(1[5-9]|20)\d{2}\s*年?|\d{1,2}\s*月|第\s*\d+\s*(天|周|月|轮|季度?)|Q[1-4]\b|\b\d{1,2}:\d{2}\b|周[一二三四五六日]|(day|week|month)\s*\d+/gi) || []).length >= 3, quadrant: t => true,
   packet: t => /\d+\s*(位|字节|bits?|bytes?)/i.test(t),
   // a parameter sweep says how far it moves: "越 X 越 Y" or "从 A 调到 B" with the numbers
-  slider: t => /(越.{1,8}越|从\s*\S+\s*(调|升|降|涨|增|减)到|the (larger|higher|more|smaller|lower)|as .{1,20} (increases|grows|shrinks))/i.test(t) && nums(t) >= 2,
+  // a slider shows one parameter's effect; a list of several actions is not one parameter
+  slider: t => !listShaped(t) && /(越.{1,8}越|从\s*\S+\s*(调|升|降|涨|增|减)到|the (larger|higher|more|smaller|lower)|as .{1,20} (increases|grows|shrinks))/i.test(t) && nums(t) >= 2,
   // alternatives are named as such: 方案 A / 可以选 X，也可以选 Y / option
   tabs: t => /(方案|选项|做法|路线|可以选|也可以|还是|或者|二选一|option|alternative|approach|either)/i.test(t),
   // a list whose branches stay inside its own items is still a list: draw a flow only when items jump or loop
@@ -163,6 +164,8 @@ export const HARD = {
   // a mindmap shows a hierarchy: two or more parts that each have their own sub-points
   mindmap: t => branchingParents(t) >= 2,
   treemap: t => branchingParents(t) >= 1 && sameUnit(t) >= 3,
+  // a journey needs three or more stages, each with how the person feels
+  journey: t => new Set(t.match(/(兴奋|烦躁|焦虑|开心|高兴|不错|烦|放松|失望|满意|沮丧|紧张|期待|愉快|生气|困惑|舒服|难受|惊喜|担心|安心|无聊|frustrat\w*|happy|anxious|relieved|annoyed|delighted)/gi) || []).size >= 3,
   kanban: t => new Set(t.match(/(待办|进行中|已完成|阻塞|待验收|todo|doing|done|in progress|backlog)/gi) || []).size >= 2,
   // forms bound to a domain vocabulary: the text must use that vocabulary
   // a requirement diagram needs numbered requirements or binding wording, not just the word 需求
