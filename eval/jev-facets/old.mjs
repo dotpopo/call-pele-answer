@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { BUILTIN_ADAPTERS } from '/workspace/work/call-pele-answer/skills/call-pele-answer/scripts/routers/systemone.mjs';
 import { routeAsk, routeLocal } from '/workspace/work/call-pele-answer/skills/call-pele-answer/scripts/routers/engine.mjs';
-const B = JSON.parse(readFileSync(new URL('./blocks.json', import.meta.url)));
+const B = JSON.parse(readFileSync(new URL('./' + (process.env.SET || 'blocks') + '.json', import.meta.url)));
 const a = BUILTIN_ADAPTERS.find(x => x.name === 'classifier-systemone');
 for (const [name, fn] of [['local', t => routeLocal(t)], ['jev-full(old)', t => routeAsk(t, a, 'full')]]) {
   const t0 = Date.now(); const r = await fn(B.map(b => b.text)); const ms = Date.now() - t0;
