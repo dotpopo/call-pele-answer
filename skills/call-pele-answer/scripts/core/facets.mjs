@@ -95,7 +95,7 @@ export const RULES = {
   wardley: s => Y(s,'evolution'),
   cynefin: s => Y(s,'domains'),
   railroad: s => Y(s,'grammar'),
-  table: s => s.items_attrs >= 0.9, // a grid-shaped list is routed by gridShape; prose needs a clear yes
+  table: s => s.items_attrs >= 0.9 && s.__grid, // only content already shaped as a grid; JEV alone says yes to any multi-point list
   callout: s => Y(s,'warning'),
   steps: s => Y(s,'steps') && !Y(s,'decision'),
   tabs: s => Y(s,'alternatives'),
@@ -193,7 +193,10 @@ export function gridShape(t) {
   const need = Math.max(3, items.length - 1);
   return [...seen.values()].filter(v => v >= need).length >= 2;
 }
+// A comparison written in a sentence: three or more items split by "；", each giving two or more attributes.
+export const proseGrid = t => { const segs = t.split(/[；;]/).map(x => x.trim()).filter(Boolean); return segs.length >= 3 && segs.every(x => (x.match(/[、，,]/g) || []).length >= 1); };
 export function decide(s, text = '') {
+  s = { ...s, __grid: gridShape(text) || proseGrid(text) };
   let cands = PRIORITY.filter(c => RULES[c](s) && (!HARD[c] || HARD[c](text)));
   if (gridShape(text)) cands = ['table', ...cands.filter(c => c !== 'table')];
   const primary = cands[0] || 'prose';
