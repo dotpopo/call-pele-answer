@@ -116,7 +116,7 @@ class Engine {
     return { draft, blocks: res.blocks, by: res.by, ms: Date.now() - t0, notes };
   }
 
-  build(draft, { output = this.config.output, theme = this.config.theme, ste = this.config.ste, palette = this.config.palette, annotate = this.config.annotate, color = this.config.color, mode, lean } = {}) {
+  build(draft, { output = this.config.output, theme = this.config.theme, ste = this.config.ste, palette = this.config.palette, annotate = this.config.annotate, color = this.config.color, mode, lean, strict = false } = {}) {
     const T = this.trace;
     const { doc, errors, warns, embedded } = T.span('parse', () => parseDraft(draft, this.registry, T));
     if (!process.env.PE_NO_LOG && !errors.length) logUsage(draft, this.registry.components());
@@ -128,6 +128,11 @@ class Engine {
     found.sort((a, b) => a[0] - b[0]);
     const lang = docLang(doc);
     if (errors.length) return { doc, errors: errors.sort((a, b) => a[0] - b[0]), warnings: found, embedded, lang };
+    // Strict mode is intended for final delivery and CI: a page that still
+    // contains routing walls, prose comparisons, or other lint findings is
+    // not silently shipped as if it had passed review.
+    const walls = found.filter(w => String(w[1]).startsWith('route/'));
+    if (strict && walls.length) return { doc, errors: walls, warnings: found, embedded, lang };
     const out = this.registry.output(output);
     if (!out) throw new Error(`未知 output：${output}（可选 ${this.registry.outputs().join(' | ')}）`);
     const text = T.span(`output:${output}`, () => out.write(doc, { registry: this.registry, theme, lang, mode, lean, palette, annotate, color }));

@@ -3,10 +3,12 @@
 //   pe render <draft.md|->  [-o out] [--output html|markdown|json] [--theme pele] [--ste flavored|strict|off] [--lean]
 //   pe check  <draft.md|->                       lint only, writes nothing
 //   pe route  <answer.md|-> [-o draft.md] [--render out.html] [--router auto|…] [--device desktop|mobile] [--json]
-//   pe answer <answer.md|-> [-o page.html] [--router …]   one pass: route + derive + render, no second writing pass
+//   pe answer <answer.md|-> [-o page.html] [--router …] [--audit] [--strict]   route + derive + render
 //   --annotate on|off  批注开关（默认开；也可配置 "annotate": false，或 PE_ANNOTATE=0，或稿件 annotate: off）
 //   --color auto|plain 自动配色开关（默认 auto：每块随机上一种背景色；plain 恢复素色。也可配置 "color": "plain"，或 PE_COLOR=plain，或稿件 color: plain）
 //   --palette on|off   调色器开关（默认开；也可在配置写 "palette": false，或 PE_PALETTE=0，或稿件 palette: off）
+//   --audit            输出每块的候选组件、实际组件和未落地候选
+//   --strict           有 route 警告时不生成输出（STE 文字提示不拦）
 //   pe options <answer.md|-> [--json]           per block: components whose admission conditions pass, with evidence
 //   pe assemble <draft.md> --block <n|title> --use a,b[,c] [--as views|stack] [-o out.md]   insert their skeletons
 //   pe tune                                      adjust admission thresholds from what was offered vs used
@@ -22,7 +24,7 @@ import { fileURLToPath } from 'node:url';
 import { createEngine, USER_CONFIG } from './core/engine.mjs';
 import { createTrace } from './core/trace.mjs';
 import { stats } from './core/stats.mjs';
-import { assemble as assembleDraft, tune as tuneAdmission } from './core/admit.mjs';
+import { assemble as assembleDraft, tune as tuneAdmission, usedComponents } from './core/admit.mjs';
 
 const fmt = ([l, r, m, f]) => `L${l} [${r}] ${m}${f ? `  →  ${f}` : ''}`;
 const readInput = p => (p === '-' || !p ? readFileSync(0, 'utf8') : readFileSync(p, 'utf8'));
@@ -50,7 +52,7 @@ function outPath(opts, title, ext) {
 async function build(engine, file, opts, { checkOnly = false } = {}) {
   const src = readInput(file);
   engine.trace.count('draft_chars', src.length);
-  const r = engine.build(src, { output: opts.output || undefined, theme: opts.theme || undefined, ste: opts.ste || undefined, lean: !!opts.lean, palette: opts.palette === undefined ? undefined : !/^(off|0|false|no)$/i.test(String(opts.palette)), annotate: opts.annotate === undefined ? undefined : !/^(off|0|false|no)$/i.test(String(opts.annotate)), color: opts.color === undefined ? undefined : /^(plain|off|0|false|no)$/i.test(String(opts.color)) ? 'plain' : 'auto' });
+  const r = engine.build(src, { output: opts.output || undefined, theme: opts.theme || undefined, ste: opts.ste || undefined, lean: !!opts.lean, strict: !!opts.strict, palette: opts.palette === undefined ? undefined : !/^(off|0|false|no)$/i.test(String(opts.palette)), annotate: opts.annotate === undefined ? undefined : !/^(off|0|false|no)$/i.test(String(opts.annotate)), color: opts.color === undefined ? undefined : /^(plain|off|0|false|no)$/i.test(String(opts.color)) ? 'plain' : 'auto' });
   if (r.errors.length) {
     console.log(`✗ 稿件有 ${r.errors.length} 处错误，没有生成输出：`);
     r.errors.forEach(e => console.log('  ' + fmt(e)));
@@ -87,9 +89,16 @@ async function route(engine, file, opts) {
 
 const showOptions = (blocks, full) => blocks.forEach((b, i) => {
   const o = b.options || [];
+  const rec = b.recommended || o, pos = b.possible || [];
   console.log(`  ${String(i + 1).padStart(2)} ${(b.title || b.text.slice(0, 18))}${o.length ? '' : '  —  无组件通过，写文字'}`);
-  if (full) o.forEach(x => console.log(`       ${x.name.padEnd(16)} ${x.p == null ? ' -- ' : x.p.toFixed(2)}  ${x.evidence ? x.evidence + ' · ' : ''}${x.desc}`));
-  else if (o.length) console.log(`     可选：${o.map(x => x.name).join(' · ')}`);
+  if (full) {
+    rec.forEach(x => console.log(`       推荐  ${x.name.padEnd(16)} ${x.p == null ? ' -- ' : x.p.toFixed(2)}  ${x.evidence ? x.evidence + ' · ' : ''}${x.desc}`));
+    pos.forEach(x => console.log(`       可选  ${x.name.padEnd(16)} ${x.p == null ? ' -- ' : x.p.toFixed(2)}  ${x.evidence ? x.evidence + ' · ' : ''}${x.desc}`));
+    if (b.evidenceOnly?.length) console.log(`       仅证据命中：${b.evidenceOnly.map(x => x.name).join(' · ')}`);
+  } else if (o.length) {
+    console.log(`     推荐：${rec.map(x => x.name).join(' · ') || '文字'}`);
+    if (pos.length) console.log(`     可选：${pos.map(x => x.name).join(' · ')}`);
+  }
   if (full && b.near?.length) console.log(`       接近门槛：${b.near.map(x => `${x.name} ${x.p}/${x.min}`).join(' · ')}`);
 });
 async function options(engine, file, opts) {
@@ -121,6 +130,19 @@ async function answer(engine, file, opts) {
   res.blocks.filter(b => b.underived).forEach(b => console.log(`  ! 「${b.title || b.text.slice(0, 18)}」路由为 ${b.family}${b.type ? '/' + b.type : ''}，一遍模式没法自动生成，仍是文字；要图就在这块手写对应围栏`));
   const tmp = tmpFile('answer');
   writePrivate(tmp, res.draft);
+  if (opts.audit) {
+    const parts = res.draft.split(/^(?=##\s)/m).filter(p => /^##\s/.test(p));
+    console.log('  组件落地审计：');
+    res.blocks.forEach((b, i) => {
+      const actual = usedComponents(parts[i] || '', engine.registry.components());
+      const offered = (b.options || []).map(x => x.name);
+      const missing = offered.filter(n => !actual.includes(n));
+      console.log(`    ${i + 1}. ${b.title || '未命名块'} · 推荐=${(b.recommended || []).map(x => x.name).join(',') || '文字'} · 可选=${(b.possible || []).map(x => x.name).join(',') || '无'} · 实际=${actual.join(',') || '文字'}${missing.length ? ` · 未落地=${missing.join(',')}` : ''}`);
+    });
+    if (res.blocks.some((b, i) => (b.options || []).length && !usedComponents(parts[i] || '', engine.registry.components()).length)) {
+      console.log('  ! 有块存在组件候选但实际仍为文字；请运行 pe assemble，或在 answer 稿中明确写入组件围栏。');
+    }
+  }
   return build(engine, tmp, { ...opts, quiet: true });
 }
 

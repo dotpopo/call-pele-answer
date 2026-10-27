@@ -37,7 +37,9 @@ export const CHECKS = {
   grid: (t, raw = t) => {
     const ts = tablesIn(raw);
     if (ts.length) { const sh = ts.map(tableShape); const ok = sh.find(x => x.kind === 'comparison'); return ok ? ok.why : null; }
-    const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || []).filter(l => (l.match(/[，,；;：:]/g) || []).length >= 2);
+    const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || [])
+      .filter(l => !/https?:\/\//i.test(l))
+      .filter(l => (l.match(/[，,；;：:]/g) || []).length >= 2);
     return items.length >= 3 ? `${items.length} 项各带 ≥2 个属性` : null;
   },
   kw: rx => t => (rx.test(t) ? `提到「${(t.match(rx) || [''])[0]}」` : null),
