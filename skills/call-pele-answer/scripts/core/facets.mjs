@@ -82,7 +82,7 @@ export const RULES = {
   wardley: s => Y(s,'evolution'),
   cynefin: s => Y(s,'domains'),
   railroad: s => Y(s,'grammar'),
-  table: s => Y(s,'items_attrs'),
+  table: s => s.items_attrs >= 0.9, // a grid-shaped list is routed by gridShape; prose needs a clear yes
   callout: s => Y(s,'warning'),
   steps: s => Y(s,'steps') && !Y(s,'decision'),
   tabs: s => Y(s,'alternatives'),
