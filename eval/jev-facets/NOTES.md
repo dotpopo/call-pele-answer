@@ -52,3 +52,10 @@ Results (wrongly drawn = prose gold drawn as a form not in gold):
 - new2.json 30 unused, labeled first, run once, nothing folded: wrong 0 of 9 for v2 (and v1); 3 misses are blocks whose
   answers failed (429 daily quota, resets ~08:00 CST) → rerun new2 once quota returns.
 Next: recover recall (25 left as text: flattened tables JEV can't see, plan-steps under time_buckets) without new wrongs.
+- Released 0.5.12 2026-10-28 (her OK): merged feature/optimized-routing-and-views + review fixes; GitHub tag v0.5.12.
+
+## Round 8 (2026-10-28, merged 0.5.12 + live key)
+- CLASSIFIER_API_KEY live again (no 429). new2 fully judged: 1 wrongly drawn — pele-063#2 (advice on how to design kanban columns: 列 = 阶段, WIP Limit, 泳道) → kanban.
+- Fix: HARD kanban rejects column-design advice (列的设计|列 =|每列|WIP Limit|泳道). Gold kanban1/2 unaffected.
+- After: wrongly drawn 0 on all sets — new2 9 prose/0, new 30/0, 424 real 201/0, blocks 4/0. top1 new2 .933→.967; 424 .965; missed draws 424: 25 (unchanged).
+- Released 0.5.13.

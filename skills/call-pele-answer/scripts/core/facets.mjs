@@ -292,7 +292,8 @@ export const HARD = {
   journey: t => new Set(t.match(/(兴奋|烦躁|焦虑|开心|高兴|不错|烦|放松|失望|满意|沮丧|紧张|期待|愉快|生气|困惑|舒服|难受|惊喜|担心|安心|无聊|frustrat\w*|happy|anxious|relieved|annoyed|delighted)/gi) || []).size >= 3,
   // a callout is a caution the text itself flags (⚠️, 注意：, 切勿…); a list of caveats is a list
   callout: t => /(⚠️|❗|(^|\n)\s*>?\s*\**\s*(注意|重要|警告|风险提示|小心|warning|caution|important)\**\s*[:：]|^\s*>?\s*\**callout\b|绝对不要|切勿|务必)/i.test(t),
-  kanban: t => new Set(t.match(/(待办|进行中|已完成|阻塞|待验收|todo|doing|done|in progress|backlog)/gi) || []).size >= 2,
+  // a board shows work items placed in status columns; advice on how to design the columns (列 = 阶段, WIP, 泳道) is prose
+  kanban: t => !/(列的设计|列\s*[=＝]|每列|WIP\s*Limit|WIP\s*[=＝]|泳道|swimlane)/i.test(t) && new Set(t.match(/(待办|进行中|已完成|阻塞|待验收|todo|doing|done|in progress|backlog)/gi) || []).size >= 2,
   // forms bound to a domain vocabulary: the text must use that vocabulary
   // a requirement diagram needs numbered requirements or binding wording, not just the word 需求
   requirement: t => /(REQ-\d|\bR\d+\b|requirement|shall\b)/i.test(t) || (/(需求|验收)/.test(t) && (t.match(/(必须|应当|不得|须)/g) || []).length >= 2),
