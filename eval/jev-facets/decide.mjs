@@ -101,7 +101,17 @@ export const HARD = {
   sankey: t => nums(t) >= 3, treemap: t => nums(t) >= 3, bar: t => nums(t) >= 3, line: t => nums(t) >= 3, quadrant: t => true,
   packet: t => /\d+\s*(位|字节|bits?|bytes?)/i.test(t),
 };
+// A generic form drawing the same content as a more specific primary is redundant.
+const GENERIC = { flowchart: 'process', steps: 'process', table: 'compare', tabs: 'compare', bar: 'numbers', mindmap: 'parts' };
+const COVERS = {
+  process: ['swimlane','sequenceDiagram','stateDiagram','agentflow','gantt','gitGraph','timeline','journey','eventmodeling','requirement','erDiagram','classDiagram','block','c4','usecase','architecture','wardley','packet','code'],
+  compare: ['radar','quadrant','sankey','venn','cynefin','slider','bar','pie'],
+  numbers: ['pie','treemap','radar','sankey','line','gantt','packet'],
+  parts: ['treemap','ishikawa','treeView','table','tabs'],
+};
 export function decide(s, text = '') {
-  const cands = PRIORITY.filter(c => RULES[c](s) && (!HARD[c] || HARD[c](text)));
-  return { primary: cands[0] || 'prose', cands };
+  let cands = PRIORITY.filter(c => RULES[c](s) && (!HARD[c] || HARD[c](text)));
+  const primary = cands[0] || 'prose';
+  cands = cands.filter(c => c === primary || !GENERIC[c] || !COVERS[GENERIC[c]].includes(primary));
+  return { primary, cands };
 }
