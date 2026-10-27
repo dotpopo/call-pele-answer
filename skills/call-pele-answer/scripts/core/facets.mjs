@@ -43,6 +43,15 @@ export const FACETS = {
   alternatives: N('Does the text present two or more named alternative approaches?'),
   parameter: N('Does the text explain how a result changes when one parameter grows or shrinks?'),
   code: N('Does the text contain a command or code to run or copy?'),
+  // structure a list cannot show (the draw gate for process forms)
+  loop_back: N('Does the text say that after some step the work goes back to an earlier step?'),
+  paths_merge: N('Does the text describe two different paths that later continue with the same step?'),
+  multi_branch: N('Does the text contain two or more separate checks, each deciding what happens next?'),
+  any_order: N('Could the listed items be done in any order without changing the result?'),
+  uses_previous: N('Does a later step need the result of an earlier step?'),
+  back_and_forth: N('Does work pass between the same two roles more than once?'),
+  transitions: N('Does the text say what event moves one object from one named state to another named state?'),
+  advice: N('Is the text mainly a set of separate recommendations, rules or plan items?'),
   system_parts: N('Does the text name components of a software or hardware system and which connects to which?'),
 };
 export const YES = 0.7;
@@ -114,6 +123,10 @@ export function branchingParents(t) {
   n += (t.match(/[^，。；、\s（(]{1,20}[（(][^）)]*[、,，][^）)]*[）)]/g) || []).length;
   return n;
 }
+// The text is already a list of three or more items that make up most of it.
+export const listShaped = t => { const ls = t.split('\n').filter(l => l.trim()); const it = ls.filter(l => /^\s*([-*]|\d+[.)])\s/.test(l)).length; return it >= 3 && it >= ls.length * 0.6; };
+// An item points at another item: a jump or a loop that a list cannot draw.
+export const crossRef = t => /(回到|返回|退回|跳到|跳回|重复)(第\s*\d+\s*步|步骤|上一步|前一步|开头|起点|[A-Z①-⑨]\b)?|再走一遍|go back to|return to step|repeat from/i.test(t);
 // the most numbers that share one unit ("72 美元 … 68 美元 … 65 美元" → 3)
 const sameUnit = t => { const c = {}; for (const m of t.matchAll(/\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
 const nums = t => (t.match(/\d+(?:\.\d+)?/g) || []).length;
@@ -130,6 +143,10 @@ export const HARD = {
   slider: t => /(越.{1,8}越|从\s*\S+\s*(调|升|降|涨|增|减)到|the (larger|higher|more|smaller|lower)|as .{1,20} (increases|grows|shrinks))/i.test(t) && nums(t) >= 2,
   // alternatives are named as such: 方案 A / 可以选 X，也可以选 Y / option
   tabs: t => /(方案|选项|做法|路线|可以选|也可以|还是|或者|二选一|option|alternative|approach|either)/i.test(t),
+  // a list whose branches stay inside its own items is still a list: draw a flow only when items jump or loop
+  flowchart: t => !listShaped(t) || crossRef(t),
+  swimlane: t => !listShaped(t) || crossRef(t),
+  stateDiagram: t => !listShaped(t) || crossRef(t),
   // a mindmap shows a hierarchy: two or more parts that each have their own sub-points
   mindmap: t => branchingParents(t) >= 2,
   treemap: t => branchingParents(t) >= 1 && nums(t) >= 3,
@@ -158,11 +175,13 @@ const COVERS = {
 // ("- A：价格 3，耗时 5" / "- B：价格 4，耗时 2"): the text already has a grid's shape. Sentences in a list
 // rarely start their clauses with the same words, so a repeated label is the tell.
 export function gridShape(t) {
-  const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || []).filter(l => (l.match(/[，,；;]/g) || []).length >= 2);
+  const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || []);
   if (items.length < 3) return false;
+  // a table rewritten as a list ("- 行名：列 A 值，列 B 值") repeats the same column words in every item
   const seen = new Map();
-  for (const l of items) for (const k of new Set(l.split(/[，,；;：:]/).slice(1).map(x => x.trim().slice(0, 2)).filter(Boolean))) seen.set(k, (seen.get(k) || 0) + 1);
-  return [...seen.values()].some(v => v >= Math.max(3, items.length - 1));
+  for (const l of items) for (const k of new Set([...l.matchAll(/[：:，,]\s*([^\s，,：:；;]{1,24})\s/g)].map(m => m[1]))) seen.set(k, (seen.get(k) || 0) + 1);
+  const need = Math.max(3, items.length - 1);
+  return [...seen.values()].filter(v => v >= need).length >= 2;
 }
 export function decide(s, text = '') {
   let cands = PRIORITY.filter(c => RULES[c](s) && (!HARD[c] || HARD[c](text)));

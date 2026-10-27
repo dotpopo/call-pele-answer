@@ -10,13 +10,15 @@ const key = (q, t) => createHash('sha1').update(JSON.stringify([q, t])).digest('
 const need = {}; let requests = 0, ms = 0, errors = 0;
 for (const b of blocks) for (const [n, q] of Object.entries(FACETS)) if (cache[key(q, b.text)] == null) (need[b.text] ??= {})[n] = q;
 const texts = Object.keys(need);
-if (texts.length) {
-  const qs = Object.assign({}, ...Object.values(need));
+// fetch missing answers in small batches so one request stays under the adapter timeout
+for (let k = 0; k < texts.length; k += 15) {
+  const part = texts.slice(k, k + 15);
+  const qs = Object.assign({}, ...part.map(t => need[t]));
   const a = BUILTIN_ADAPTERS.find(x => x.name === 'classifier-systemone');
-  const t = Date.now();
-  try { const r = await a.ask(texts, qs); requests++; ms = Date.now() - t;
-    texts.forEach((tx, i) => { for (const [n, q] of Object.entries(qs)) { const v = r[i][n]?.noul; if (v == null) errors++; else cache[key(q, tx)] = v; } });
-  } catch (e) { errors++; console.error('ask failed', e.message); }
+  const t0 = Date.now();
+  try { const r = await a.ask(part, qs); requests++; ms += Date.now() - t0;
+    part.forEach((tx, i) => { for (const [n, q] of Object.entries(qs)) { const v = r[i][n]?.noul; if (v == null) errors++; else cache[key(q, tx)] = v; } });
+  } catch (e) { errors++; console.error('ask failed', e.message); if (/429/.test(e.message)) await new Promise(r => setTimeout(r, 30000)); }
   writeFileSync(CACHE, JSON.stringify(cache));
 }
 let top1 = 0, recall = 0, extra = 0; const miss = [];
