@@ -10,7 +10,11 @@ export function parsePalette(str = '') {
   const out = {}; for (const kv of String(str).split(/[\s,;]+/)) { const m = kv.match(/^([\w.~-]+)=([\w-]+)$/); if (m) out[m[1]] = m[2]; } return out;
 }
 
-export function paletteCss(registry) {
+export function paletteCss(registry) { return tintCss(registry) + '\n' + STUDIO_CSS; }
+
+// tintCss — only what paints: page presets, [data-pk] main colour, [data-pb] background. Used alone when
+// the studio is off but auto colour is on.
+export function tintCss(registry) {
   const pages = registry.palettes('page');
   const decl = o => Object.entries(o).map(([k, v]) => `${k}:${v}`).join(';');
   const pageCss = pages.filter(p => Object.keys(p.light || {}).length).map(p =>
@@ -25,7 +29,12 @@ html[data-theme=dark] [data-pk]{${tintDark}}
 [data-pk] th{color:var(--pe-accent);background:var(--pe-surface)}[data-pk] th:first-child{padding-left:.5rem}[data-pk] td:first-child{padding-left:.5rem}
 .pe-callout[data-pk]{border-left-color:var(--pe-accent);background:var(--pe-surface)}
 .pe-fig[data-pk],.pe-views[data-pk]{border-color:var(--pe-border)}
-.pe-pal{margin-left:0;height:1.6rem;min-width:auto;padding:0 .5rem;font:11px var(--pe-mono);color:var(--pe-muted)}
+section.pe-panel[data-pb]{--pb:color-mix(in srgb,var(--pb-l) 30%,var(--pe-paper));box-shadow:none;border-radius:var(--pe-radius);padding:1.4rem 1.4rem;margin:.9rem 0;border-bottom:0}
+@media (prefers-color-scheme:dark){html:not([data-theme=light]) section.pe-panel[data-pb]{--pb:color-mix(in srgb,var(--pb-d) 60%,var(--pe-paper))}}
+html[data-theme=dark] section.pe-panel[data-pb]{--pb:color-mix(in srgb,var(--pb-d) 60%,var(--pe-paper))}`;
+}
+
+const STUDIO_CSS = `.pe-pal{margin-left:0;height:1.6rem;min-width:auto;padding:0 .5rem;font:11px var(--pe-mono);color:var(--pe-muted)}
 .pe-pal[aria-pressed=true]{color:var(--pe-ink);border-color:var(--pe-ink)}
 .pe-picking [data-pe-id]{cursor:crosshair}
 .pe-picking [data-pe-hov]:not(svg *){outline:1.5px dashed var(--pe-muted);outline-offset:3px}
@@ -69,7 +78,6 @@ svg [data-pk]>rect[fill-opacity]{fill-opacity:.45}
 @media (max-width:640px){.pe-studio{left:.5rem;right:.5rem;bottom:.5rem;width:auto;max-height:55vh}}
 .nojs .pe-pal{display:none}
 @media print{.pe-pal,.pe-studio{display:none!important}[data-pe-sel],[data-pe-hov]{outline:0!important}}`;
-}
 
 export function paletteJs(registry) {
   const data = { pages: registry.palettes('page').map(p => ({ n: p.name, t: p.label, c: [p.light?.['--pe-paper'] || '#FFFCF0', p.light?.['--pe-ink'] || '#100F0F', p.light?.['--pe-accent'] || '#205EA6'] })),
@@ -130,4 +138,26 @@ document.addEventListener('click',pick,true);document.addEventListener('mouseove
 P.querySelector('h3 button').onclick=()=>open(false);btn.onclick=()=>open(P.hidden);
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!P.hidden)open(false)});
 document.body.append(P);sync();})();`;
+}
+
+// autoPalette — the default coloured version: every panel gets one swatch as its main colour and its
+// background. Seeded by the page's titles, so the same draft always gets the same colours; neighbours
+// never share a colour; the grey swatch is left out. Returns a palette line ('s1=mint s1~bg=mint …').
+export function autoPalette(doc, registry) {
+  const names = registry.palettes('swatch').map(s => s.name).filter(n => n !== 'graphite');
+  const n = doc.panels.length;
+  if (!names.length || !n) return '';
+  let h = 2166136261;
+  for (const ch of [doc.meta.title || '', ...doc.panels.map(p => p.title)].join('\u0001')) { h ^= ch.codePointAt(0); h = Math.imul(h, 16777619) >>> 0; }
+  const rnd = () => { h = (Math.imul(h ^ (h >>> 15), 2246822507) + 0x9e3779b9) >>> 0; return h / 4294967296; };
+  const order = [...names];
+  for (let k = order.length - 1; k > 0; k--) { const j = Math.floor(rnd() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
+  return doc.panels.map((_, k) => { const c = order[k % order.length]; return `s${k + 1}=${c} s${k + 1}~bg=${c}`; }).join(' ');
+}
+
+// paintJs — apply a baked palette line without the studio (panel-level keys only).
+export function paintJs(registry) {
+  const sw = Object.fromEntries(registry.palettes('swatch').map(s => [s.name, s]));
+  return `(()=>{const SW=${JSON.stringify(sw)},d=document.documentElement;
+String(d.dataset.palette||'').split(/[\\s,;]+/).forEach(kv=>{const m=kv.match(/^s(\\d+)(~bg)?=([\\w-]+)$/);if(!m)return;const e=document.getElementById('s'+m[1]),s=SW[m[3]];if(!e||!s)return;const a=m[2]?'pb':'pk';e.setAttribute('data-'+a,m[3]);['l','m','d'].forEach(v=>e.style.setProperty('--'+a+'-'+v,s[v]))})})();`;
 }

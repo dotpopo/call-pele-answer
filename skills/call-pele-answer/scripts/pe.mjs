@@ -5,6 +5,7 @@
 //   pe route  <answer.md|-> [-o draft.md] [--render out.html] [--router auto|…] [--device desktop|mobile] [--json]
 //   pe answer <answer.md|-> [-o page.html] [--router …]   one pass: route + derive + render, no second writing pass
 //   --annotate on|off  批注开关（默认开；也可配置 "annotate": false，或 PE_ANNOTATE=0，或稿件 annotate: off）
+//   --color auto|plain 自动配色开关（默认 auto：每块随机上一种背景色；plain 恢复素色。也可配置 "color": "plain"，或 PE_COLOR=plain，或稿件 color: plain）
 //   --palette on|off   调色器开关（默认开；也可在配置写 "palette": false，或 PE_PALETTE=0，或稿件 palette: off）
 //   pe options <answer.md|-> [--json]           per block: components whose admission conditions pass, with evidence
 //   pe assemble <draft.md> --block <n|title> --use a,b[,c] [--as views|stack] [-o out.md]   insert their skeletons
@@ -49,7 +50,7 @@ function outPath(opts, title, ext) {
 async function build(engine, file, opts, { checkOnly = false } = {}) {
   const src = readInput(file);
   engine.trace.count('draft_chars', src.length);
-  const r = engine.build(src, { output: opts.output || undefined, theme: opts.theme || undefined, ste: opts.ste || undefined, lean: !!opts.lean, palette: opts.palette === undefined ? undefined : !/^(off|0|false|no)$/i.test(String(opts.palette)), annotate: opts.annotate === undefined ? undefined : !/^(off|0|false|no)$/i.test(String(opts.annotate)) });
+  const r = engine.build(src, { output: opts.output || undefined, theme: opts.theme || undefined, ste: opts.ste || undefined, lean: !!opts.lean, palette: opts.palette === undefined ? undefined : !/^(off|0|false|no)$/i.test(String(opts.palette)), annotate: opts.annotate === undefined ? undefined : !/^(off|0|false|no)$/i.test(String(opts.annotate)), color: opts.color === undefined ? undefined : /^(plain|off|0|false|no)$/i.test(String(opts.color)) ? 'plain' : 'auto' });
   if (r.errors.length) {
     console.log(`✗ 稿件有 ${r.errors.length} 处错误，没有生成输出：`);
     r.errors.forEach(e => console.log('  ' + fmt(e)));

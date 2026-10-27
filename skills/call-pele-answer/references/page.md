@@ -1,5 +1,11 @@
 # 页面上的调色器与批注
 
+## 自动配色（默认开）
+
+每个块自动上一种色板做主色和背景色（番茄、芥末、薄荷、钴蓝、腮红、青、紫，不用灰），颜色按标题做种子随机选，同一稿件每次渲染颜色相同，相邻块不同色。不喜欢就关：稿件 `color: plain`，命令行 `--color plain`，环境变量 `PE_COLOR=plain`，或配置 `"color": "plain"`；稿件里写的优先。稿件里手写了 `palette:` 配色行时，以手写的为准，不再叠加自动配色。关掉调色器（`palette: off`）不影响自动配色。
+
+## 调色器与批注
+
 两者默认开启。关闭：稿件 `palette: off` / `annotate: off`，命令行 `--palette off` / `--annotate off`，环境变量 `PE_PALETTE=0` / `PE_ANNOTATE=0`，或配置 `"palette": false` / `"annotate": false`；稿件里写的优先。
 
 ## 组件编号

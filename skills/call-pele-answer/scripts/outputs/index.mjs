@@ -3,7 +3,7 @@
 //   markdown  the chat carrier: interactive forms flattened (steps → numbered beats, views → the pick)
 //   json      the IR itself, versioned — the contract for other renderers (React, note apps, slides)
 import { createRenderer, esc } from '../core/render.mjs';
-import { paletteCss, paletteJs } from '../themes/palette-ui.mjs';
+import { paletteCss, paletteJs, tintCss, paintJs, autoPalette } from '../themes/palette-ui.mjs';
 import { annotateCss, annotateJs, DEFAULT_KINDS } from '../themes/annotate-ui.mjs';
 
 const BASE_JS = `(()=>{const d=document.documentElement;d.classList.replace('nojs','js');window.PE={reduce:matchMedia('(prefers-reduced-motion: reduce)').matches};
@@ -23,16 +23,23 @@ function html(doc, ctx) {
   // precedence: draft front matter (palette: off / on) > CLI/env/config (ctx.palette, default on)
   const fm = String(doc.meta.palette || '').trim();
   const studio = fm === 'off' ? false : fm === 'on' || /=/.test(fm) ? true : ctx.palette !== false;
+  // auto colour (default on): a seeded swatch per panel, baked as a palette line. Draft color: > CLI/env/config.
+  // A hand-written palette line (any key=value) is the reader's own choice and replaces the auto colours.
+  const fc = String(doc.meta.color || '').trim();
+  const colorOn = /^(plain|off|0|false|no)$/i.test(fc) ? false : /^(auto|on)$/i.test(fc) ? true : ctx.color !== 'plain';
+  const auto = colorOn && !/=/.test(fm) ? autoPalette(doc, registry) : '';
+  const palLine = auto || (/=/.test(fm) ? fm : '');
+  const paint = !studio && !!auto;
   const fa = String(doc.meta.annotate || '').trim();
   const notes = fa === 'off' ? false : fa === 'on' ? true : ctx.annotate !== false;
   const kinds = registry.annotations?.().length ? registry.annotations() : DEFAULT_KINDS;
-  const css = [theme.css, ...forms.map(f => f.assets.css || ''), studio ? paletteCss(registry) : '', notes ? annotateCss(kinds) : ''].join('\n');
-  const js = [BASE_JS, ...forms.map(f => f.assets.js || ''), theme.js || '', '})();', studio ? paletteJs(registry) : '', notes ? annotateJs(kinds) : ''].join('\n');
+  const css = [theme.css, ...forms.map(f => f.assets.css || ''), studio ? paletteCss(registry) : paint ? tintCss(registry) : '', notes ? annotateCss(kinds) : ''].join('\n');
+  const js = [BASE_JS, ...forms.map(f => f.assets.js || ''), theme.js || '', '})();', studio ? paletteJs(registry) : paint ? paintJs(registry) : '', notes ? annotateJs(kinds) : ''].join('\n');
   const meta = doc.meta;
   const htmlLang = meta.lang || (lang === 'zh' ? 'zh-CN' : lang === 'neutral' ? 'und' : lang || 'und');
-  const extra = Object.entries(meta).filter(([k]) => !['title', 'subtitle', 'lang', 'theme', 'ste', 'router', 'palette', 'annotate'].includes(k));
+  const extra = Object.entries(meta).filter(([k]) => !['title', 'subtitle', 'lang', 'theme', 'ste', 'router', 'palette', 'annotate', 'color'].includes(k));
   return `<!doctype html>
-<html lang="${esc(htmlLang)}" class="nojs" data-default="${esc(ctx.mode || meta.mode || 'auto')}" data-theme-name="${esc(theme.name)}"${studio && meta.palette ? ` data-palette="${esc(meta.palette)}"` : ''}${studio && /page=(\w+)/.test(meta.palette || '') && meta.palette.match(/page=(\w+)/)[1] !== 'ink' ? ` data-pal="${esc(meta.palette.match(/page=(\w+)/)[1])}"` : ''}>
+<html lang="${esc(htmlLang)}" class="nojs" data-default="${esc(ctx.mode || meta.mode || 'auto')}" data-theme-name="${esc(theme.name)}"${auto ? ' data-color="auto"' : ''}${(studio || paint) && palLine ? ` data-palette="${esc(palLine)}"` : ''}${studio && /page=(\w+)/.test(meta.palette || '') && meta.palette.match(/page=(\w+)/)[1] !== 'ink' ? ` data-pal="${esc(meta.palette.match(/page=(\w+)/)[1])}"` : ''}>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:">
 <meta name="generator" content="call-pele-answer ir${doc.ir}; forms=${[...r.used].join(',')}">

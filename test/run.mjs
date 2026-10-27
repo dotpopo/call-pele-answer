@@ -172,6 +172,32 @@ execFileSync('node', [PE, 'render', '-', '-o', join(dir, 'pal.html')], { input: 
 t('烘焙配色：data-pal 与 data-palette 写进页面，色板 CSS 在内', /data-pal="warm"/.test(palHtml) && /data-palette="page=warm s1=tomato"/.test(palHtml) && /\[data-pk\]/.test(palHtml) && /class="pe-pal"/.test(palHtml));
 execFileSync('node', [PE, 'render', '-', '-o', join(dir, 'off.html')], { input: good.replace('---\n', '---\npalette: off\n') }); const offHtml = readFileSync(join(dir, 'off.html'), 'utf8');
 t('palette: off 不带调色器', !/class="pe-pal"/.test(offHtml) && !/pe-studio/.test(offHtml));
+console.log('— 自动配色');
+{
+  const e = await createEngine({});
+  const md = '---\ntitle: 配色测试\n---\n结论。\n\n## 一\n甲。\n\n## 二\n乙。\n\n## 三\n丙。\n\n## 四\n丁。\n';
+  const pal = h => (h.match(/data-palette="([^"]*)"/) || [])[1] || '';
+  const on = e.build(md).text, again = e.build(md).text;
+  const keys = parsePalette(pal(on));
+  t('默认开启自动配色：每个块都有背景色', /data-color="auto"/.test(on) && [1, 2, 3, 4].every(k => keys['s' + k + '~bg'] && keys['s' + k] === keys['s' + k + '~bg']));
+  t('自动配色可复现：同一稿件两次渲染颜色相同', pal(on) === pal(again));
+  t('相邻块颜色不同', [1, 2, 3].every(k => keys['s' + k] !== keys['s' + (k + 1)]));
+  t('不用石墨这种灰色', !Object.values(keys).includes('graphite'));
+  const plainFm = e.build(md.replace('title: 配色测试', 'title: 配色测试\ncolor: plain')).text, plainCli = e.build(md, { color: 'plain' }).text;
+  t('color: plain / --color plain 关掉自动配色，恢复原样', !/data-color="auto"/.test(plainFm) && !pal(plainFm) && !/data-color="auto"/.test(plainCli) && !pal(plainCli));
+  const fmOn = e.build(md.replace('title: 配色测试', 'title: 配色测试\ncolor: auto'), { color: 'plain' }).text;
+  t('稿件 color: auto 优先于命令行', /data-color="auto"/.test(fmOn));
+  const hand = e.build(md.replace('title: 配色测试', 'title: 配色测试\npalette: s2=tomato')).text;
+  t('手写 palette 行时不叠加自动配色', pal(hand) === 's2=tomato');
+  const noStudio = e.build(md.replace('title: 配色测试', 'title: 配色测试\npalette: off')).text;
+  t('关掉调色器时自动配色照样生效（只上色，不出调色器）', /data-color="auto"/.test(noStudio) && /\[data-pb\]/.test(noStudio) && !/class="pe-pal"/.test(noStudio) && !/pe-studio/.test(noStudio));
+  const prev = process.env.PE_COLOR; process.env.PE_COLOR = 'plain';
+  const envCfg = (await import('../skills/call-pele-answer/scripts/core/engine.mjs')).loadConfig?.(process.cwd());
+  if (prev === undefined) delete process.env.PE_COLOR; else process.env.PE_COLOR = prev;
+  t('PE_COLOR=plain 关掉自动配色', envCfg?.color === 'plain');
+  const r = run(['render', '-', '--color', 'plain', '-o', join(dir, 'plain.html')], md);
+  t('CLI --color plain', r.out.startsWith('✓') && !/data-color="auto"/.test(readFileSync(join(dir, 'plain.html'), 'utf8')));
+}
 console.log('— 批注');
 {
   const e = await createEngine({});

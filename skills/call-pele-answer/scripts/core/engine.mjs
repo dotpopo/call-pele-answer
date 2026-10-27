@@ -36,7 +36,7 @@ export function loadConfig(cwd = process.cwd()) {
   const ignored = [];
   if (project && process.env.PE_TRUST_PROJECT !== '1') for (const k of CODE_KEYS) if (project[k]?.length) { ignored.push(k); delete project[k]; }
   const layers = [user, project].filter(Boolean);
-  const cfg = { router: 'auto', theme: 'pele', output: 'html', palette: true, annotate: true, plugins: [], adapters: [], routers: [], policy: {}, ignored };
+  const cfg = { router: 'auto', theme: 'pele', output: 'html', palette: true, annotate: true, color: 'auto', plugins: [], adapters: [], routers: [], policy: {}, ignored };
   for (const l of layers) {
     for (const k of ['router', 'theme', 'output', 'ste']) if (l[k]) cfg[k] = l[k];
     cfg.plugins.push(...(l.plugins || []).map(p => ({ spec: p, dir: l.__dir })));
@@ -44,11 +44,13 @@ export function loadConfig(cwd = process.cwd()) {
     cfg.routers.push(...(l.routers || []));
     Object.assign(cfg.policy, l.policy || {});
     if ('annotate' in l) cfg.annotate = l.annotate !== false && l.annotate !== 'off';
+    if ('color' in l) cfg.color = /^(plain|off|0|false|no)$/i.test(String(l.color)) ? 'plain' : 'auto';
     if ('palette' in l) cfg.palette = l.palette !== false && l.palette !== 'off';
   }
   if (process.env.PE_ROUTER) cfg.router = process.env.PE_ROUTER;
   if (process.env.PE_THEME) cfg.theme = process.env.PE_THEME;
   if (process.env.PE_ANNOTATE) cfg.annotate = !/^(0|off|false|no)$/i.test(process.env.PE_ANNOTATE);
+  if (process.env.PE_COLOR) cfg.color = /^(plain|off|0|false|no)$/i.test(process.env.PE_COLOR) ? 'plain' : 'auto';
   if (process.env.PE_PALETTE) cfg.palette = !/^(0|off|false|no)$/i.test(process.env.PE_PALETTE);
   cfg.layers = layers.map(l => l.__dir);
   return cfg;
@@ -114,7 +116,7 @@ class Engine {
     return { draft, blocks: res.blocks, by: res.by, ms: Date.now() - t0, notes };
   }
 
-  build(draft, { output = this.config.output, theme = this.config.theme, ste = this.config.ste, palette = this.config.palette, annotate = this.config.annotate, mode, lean } = {}) {
+  build(draft, { output = this.config.output, theme = this.config.theme, ste = this.config.ste, palette = this.config.palette, annotate = this.config.annotate, color = this.config.color, mode, lean } = {}) {
     const T = this.trace;
     const { doc, errors, warns, embedded } = T.span('parse', () => parseDraft(draft, this.registry, T));
     if (!process.env.PE_NO_LOG && !errors.length) logUsage(draft, this.registry.components());
@@ -128,7 +130,7 @@ class Engine {
     if (errors.length) return { doc, errors: errors.sort((a, b) => a[0] - b[0]), warnings: found, embedded, lang };
     const out = this.registry.output(output);
     if (!out) throw new Error(`未知 output：${output}（可选 ${this.registry.outputs().join(' | ')}）`);
-    const text = T.span(`output:${output}`, () => out.write(doc, { registry: this.registry, theme, lang, mode, lean, palette, annotate }));
+    const text = T.span(`output:${output}`, () => out.write(doc, { registry: this.registry, theme, lang, mode, lean, palette, annotate, color }));
     T.count('bytes', text.length);
     return { doc, errors: [], warnings: found, embedded, lang, ext: out.ext, text };
   }
