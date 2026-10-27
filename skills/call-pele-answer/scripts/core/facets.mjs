@@ -162,11 +162,14 @@ export const HARD = {
   steps: t => (t.match(/^\s*([-*]|\d+[.)])\s/gm) || []).length >= 3 || (t.match(/(先|再|然后|接着|随后|最后|第[一二三四五六]步|first|then|next|finally)/gi) || []).length >= 2 || /分\s*[\d一二三四五六七八九十]+\s*步/.test(t),
   // a mindmap shows a hierarchy: two or more parts that each have their own sub-points
   mindmap: t => branchingParents(t) >= 2,
-  treemap: t => branchingParents(t) >= 1 && nums(t) >= 3,
+  treemap: t => branchingParents(t) >= 1 && sameUnit(t) >= 3,
+  kanban: t => new Set(t.match(/(待办|进行中|已完成|阻塞|待验收|todo|doing|done|in progress|backlog)/gi) || []).size >= 2,
   // forms bound to a domain vocabulary: the text must use that vocabulary
-  requirement: t => /(需求|验收|REQ-|requirement|shall\b)/i.test(t),
+  // a requirement diagram needs numbered requirements or binding wording, not just the word 需求
+  requirement: t => /(REQ-\d|\bR\d+\b|requirement|shall\b)/i.test(t) || (/(需求|验收)/.test(t) && (t.match(/(必须|应当|不得|须)/g) || []).length >= 2),
   railroad: t => /(语法|文法|BNF|正则|产生式|开头|后面跟|分隔|可以是|syntax|grammar|token)/i.test(t),
-  usecase: t => /(用例|权限|use case|actor|permission)/i.test(t) || (t.match(/(可以|能|只能|can)/g) || []).length >= 2,
+  // use cases: the vocabulary, or two or more clauses that each open with a role and what it can do
+  usecase: t => /(用例|权限|use case|actor|permission)/i.test(t) || (t.match(/(?:^|[；;，,。：:])\s*[^，。；;：:\s]{1,10}?(只能|可以|能|还能|\bcan\b)/g) || []).length >= 2,
   c4: t => /(外部|第三方|C4|系统上下文|external|third-party)/i.test(t),
   // a fishbone groups causes under named categories
   ishikawa: t => /(原因|导致|为什么|根因|cause|because)/i.test(t) && (branchingParents(t) >= 2 || t.split(/[；;]/).filter(x => x.trim()).length >= 3),
