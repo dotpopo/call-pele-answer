@@ -51,6 +51,9 @@ export const FACETS = {
   uses_previous: N('Does a later step need the result of an earlier step?'),
   back_and_forth: N('Does work pass between the same two roles more than once?'),
   transitions: N('Does the text say what event moves one object from one named state to another named state?'),
+  // procedure vs plan (Horn's information types; DITA task): one goal, done by the reader in order, conditions live inside a step
+  one_task: N('Do the items together complete one specific task that the reader carries out step by step?'),
+  time_buckets: N('Are the items grouped by time period, phase or priority (this week, this month, first, later) rather than done in one go?'),
   advice: N('Is the text mainly a set of separate recommendations, rules or plan items?'),
   system_parts: N('Does the text name components of a software or hardware system and which connects to which?'),
 };
@@ -98,7 +101,8 @@ export const RULES = {
   railroad: s => Y(s,'grammar'),
   table: s => s.items_attrs >= 0.9 && s.__grid, // only content already shaped as a grid; JEV alone says yes to any multi-point list
   callout: s => Y(s,'warning'),
-  steps: s => Y(s,'steps') && !Y(s,'decision'),
+  // conditions inside a step of one task stay in that step (DITA task / Horn procedure); only a plan with branches is blocked
+  steps: s => Y(s,'steps') && (!Y(s,'decision') || (s.__list && s.one_task >= 0.85)),
   tabs: s => Y(s,'alternatives'),
   slider: s => Y(s,'parameter'),
   code: s => Y(s,'code'),
@@ -213,7 +217,7 @@ export function gridShape(t) {
 // A comparison written in a sentence: three or more items split by "；", each giving two or more attributes.
 export const proseGrid = t => { const segs = t.split(/[；;]/).map(x => x.trim()).filter(Boolean); return segs.length >= 3 && segs.every(x => (x.match(/[、，,]/g) || []).length >= 1); };
 export function decide(s, text = '') {
-  s = { ...s, __grid: gridShape(text) || proseGrid(text), __arrows: (text.match(/→|->|⟶/g) || []).length };
+  s = { ...s, __list: listShaped(text), __grid: gridShape(text) || proseGrid(text), __arrows: (text.match(/→|->|⟶/g) || []).length };
   let cands = PRIORITY.filter(c => RULES[c](s) && (!HARD[c] || HARD[c](text)));
   if (gridShape(text)) cands = ['table', ...cands.filter(c => c !== 'table')];
   const primary = cands[0] || 'prose';
