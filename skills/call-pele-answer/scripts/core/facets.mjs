@@ -101,6 +101,18 @@ export const HARD = {
   radar: t => nums(t) >= 6,
   sankey: t => nums(t) >= 3, treemap: t => nums(t) >= 3, bar: t => nums(t) >= 3, line: t => nums(t) >= 3, quadrant: t => true,
   packet: t => /\d+\s*(位|字节|bits?|bytes?)/i.test(t),
+  // forms bound to a domain vocabulary: the text must use that vocabulary
+  requirement: t => /(需求|验收|REQ-|requirement|shall\b)/i.test(t),
+  railroad: t => /(语法|文法|BNF|正则|产生式|开头|后面跟|分隔|可以是|syntax|grammar|token)/i.test(t),
+  usecase: t => /(用例|权限|use case|actor|permission)/i.test(t) || (t.match(/(可以|能|只能|can)/g) || []).length >= 2,
+  c4: t => /(外部|第三方|C4|系统上下文|external|third-party)/i.test(t),
+  ishikawa: t => /(原因|导致|为什么|根因|cause|because)/i.test(t),
+  eventmodeling: t => /(事件|命令|event|command)/i.test(t),
+  wardley: t => /(演进|成熟度|商品化|定制|Wardley|commodit|evolution)/i.test(t),
+  cynefin: t => /(Cynefin|混沌|繁杂|复杂域|清晰域|可预测|chaotic|complicated)/i.test(t),
+  erDiagram: t => /(表|字段|主键|外键|实体|table|column|entity|primary key)/i.test(t),
+  classDiagram: t => /(类|方法|属性|接口|继承|class|method|interface|inherit)/i.test(t),
+  gitGraph: t => /(git|分支|合并|branch|merge|commit)/i.test(t),
 };
 // A generic form drawing the same content as a more specific primary is redundant.
 const GENERIC = { flowchart: 'process', steps: 'process', table: 'compare', tabs: 'compare', bar: 'numbers', mindmap: 'parts' };
