@@ -142,9 +142,12 @@ document.body.append(P);sync();})();`;
 
 // autoPalette — the default coloured version: every panel gets one swatch as its main colour and its
 // background. Seeded by the page's titles, so the same draft always gets the same colours; neighbours
-// never share a colour; the grey swatch is left out. Returns a palette line ('s1=mint s1~bg=mint …').
+// never share a colour; grey, pink and peach are left out (AUTO_SKIP). Returns a palette line ('s1=mint s1~bg=mint …').
+// Left out of auto colour: grey (dull), blush and tomato (pink / peach backgrounds read too sweet — her note
+// 2026-10-28: the first, quieter version looked better). Readers can still pick them in the studio.
+const AUTO_SKIP = new Set(['graphite', 'blush', 'tomato', 'cyan']); // cyan's light band is too close to mint's
 export function autoPalette(doc, registry) {
-  const names = registry.palettes('swatch').map(s => s.name).filter(n => n !== 'graphite');
+  const names = registry.palettes('swatch').map(s => s.name).filter(n => !AUTO_SKIP.has(n));
   const n = doc.panels.length;
   if (!names.length || !n) return '';
   let h = 2166136261;

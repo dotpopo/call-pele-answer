@@ -182,7 +182,7 @@ console.log('— 自动配色');
   t('默认开启自动配色：每个块都有背景色', /data-color="auto"/.test(on) && [1, 2, 3, 4].every(k => keys['s' + k + '~bg'] && keys['s' + k] === keys['s' + k + '~bg']));
   t('自动配色可复现：同一稿件两次渲染颜色相同', pal(on) === pal(again));
   t('相邻块颜色不同', [1, 2, 3].every(k => keys['s' + k] !== keys['s' + (k + 1)]));
-  t('不用石墨这种灰色', !Object.values(keys).includes('graphite'));
+  t('自动配色素雅：不用灰、粉、桃红', !Object.values(keys).some(v => ['graphite', 'blush', 'tomato', 'cyan'].includes(v)));
   const plainFm = e.build(md.replace('title: 配色测试', 'title: 配色测试\ncolor: plain')).text, plainCli = e.build(md, { color: 'plain' }).text;
   t('color: plain / --color plain 关掉自动配色，恢复原样', !/data-color="auto"/.test(plainFm) && !pal(plainFm) && !/data-color="auto"/.test(plainCli) && !pal(plainCli));
   const fmOn = e.build(md.replace('title: 配色测试', 'title: 配色测试\ncolor: auto'), { color: 'plain' }).text;
