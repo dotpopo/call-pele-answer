@@ -62,7 +62,8 @@ const NARROW = new Set(['usecase','requirements','events_commands','bit_layout',
 const Y = (s, k) => s[k] >= (NARROW.has(k) ? STRICT : YES);
 // 每个组件 = 原子判断的布尔组合（代码里，可审、可测）
 export const RULES = {
-  flowchart: s => (Y(s,'steps') && Y(s,'decision')) || (Y(s,'system_parts') && !Y(s,'infra')),
+  // parts that feed each other also make a flow, but only when the text draws the links (two or more arrows)
+  flowchart: s => (Y(s,'steps') && Y(s,'decision')) || (Y(s,'system_parts') && !Y(s,'infra') && s.__arrows >= 2),
   swimlane: s => Y(s,'steps') && Y(s,'roles_handoff'),
   agentflow: s => Y(s,'agent_tools'),
   sequenceDiagram: s => Y(s,'messages'),
@@ -134,7 +135,8 @@ export const crossRef = t => /(回到|返回|退回|跳到|跳回|重复)(第\s*
 // the most numbers that share one unit ("72 美元 … 68 美元 … 65 美元" → 3)
 // Counting words (块、个、项…) count things, they are not a measure to compare on a bar.
 const COUNTERS = new Set('块个项页次题条处份张名人轮步种类位件段行列组批篇章节号年'.split(''));
-const sameUnit = t => { const c = {}; for (const m of t.matchAll(/\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) if (!COUNTERS.has(m[1])) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
+// thresholds (≥90 cm) and range ends (18.5–23.9) are limits, not magnitudes to compare
+const sameUnit = t => { const c = {}; for (const m of t.matchAll(/(?<![≥≤<>＜＞~–\-\d.])\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) if (!COUNTERS.has(m[1]) && !/^\s*[–~-]/.test(t.slice(m.index + m[0].length - m[1].length - 1, m.index + m[0].length))) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
 const nums = t => (t.match(/\d+(?:\.\d+)?/g) || []).length;
 export const HARD = {
   // a timeline needs three or more distinct dates, each carrying its own event
@@ -165,7 +167,8 @@ export const HARD = {
   railroad: t => /(语法|文法|BNF|正则|产生式|开头|后面跟|分隔|可以是|syntax|grammar|token)/i.test(t),
   usecase: t => /(用例|权限|use case|actor|permission)/i.test(t) || (t.match(/(可以|能|只能|can)/g) || []).length >= 2,
   c4: t => /(外部|第三方|C4|系统上下文|external|third-party)/i.test(t),
-  ishikawa: t => /(原因|导致|为什么|根因|cause|because)/i.test(t),
+  // a fishbone groups causes under named categories
+  ishikawa: t => /(原因|导致|为什么|根因|cause|because)/i.test(t) && (branchingParents(t) >= 2 || t.split(/[；;]/).filter(x => x.trim()).length >= 3),
   eventmodeling: t => /(事件|命令|event|command)/i.test(t),
   wardley: t => /(演进|成熟度|商品化|定制|Wardley|commodit|evolution)/i.test(t),
   cynefin: t => /(Cynefin|混沌|繁杂|复杂域|清晰域|可预测|chaotic|complicated)/i.test(t),
@@ -196,7 +199,7 @@ export function gridShape(t) {
 // A comparison written in a sentence: three or more items split by "；", each giving two or more attributes.
 export const proseGrid = t => { const segs = t.split(/[；;]/).map(x => x.trim()).filter(Boolean); return segs.length >= 3 && segs.every(x => (x.match(/[、，,]/g) || []).length >= 1); };
 export function decide(s, text = '') {
-  s = { ...s, __grid: gridShape(text) || proseGrid(text) };
+  s = { ...s, __grid: gridShape(text) || proseGrid(text), __arrows: (text.match(/→|->|⟶/g) || []).length };
   let cands = PRIORITY.filter(c => RULES[c](s) && (!HARD[c] || HARD[c](text)));
   if (gridShape(text)) cands = ['table', ...cands.filter(c => c !== 'table')];
   const primary = cands[0] || 'prose';
