@@ -2,7 +2,7 @@
 name: call-pele-answer
 slug: call-pele-answer
 displayName: Call Pele Answer
-version: 0.5.8
+version: 0.5.9
 allowed-tools: Bash(node:*) Read Write
 metadata: {"openclaw":{"requires":{"bins":["node"]}}}
 summary: 把长回答按块拆开，逐块挑最合适的形式（文字、表格、30+ 种图、滑块、标签页、分步播放），生成离线交互讲解页，可调色、可批注。

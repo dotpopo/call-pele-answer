@@ -52,6 +52,7 @@ export const FACETS = {
   back_and_forth: N('Does work pass between the same two roles more than once?'),
   transitions: N('Does the text say what event moves one object from one named state to another named state?'),
   // procedure vs plan (Horn's information types; DITA task): one goal, done by the reader in order, conditions live inside a step
+  side_by_side: N('Does every item give its own value for the same two or more named attributes, so the items can be compared side by side?'),
   one_task: N('Do the items together complete one specific task that the reader carries out step by step?'),
   time_buckets: N('Are the items grouped by time period, phase or priority (this week, this month, first, later) rather than done in one go?'),
   advice: N('Is the text mainly a set of separate recommendations, rules or plan items?'),
@@ -99,7 +100,7 @@ export const RULES = {
   wardley: s => Y(s,'evolution'),
   cynefin: s => Y(s,'domains'),
   railroad: s => Y(s,'grammar'),
-  table: s => s.items_attrs >= 0.9 && s.__grid, // only content already shaped as a grid; JEV alone says yes to any multi-point list
+  table: s => s.side_by_side >= 0.85 || (s.side_by_side >= 0.7 && s.__grid),
   callout: s => Y(s,'warning'),
   // conditions inside a step of one task stay in that step (DITA task / Horn procedure); only a plan with branches is blocked
   steps: s => Y(s,'steps') && (!Y(s,'decision') || (s.__list && s.one_task >= 0.85)),
