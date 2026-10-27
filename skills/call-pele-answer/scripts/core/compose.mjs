@@ -71,12 +71,40 @@ const extract = {
     for (const m of t.matchAll(/([\u4e00-\u9fa5]{2,6})(超时|失败|取消后?)则\s*([\u4e00-\u9fa5]{2,6})/g)) out.push([m[1], m[3], m[2]]);
     return out;
   },
-  steps: t => /^\s*(\d+[.)]|[-*+])\s+\S/m.test(t) ? t.split('\n').filter(l => /^\s*(\d+[.)]|[-*+])\s+\S/.test(l)).map(l => clean(l.replace(/^\s*(\d+[.)]|[-*+])\s+/, '').replace(/`/g, '').split(/[，,；;：:（(]/)[0])) : t.split(/(?:首先|先|然后|再|接着|随后|最后|，|,|；|;|。)/).map(clean).filter(s => s.length >= 2),
+  steps: t => {
+    // A day-by-day plan is already a natural seven-step sequence. Keep each
+    // day together instead of splitting it into dozens of punctuation-sized
+    // fragments.
+    const days = t.split(/\n\s*\n/).map(clean).filter(x => /^\*\*第\s*[一二三四五六七八九十\d]+\s*天/.test(x));
+    if (days.length >= 3) return days;
+    return /^\s*(\d+[.)]|[-*+])\s+\S/m.test(t)
+      ? t.split('\n').filter(l => /^\s*(\d+[.)]|[-*+])\s+\S/.test(l)).map(l => clean(l.replace(/^\s*(\d+[.)]|[-*+])\s+/, '').replace(/`/g, '').split(/[，,；;：:（(]/)[0]))
+      : t.split(/(?:首先|先|然后|再|接着|随后|最后|，|,|；|;|。)/).map(clean).filter(s => s.length >= 2);
+  },
 };
 
 // Each deriver: (block) → { label, md } | null. label names the view in the switcher.
 export const DERIVERS = {
+  hierarchy: [
+    b => {
+      if (b.type !== 'treeView') return null;
+      const m = b.text.match(/```(?:text|plaintext|tree)?\s*\n([\s\S]*?)```/i);
+      if (!m || !(/[\\/]\S|^\s{2,}\S/m.test(m[1]))) return null;
+      const body = m[1].trimEnd();
+      return { label: '目录树', md: ['```mermaid', 'treeView-beta', body, '```'].join('\n') };
+    },
+  ],
   timeline: [
+    b => {
+      const days = [...b.text.matchAll(/(?:^|\n)\s*\*\*第\s*([一二三四五六七八九十\d]+)\s*天：?([\s\S]*?)(?=\n\s*\*\*第\s*[一二三四五六七八九十\d]+\s*天|$)/g)]
+        .map(m => [m[1], clean(m[2].replace(/\*\*/g, ''))]).filter(x => x[1]);
+      return days.length >= 3 ? { label: '七天计划', md: ['```mermaid', 'timeline', '  title 学习计划', ...days.map(([d, v]) => `  第${d}天 : ${v.slice(0, 80).replace(/:/g, '：')}`), '```'].join('\n') } : null;
+    },
+    b => {
+      const days = [...b.text.matchAll(/(?:^|\n)\s*\*\*第\s*([一二三四五六七八九十\d]+)\s*天：?([\s\S]*?)(?=\n\s*\*\*第\s*[一二三四五六七八九十\d]+\s*天|$)/g)]
+        .map(m => [m[1], clean(m[2].replace(/\*\*/g, ''))]).filter(x => x[1]);
+      return days.length >= 3 ? { label: '计划表', md: ['| 天数 | 练习 |', '|---|---|', ...days.map(([d, v]) => `| 第${d}天 | ${v.slice(0, 120).replace(/\|/g, '／')} |`)].join('\n') } : null;
+    },
     b => { const ev = extract.events(b.text); return ev.length >= 2 ? { label: '时间线', md: ['```mermaid', 'timeline', ...ev.map(([y, e]) => `  ${y} : ${e.replace(/:/g, '：')}`), '```'].join('\n') } : null; },
     b => { const ev = extract.events(b.text); return ev.length >= 2 ? { label: '表格', md: ['| 时间 | 事件 |', '|---|---|', ...ev.map(([y, e]) => `| ${y} | ${e} |`)].join('\n') } : null; },
   ],
@@ -93,8 +121,8 @@ export const DERIVERS = {
   ],
   steps: [
     // branches need judgment about which step leads where: those stay with the model's skeleton
-    b => { const s = extract.steps(b.text); return s.length >= 3 && !isList(b.text) && !/(失败|否则|如果|成功|没有.{0,4}就)/.test(b.text) ? { label: '步骤', md: s.map((x, k) => `${k + 1}. ${x}`).join('\n') } : null; },
-    b => { const s = extract.steps(b.text); return s.length >= 3 && s.length <= 8 && !/(失败|否则|如果|成功|没有.{0,4}就)/.test(b.text) ? { label: '流程图', md: ['```mermaid', 'flowchart LR', ...s.map((x, k) => `  S${k}[${q(x)}]`), '  ' + s.map((_, k) => `S${k}`).join(' --> '), '```'].join('\n') } : null; },
+    b => { const s = extract.steps(b.text); return s.length >= 3 && !isList(b.text) && !/(如果|否则|若.{0,4}则|失败就|成功则|没有.{0,4}就)/.test(b.text) ? { label: '步骤', md: s.map((x, k) => `${k + 1}. ${x}`).join('\n') } : null; },
+    b => { const s = extract.steps(b.text); return s.length >= 3 && s.length <= 8 && !/(如果|否则|若.{0,4}则|失败就|成功则|没有.{0,4}就)/.test(b.text) ? { label: '流程图', md: ['```mermaid', 'flowchart LR', ...s.map((x, k) => `  S${k}[${q(x)}]`), '  ' + s.map((_, k) => `S${k}`).join(' --> '), '```'].join('\n') } : null; },
   ],
 };
 
@@ -113,13 +141,18 @@ export function scaffold({ title, lead, blocks, derivers = DERIVERS, policy = {}
     out.push(`## ${b.title || `块 ${i + 1}`}`); if (!auto) out.push(`<!-- route: ${tag} -->`);
     // a block the author already wrote in Pele form (fence or table) is kept verbatim: deriving from it
     // would read fence lines as prose and duplicate the content
-    const authored = /^\s*(```|~~~)/m.test(b.text) || /^\s*\|.*\|\s*$/m.test(b.text);
+    // A directory code fence is source material for the treeView deriver, not
+    // a reason to suppress the visual form. Other authored forms remain verbatim.
+    const authored = (/^\s*(```|~~~)/m.test(b.text) && !(b.family === 'hierarchy' && b.type === 'treeView')) || /^\s*\|.*\|\s*$/m.test(b.text);
     const views = b.family === 'prose' || authored ? [] : derive(b, derivers).slice(0, maxViews - 1);
     const safeText = b.text.replace(/-->/g, '→');
     // one-pass mode: a single derived view never sits next to the same text (that reads as duplication);
     // the reader switches between the component and the original instead
     if (views.length >= 2 || (auto && views.length === 1 && !['timeline', 'chart'].includes(b.family))) {
-      out.push('```views', ...views.flatMap(v => [`=== ${v.label}`, v.md.replace(/```/g, '~~~')]), '=== 原文', b.text, '```', '');
+      // The original may itself contain ```code fences. Convert them before
+      // embedding it in the outer ```views fence, otherwise the Markdown
+      // parser closes views early and leaks the remainder into the panel.
+      out.push('```views', ...views.flatMap(v => [`=== ${v.label}`, v.md.replace(/```/g, '~~~')]), '=== 原文', b.text.replace(/```/g, '~~~'), '```', '');
     } else if (views.length === 1) {
       out.push(views[0].md, '', ['timeline', 'chart'].includes(b.family) ? `<!-- 原文：${safeText} -->` : b.text, '');
     } else {

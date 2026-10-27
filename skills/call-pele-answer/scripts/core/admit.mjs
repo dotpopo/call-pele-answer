@@ -29,6 +29,33 @@ function hard(c, text, raw) {
   return ev;
 }
 
+// Local mode has no semantic probability. A hard check such as “mentions a
+// file name” is evidence, not a recommendation for a tree. Promote only when
+// the text also contains the structure that makes the component useful.
+const localTier = (name, text, evidence) => {
+  const t = String(text || '');
+  const has = x => evidence.some(e => e.includes(x));
+  const ordered = /(第\s*[一二三四五六七八九十\d]+\s*天|第\s*[一二三四五六七八九十\d]+\s*步|首先|然后|接着|随后|最后|\n\s*\d+[.)])/;
+  const orderHits = (t.match(/第\s*[一二三四五六七八九十\d]+\s*[天步]|首先|然后|接着|随后|最后|\n\s*\d+[.)]/g) || []).length;
+  const connected = /(调用|连接|流向|发送|返回|请求|响应|依赖|进入|变成|转为|之后|然后|-->|->)/;
+  const pathLines = t.split('\n').filter(line => /(^|\s{2,})([\w.-]+[\\/][\w./-]*|[\w-]+\.(?:m?js|ts|tsx|py|go|rs|md|json|ya?ml|toml|sh))\b/.test(line)).length;
+  const hasTreeFence = /```(?:text|plaintext|tree)?\s*\n[\s\S]*?(?:[\\/]\S|^\s{2,}\S)[\s\S]*?```/i.test(t);
+  const strong = (
+    (name === 'treeView' && has('路径或文件名') && (hasTreeFence || pathLines >= 3)) ||
+    (name === 'table' && has('各带')) ||
+    (name === 'callout' && has('限制或提醒') && /(不要|必须|注意|否则|风险|上限|限制)/i.test(t)) ||
+    (name === 'steps' && has('项') && orderHits >= 2 && ordered.test(t) && /(步骤|流程|第\s*[一二三四五六七八九十\d]+\s*[天步]|首先|然后|接着|随后|最后)/.test(t)) ||
+    (name === 'flowchart' && connected.test(t) && /(步骤|流程|如果|否则|先|然后|接着)/.test(t)) ||
+    (name === 'sequenceDiagram' && has('来回传递') && connected.test(t)) ||
+    (name === 'stateDiagram' && has('状态词') && /(状态|生命周期|pending|running|done|failed)/i.test(t) && /(生命周期|从.{1,12}(变成|进入|转为).{1,12}|状态.{0,8}(变成|进入|转为))/.test(t)) ||
+    (name === 'code' && has('代码或命令')) ||
+    (name === 'timeline' && has('日期') && /\b(19|20)\d{2}\b|\d+\s*年/.test(t))
+  );
+  if (strong) return 'recommended';
+  if (['architecture', 'classDiagram', 'block', 'c4', 'mindmap', 'swimlane', 'agentflow', 'gantt', 'bar', 'line', 'pie', 'radar', 'quadrant', 'sankey', 'treemap', 'gitGraph'].includes(name)) return 'evidence';
+  return 'possible';
+};
+
 export async function admit(blocks, components, adapter, { overrides = readJson(ADMISSION), log = true } = {}) {
   // judge content, not markup: a table already in the draft is turned back into facts first, so it is
   // never its own evidence for `table`
@@ -44,15 +71,25 @@ export async function admit(blocks, components, adapter, { overrides = readJson(
     try { answers = await adapter.ask(flat, questions); } catch (e) { note = `组件准入没有 JEV（${e.message}），只用脚本条件`; }
   }
   blocks.forEach((b, i) => {
-    const opts = [], near = [];
+    const opts = [], possible = [], evidenceOnly = [], near = [];
     for (const { c, ev } of pre[i]) {
       const p = answers?.[i]?.[`cmp_${c.name}`]?.noul;
       const min = overrides[c.name] ?? c.min ?? 0.8;
       if (answers) { if (p != null && p < min && p >= min - 0.1) near.push({ name: c.name, p: +p.toFixed(2), min, evidence: ev.join('，'), desc: c.desc }); if (p == null || p < min) continue; }
       else if (!(c.requires || []).length) continue; // offline: only components a script can vouch for
-      opts.push({ name: c.name, p: p == null ? null : +p.toFixed(2), evidence: ev.join('，'), desc: c.desc });
+      const item = { name: c.name, p: p == null ? null : +p.toFixed(2), evidence: ev.join('，'), desc: c.desc };
+      if (!answers) item.tier = localTier(c.name, flat[i], ev);
+      if (item.tier === 'evidence') evidenceOnly.push(item);
+      else if (item.tier === 'possible') possible.push(item);
+      else opts.push(item);
     }
-    b.options = judged ? opts.sort((x, y) => b.cands.indexOf(x.name) - b.cands.indexOf(y.name)) : opts.sort((x, y) => (y.p ?? 0) - (x.p ?? 0));
+    const rank = (x, y) => judged ? b.cands.indexOf(x.name) - b.cands.indexOf(y.name) : (y.p ?? 0) - (x.p ?? 0);
+    b.recommended = opts.sort(rank).slice(0, 3);
+    b.possible = possible.sort(rank).slice(0, 4);
+    b.evidenceOnly = evidenceOnly.sort(rank);
+    // Legacy consumers still read b.options. It now excludes keyword-only
+    // evidence, which was the source of the previous candidate explosion.
+    b.options = [...b.recommended, ...b.possible];
     b.near = near.sort((x, y) => y.p - x.p); // conditions met, JEV just under the bar: the agent may still use one
     b.tables = tablesIn(b.text).map(t => ({ rows: t.rows.length, cols: t.head.length, ...tableShape(t) }));
   });

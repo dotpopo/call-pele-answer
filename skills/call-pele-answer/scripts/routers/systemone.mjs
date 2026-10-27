@@ -97,6 +97,6 @@ export function shimAdapter({ name, url, keyEnv = [], concurrency = 4, keyedConc
 // "url": "https://…/v1/systemone", "keyEnv": ["PE_KEY_MY_PROXY"] }] } — user config only
 export const BUILTIN_ADAPTERS = [
   nativeAdapter({ name: 'typesafe', url: 'https://api.typesafe.ai/v1/systemone', keyEnv: ['TYPESAFE_API_KEY'], describe: 'TypeSafe 直连 System One（需 TYPESAFE_API_KEY）' }),
-  nativeAdapter({ name: 'classifier-systemone', url: 'https://classifier.dev/v1/systemone', keyEnv: ['CLASSIFIER_API_KEY', 'CLASSIFY_API_KEY'], anonymousKey: 'unused', keyedConcurrency: 4, describe: 'classifier.dev 转发的 System One（无 key 用 IP 免费额度，4 并发）' }),
+  nativeAdapter({ name: 'classifier-systemone', url: 'https://classifier.dev/v1/systemone', keyEnv: ['CLASSIFIER_API_KEY', 'CLASSIFY_API_KEY'], anonymousKey: 'unused', model: 'jev-latest', keyedConcurrency: 4, describe: 'classifier.dev System One（直连 IP 可用免费额度；匿名代理出口需要 funded key）' }),
   shimAdapter({ name: 'classifier', url: 'https://classifier.dev/v1/classify', keyEnv: ['CLASSIFIER_API_KEY', 'CLASSIFY_API_KEY'], describe: 'classifier.dev 批量分类，按问题批量模拟 System One（无 key 可用）' }),
 ];

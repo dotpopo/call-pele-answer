@@ -8,14 +8,16 @@
 
 ## 三个入口
 
-- **`pe answer 回答.md -o 页面.html`**（默认）：路由、组合、派生、渲染一个进程完成，约 0.3 秒（6 块，TypeSafe）。
+- **`pe answer 回答.md -o 页面.html --audit`**（默认快捷入口）：路由、组合、派生、渲染一个进程完成，并打印每块的候选组件、实际落地组件与未落地候选。最终验收加 `--strict`；有 lint/route 警告时不生成页面。
 - **`pe render 稿件.md -o 页面.html`**：你已知道每块的形式，直接写稿件。可从 stdin 读：
   ```bash
   node "${SKILL_DIR}/scripts/pe.mjs" render - -o "<绝对路径>.html" <<'PE_EOF'
   …稿件…
   PE_EOF
   ```
-- **`pe options 稿件.md [--json]`**：每块列出准入通过的组件（JEV 概率 + 脚本证据）和“接近门槛”的组件。准入 = 组件自己声明的硬条件（脚本查，如有不同百分比、≥2 个日期、≥3 个路径）全过 + JEV 对它的是/否问题 ≥ 门槛。离线时只给脚本能担保的组件。不预设任何组合。
+- **`pe options 稿件.md [--json]`**：每块按 `推荐 / 可选 / 仅证据命中` 分层。推荐需要结构性证据；可选需要人工确认；仅证据命中不会进入普通候选组合。JEV 可用时，推荐层由 JEV 概率和脚本证据共同决定；离线 local 时不把关键词命中当作语义确认。
+- **`pe answer ... --audit`**：快捷模式的组件覆盖审计。`候选` 是准入通过的组件，`实际` 是稿件中已识别并会渲染的组件；候选存在但实际为空时必须回到 `pe assemble` 或手写对应围栏。
+- **`pe check 稿件.md --strict`**：严格检查；任何 lint/route 警告都会按错误处理，适合交付前或 CI。
 - **`pe assemble 稿件.md --block <n|标题> --use a,b --as views|stack [-o out.md]`**：把选中组件的骨架拼进这一块；`views` 让原文成为最后一个视图，`stack` 追加在正文后。
 - **`pe tune`**：对比“提供过的组件”和“稿件里真正用到的组件”（`~/.call-pele-answer/offers.jsonl`、`usage.jsonl`），提供 ≥8 次使用率 <10% 的门槛 +0.03，没提供却被用 ≥3 次的 −0.03，写到 `admission.json`。设 `PE_NO_LOG=1` 不记录。
 - **`pe route answer.md -o draft.md`**：形式拿不准时，路由器逐块给形式，组合器按整页调整；简单形状（时间线、占比、线性步骤、状态转移）直接生成，同一块有多种看法时生成 `views`。按 `<!-- TODO … -->` 补成真实内容、删注释，再 `pe render draft.md`。
@@ -40,7 +42,8 @@
 | `hybrid` | classifier 定形式，System One 复核数据图/流程/低置信度块 | 无 key | 20/20，1.3–4 秒 |
 | `local` | 本地关键词规则 | 离线 | 14/20，约 0 ms |
 
-- 失败自动沿降级链走到 `local`，输出会注明。
+- 失败自动沿降级链走到 `local`，输出会注明采用了哪个 router 和失败原因；`local` 只作无网络兜底，组件判断较保守。
+- classifier.dev 官方免费额度按 IP 计算，但匿名代理出口会返回 `403 proxy_requires_payment`；这表示网络出口受限，不是免费额度耗尽。免费额度耗尽应返回 `429 rate_limit_day`。此时不要反复重试，改用直连环境或配置 `classifier_agent_...` funded workspace key。
 - **隐私**：除 `local` 外，内容会发到第三方。内部代码、客户数据、未公开信息用 `local` 或自建端点（`plugins.md`）。
 - `jev` 规则在 `scripts/core/facets.mjs`：问题、规则、代码硬条件、优先级、覆盖表都在这一处，改完用 `eval/jev-facets/bench.mjs` 回归。
 - 门控：没有具体数字不画数据图；一句话能说清不升级；带分支的流程不自动生成线性流程图。

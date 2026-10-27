@@ -8,7 +8,12 @@ import { createHash } from 'node:crypto';
 import { LOG_DIR } from './trace.mjs';
 export const CACHE = process.env.PE_CACHE_FILE || join(LOG_DIR, '..', 'cache', 'route.json');
 const MAX = 5000;
-const h = s => createHash('sha1').update(s).digest('hex').slice(0, 20);
+// Router states may be strings (plain routers) or structured objects (facets).
+// Hash a stable string in both cases; passing an object to crypto.update throws
+// Node's "data argument must be ... string or Buffer" error before the request
+// can reach the adapter.
+const keyText = value => typeof value === 'string' ? value : JSON.stringify(value, Object.keys(value || {}).sort());
+const h = s => createHash('sha1').update(keyText(s) || '').digest('hex').slice(0, 20);
 
 export function withCache(adapter, trace) {
   if (process.env.PE_CACHE === '0' || adapter.__cached) return adapter;
