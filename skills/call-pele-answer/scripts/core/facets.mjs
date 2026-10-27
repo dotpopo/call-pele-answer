@@ -125,7 +125,7 @@ export function branchingParents(t) {
     if (kids >= 2) n++;
   }
   // inline: "所有权（借用、生命周期）、类型系统（trait、泛型）" — a part followed by its sub-parts in brackets
-  n += (t.match(/[^，。；、\s（(]{1,20}[（(][^）)]*[、,，][^）)]*[）)]/g) || []).length;
+  n += (t.match(/[^，。；、\s（(]{1,20}[（(](?!如|例如|比如|e\.g)[^）)]*[、,，][^）)]*[）)]/g) || []).length;
   return n;
 }
 // The text is already a list of three or more items that make up most of it.
@@ -134,13 +134,14 @@ export const listShaped = t => { const ls = t.split('\n').filter(l => l.trim());
 export const crossRef = t => /(回到|返回|退回|跳到|跳回|重复)(第\s*\d+\s*步|步骤|上一步|前一步|开头|起点|[A-Z①-⑨]\b)?|再走一遍|go back to|return to step|repeat from/i.test(t);
 // the most numbers that share one unit ("72 美元 … 68 美元 … 65 美元" → 3)
 // Counting words (块、个、项…) count things, they are not a measure to compare on a bar.
-const COUNTERS = new Set('块个项页次题条处份张名人轮步种类位件段行列组批篇章节号年'.split(''));
+const COUNTERS = new Set('块个项页次题条处份张名人轮步种类位件段行列组批篇章节号年根台'.split(''));
 // thresholds (≥90 cm) and range ends (18.5–23.9) are limits, not magnitudes to compare
 const sameUnit = t => { const c = {}; for (const m of t.matchAll(/(?<![≥≤<>＜＞~–\-\d.])\d+(?:\.\d+)?\s*(%|[a-zA-Z]+|[\u4e00-\u9fa5])/g)) if (!COUNTERS.has(m[1]) && !/^\s*[–~-]/.test(t.slice(m.index + m[0].length - m[1].length - 1, m.index + m[0].length))) c[m[1]] = (c[m[1]] || 0) + 1; return Math.max(0, ...Object.values(c)); };
 const nums = t => (t.match(/\d+(?:\.\d+)?/g) || []).length;
 export const HARD = {
   // a timeline needs three or more distinct dates, each carrying its own event
-  timeline: t => new Set((t.match(/(1[5-9]|20)\d{2}(?=\s*年|-\d{2}|\s*[–-]|\s*[)）:：])/g) || [])).size >= 3,
+  // ...and each date opens its own clause or item, so the dates order the events rather than decorate them
+  timeline: t => new Set([...t.matchAll(/(?:^|[\n；;。，,])\s*(?:[-*]|\d+[.)])?\s*\**\s*((?:1[5-9]|20)\d{2})(?=\s*年|-\d{2}|\s*[–-]|\s*[)）:：])/g)].map(m => m[1])).size >= 3,
   gantt: t => /\d+\s*(天|周|个?月|小时|days?|weeks?)/.test(t),
   // a pie shows shares of one whole: three or more single percentages (not ranges) adding up to about 100
   pie: t => { const v = [...t.matchAll(/(?<![\d.–~-])(\d+(?:\.\d+)?)\s*%(?!\s*[–~-])/g)].map(m => +m[1]); const sum = v.reduce((a, b) => a + b, 0); return v.length >= 3 && sum >= 90 && sum <= 110; },
@@ -158,7 +159,7 @@ export const HARD = {
   swimlane: t => !listShaped(t) || crossRef(t),
   stateDiagram: t => !listShaped(t) || crossRef(t),
   // steps need three or more actions written in order: a list, or ordering words in prose
-  steps: t => (t.match(/^\s*([-*]|\d+[.)])\s/gm) || []).length >= 3 || (t.match(/(先|再|然后|接着|随后|最后|第[一二三四五六]步|first|then|next|finally)/gi) || []).length >= 2 || /分\s*[\d一二三四五六七八九十]+\s*步|→/.test(t),
+  steps: t => (t.match(/^\s*([-*]|\d+[.)])\s/gm) || []).length >= 3 || (t.match(/(先|再|然后|接着|随后|最后|第[一二三四五六]步|first|then|next|finally)/gi) || []).length >= 2 || /分\s*[\d一二三四五六七八九十]+\s*步/.test(t),
   // a mindmap shows a hierarchy: two or more parts that each have their own sub-points
   mindmap: t => branchingParents(t) >= 2,
   treemap: t => branchingParents(t) >= 1 && nums(t) >= 3,
