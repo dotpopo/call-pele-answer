@@ -105,6 +105,10 @@ export const HARD = {
   // a line needs at least three points on a time axis written out in the text
   line: t => (t.match(/(1[5-9]|20)\d{2}\s*年?|\d{1,2}\s*月|第\s*\d+\s*(天|周|月|轮|季度?)|Q[1-4]\b|\b\d{1,2}:\d{2}\b|周[一二三四五六日]|(day|week|month)\s*\d+/gi) || []).length >= 3, quadrant: t => true,
   packet: t => /\d+\s*(位|字节|bits?|bytes?)/i.test(t),
+  // a parameter sweep says how far it moves: "越 X 越 Y" or "从 A 调到 B" with the numbers
+  slider: t => /(越.{1,8}越|从\s*\S+\s*(调|升|降|涨|增|减)到|the (larger|higher|more|smaller|lower)|as .{1,20} (increases|grows|shrinks))/i.test(t) && nums(t) >= 2,
+  // alternatives are named as such: 方案 A / 可以选 X，也可以选 Y / option
+  tabs: t => /(方案|选项|做法|路线|可以选|也可以|还是|或者|二选一|option|alternative|approach|either)/i.test(t),
   // forms bound to a domain vocabulary: the text must use that vocabulary
   requirement: t => /(需求|验收|REQ-|requirement|shall\b)/i.test(t),
   railroad: t => /(语法|文法|BNF|正则|产生式|开头|后面跟|分隔|可以是|syntax|grammar|token)/i.test(t),
