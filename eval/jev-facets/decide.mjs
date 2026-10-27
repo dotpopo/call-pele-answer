@@ -70,8 +70,8 @@ export const RULES = {
   timeline: s => Y(s,'dated_events'),
   gantt: s => Y(s,'task_durations'),
   gitGraph: s => Y(s,'git'),
-  pie: s => Y(s,'percentages'),
-  bar: s => Y(s,'same_unit_numbers') && !Y(s,'over_time'),
+  pie: s => Y(s,'percentages') && !Y(s,'parameter') && !Y(s,'over_time'),
+  bar: s => Y(s,'same_unit_numbers') && !Y(s,'over_time') && !Y(s,'items_attrs'),
   line: s => Y(s,'over_time'),
   sankey: s => Y(s,'flows_amounts'),
   radar: s => Y(s,'scores_criteria'),
@@ -89,7 +89,7 @@ export const RULES = {
 };
 
 // Specific forms outrank generic ones; first match is the primary.
-export const PRIORITY = ['packet','gitGraph','treeView','erDiagram','classDiagram','railroad','wardley','cynefin','eventmodeling','requirement','c4','usecase','journey','kanban','agentflow','ishikawa','gantt','timeline','sankey','treemap','pie','radar','quadrant','venn','line','bar','swimlane','sequenceDiagram','stateDiagram','architecture','block','slider','table','tabs','flowchart','mindmap','steps','code','callout'];
+export const PRIORITY = ['packet','gitGraph','treeView','erDiagram','classDiagram','railroad','wardley','cynefin','eventmodeling','requirement','c4','usecase','journey','kanban','agentflow','ishikawa','gantt','timeline','sankey','treemap','pie','radar','quadrant','venn','line','bar','swimlane','sequenceDiagram','stateDiagram','architecture','block','slider','table','tabs','flowchart','mindmap','code','steps','callout'];
 // Lexical facts code can check exactly; JEV is not asked to count or parse.
 const nums = t => (t.match(/\d+(?:\.\d+)?/g) || []).length;
 export const HARD = {
