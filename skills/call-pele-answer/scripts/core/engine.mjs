@@ -26,10 +26,17 @@ const PROJECT_CONFIG = '.call-pele-answer.json';
 
 // Config precedence (later wins): built-in defaults < ~/.call-pele-answer/config.json < ./.call-pele-answer.json
 // < environment (PE_ROUTER, PE_THEME) < CLI flags.
+// A project config comes from whatever repository the agent happens to be in, so it is untrusted: it may
+// set presentation (router name, theme, output, policy) but not code (plugins) or network endpoints
+// (adapters). PE_TRUST_PROJECT=1, set by the user, lifts that for a repository they trust.
+const CODE_KEYS = ['plugins', 'adapters'];
 export function loadConfig(cwd = process.cwd()) {
   const read = p => { try { return { ...JSON.parse(readFileSync(p, 'utf8')), __dir: dirname(p) }; } catch { return null; } };
-  const layers = [read(USER_CONFIG) || read(OLD_USER_CONFIG), read(join(cwd, PROJECT_CONFIG))].filter(Boolean);
-  const cfg = { router: 'auto', theme: 'pele', output: 'html', palette: true, annotate: true, plugins: [], adapters: [], routers: [], policy: {} };
+  const user = read(USER_CONFIG) || read(OLD_USER_CONFIG), project = read(join(cwd, PROJECT_CONFIG));
+  const ignored = [];
+  if (project && process.env.PE_TRUST_PROJECT !== '1') for (const k of CODE_KEYS) if (project[k]?.length) { ignored.push(k); delete project[k]; }
+  const layers = [user, project].filter(Boolean);
+  const cfg = { router: 'auto', theme: 'pele', output: 'html', palette: true, annotate: true, plugins: [], adapters: [], routers: [], policy: {}, ignored };
   for (const l of layers) {
     for (const k of ['router', 'theme', 'output', 'ste']) if (l[k]) cfg[k] = l[k];
     cfg.plugins.push(...(l.plugins || []).map(p => ({ spec: p, dir: l.__dir })));
@@ -49,10 +56,11 @@ export function loadConfig(cwd = process.cwd()) {
 
 export async function createEngine({ cwd = process.cwd(), config, trace = NOTRACE } = {}) {
   const cfg = config || trace.span('config', () => loadConfig(cwd));
+  if (cfg.ignored?.length) console.error(`! 忽略了 ./${PROJECT_CONFIG} 里的 ${cfg.ignored.join('、')}：项目配置不能加载代码或网络端点（信任这个仓库时设 PE_TRUST_PROJECT=1）`);
   const reg = createRegistry();
   trace.span('builtins', () => { for (const p of [forms, routers, theme, palettes, outputs, rules, components]) reg.use(p); });
   // declarative adapters and routers from config: no code needed to plug in a new System One provider
-  for (const a of cfg.adapters) reg.api.adapter((a.kind === 'shim' ? shimAdapter : nativeAdapter)(a));
+  for (const a of cfg.adapters) { try { reg.api.adapter((a.kind === 'shim' ? shimAdapter : nativeAdapter)(a)); } catch (e) { console.error(`! 跳过适配器：${e.message}`); } }
   for (const r of cfg.routers) reg.api.routerSpec(r);
   // code plugins: a module whose default export is { name, apiVersion, setup(api) } or a setup function
   for (const { spec, dir } of cfg.plugins) {

@@ -5,7 +5,9 @@
 //
 // Thresholds tune themselves from use: `pe tune` reads what was offered vs what the agent actually wrote
 // and writes per-component overrides to ~/.call-pele-answer/admission.json.
-import { readFileSync, appendFileSync, mkdirSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { appendPrivate, writePrivate } from './files.mjs';
 import { join, dirname } from 'node:path';
 import { homedir } from 'node:os';
 import { CHECKS } from './components.mjs';
@@ -17,7 +19,9 @@ export const OFFERS = join(STATE_DIR, 'offers.jsonl');
 export const USAGE = join(STATE_DIR, 'usage.jsonl');
 const readJson = p => { try { return JSON.parse(readFileSync(p, 'utf8')); } catch { return {}; } };
 const readLines = p => { try { return readFileSync(p, 'utf8').split('\n').filter(Boolean).map(l => JSON.parse(l)); } catch { return []; } };
-const append = (p, o) => { try { mkdirSync(dirname(p), { recursive: true }); appendFileSync(p, JSON.stringify(o) + '\n'); } catch {} };
+const append = (p, o) => { try { appendPrivate(p, JSON.stringify(o) + '\n'); } catch {} };
+// logs keep a short hash of each block title, enough to pair an offer with its use, never the text
+const tid = s => createHash('sha256').update(s || '').digest('hex').slice(0, 12);
 
 function hard(c, text, raw) {
   const ev = [];
@@ -49,7 +53,7 @@ export async function admit(blocks, components, adapter, { overrides = readJson(
     b.near = near.sort((x, y) => y.p - x.p); // conditions met, JEV just under the bar: the agent may still use one
     b.tables = tablesIn(b.text).map(t => ({ rows: t.rows.length, cols: t.head.length, ...tableShape(t) }));
   });
-  if (log) append(OFFERS, { ts: Date.now(), blocks: blocks.map(b => ({ title: b.title || '', options: b.options.map(o => o.name) })) });
+  if (log) append(OFFERS, { ts: Date.now(), blocks: blocks.map(b => ({ title: tid(b.title), options: b.options.map(o => o.name) })) });
   return note;
 }
 
@@ -77,7 +81,7 @@ export function usedComponents(blockText, components) {
 export function logUsage(draft, components) {
   const parts = draft.split(/^(?=##\s)/m).filter(p => /^##\s/.test(p));
   if (!parts.length) return;
-  append(USAGE, { ts: Date.now(), blocks: parts.map(p => ({ title: p.match(/^##\s+(.*)$/m)[1].trim(), used: usedComponents(p, components) })) });
+  append(USAGE, { ts: Date.now(), blocks: parts.map(p => ({ title: tid(p.match(/^##\s+(.*)$/m)[1].trim()), used: usedComponents(p, components) })) });
 }
 
 // Offered but rarely used → raise its bar; used but not offered → lower it. Small steps, bounded.
@@ -100,7 +104,7 @@ export function tune(components, { minSeen = 8, step = 0.03 } = {}) {
     if (s.missed >= 3) v = Math.max(0.6, base - step);
     if (v !== base) { cur[c.name] = +v.toFixed(2); changes.push({ name: c.name, from: base, to: cur[c.name], ...s }); }
   }
-  if (changes.length) { mkdirSync(STATE_DIR, { recursive: true }); writeFileSync(ADMISSION, JSON.stringify(cur, null, 2) + '\n'); }
+  if (changes.length) writePrivate(ADMISSION, JSON.stringify(cur, null, 2) + '\n');
   return { stat, changes };
 }
 

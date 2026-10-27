@@ -14,6 +14,7 @@
 //   pe info                                      forms, routers, adapters, themes, outputs, rules, plugins
 //   pe config [get | set <key> <value> | reset]  user config (~/.call-pele-answer/config.json)
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { writePrivate, privateDir, tmpFile, TMP_DIR } from './core/files.mjs';
 import { dirname, resolve, join } from 'node:path';
 import { homedir, tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -39,8 +40,8 @@ function outPath(opts, title, ext) {
   if (opts.o) return resolve(opts.o);
   const slug = (title || 'page').replace(/[^\w\u4e00-\u9fff-]+/g, '-').slice(0, 40);
   const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
-  for (const base of [join(homedir(), '.call-pele-answer', 'pages'), join(tmpdir(), 'call-pele-answer', 'pages')]) {
-    try { mkdirSync(base, { recursive: true }); return join(base, `${stamp}-${slug}.${ext}`); } catch {}
+  for (const base of [join(homedir(), '.call-pele-answer', 'pages'), join(TMP_DIR, 'pages')]) {
+    try { privateDir(base); return join(base, `${stamp}-${slug}.${ext}`); } catch {}
   }
   return resolve(`${slug}.${ext}`);
 }
@@ -52,7 +53,7 @@ async function build(engine, file, opts, { checkOnly = false } = {}) {
   if (r.errors.length) {
     console.log(`✗ 稿件有 ${r.errors.length} 处错误，没有生成输出：`);
     r.errors.forEach(e => console.log('  ' + fmt(e)));
-    if (file === '-' || !file) { const p = join(tmpdir(), `call-pele-answer-draft-${Date.now()}.md`); writeFileSync(p, src); console.log(`  draft: ${p}  （行号对应这个文件；改完用 render ${p}）`); }
+    if (!checkOnly && (file === '-' || !file)) { const p = tmpFile('draft'); writePrivate(p, src); console.log(`  draft: ${p}  （行号对应这个文件；改完用 render ${p}）`); }
     return 1;
   }
   if (checkOnly) {
@@ -74,8 +75,8 @@ async function route(engine, file, opts) {
   const res = await engine.route(readInput(file), { router: opts.router || undefined, policy: opts.device ? { device: opts.device } : {} });
   res.notes.forEach(n => console.error('! ' + n));
   if (opts.json) { console.log(JSON.stringify({ by: res.by, ms: res.ms, notes: res.notes, blocks: res.blocks.map(({ text, ...x }) => x) }, null, 2)); return 0; }
-  const out = opts.o ? resolve(opts.o) : join(tmpdir(), `call-pele-answer-route-${Date.now()}.md`);
-  writeFileSync(out, res.draft);
+  const out = opts.o ? resolve(opts.o) : tmpFile('route');
+  writePrivate(out, res.draft);
   console.log(`route ${res.blocks.length} 块 · ${res.by} · ${res.ms} ms`);
   res.blocks.forEach((b, i) => console.log(`  ${String(i + 1).padStart(2)} ${(b.title || b.text.slice(0, 18)).padEnd(18)} → ${b.family}${b.type && b.family !== 'prose' ? '/' + b.type : ''} (${b.confidence.toFixed(2)})${b.alternatives?.length ? '  alt: ' + b.alternatives.join(',') : ''}${b.gated ? '  · ' + b.gated : ''}${b.recomposed ? '  · ' + b.recomposed : ''}`));
   console.log(`  draft: ${out}`);
@@ -117,8 +118,8 @@ async function answer(engine, file, opts) {
   console.log(`route ${res.blocks.length} 块 · ${res.by} · ${res.ms} ms`);
   console.log('  组件候选（组合由你定；pe options 看证据，pe assemble 拼骨架）：'); showOptions(res.blocks, false);
   res.blocks.filter(b => b.underived).forEach(b => console.log(`  ! 「${b.title || b.text.slice(0, 18)}」路由为 ${b.family}${b.type ? '/' + b.type : ''}，一遍模式没法自动生成，仍是文字；要图就在这块手写对应围栏`));
-  const tmp = join(tmpdir(), `call-pele-answer-answer-${Date.now()}.md`);
-  writeFileSync(tmp, res.draft);
+  const tmp = tmpFile('answer');
+  writePrivate(tmp, res.draft);
   return build(engine, tmp, { ...opts, quiet: true });
 }
 
@@ -130,8 +131,8 @@ async function patch(engine, page, opts) {
   const k = parts.findIndex(p => p.match(/^##\s+(.*)$/m)?.[1].trim() === String(opts.panel).trim());
   if (k < 0) { console.error(`✗ 找不到块「${opts.panel}」`); return 1; }
   parts[k] = readFileSync(0, 'utf8').trim() + '\n' + (k < parts.length - 1 ? '\n' : '');
-  const tmp = join(tmpdir(), `call-pele-answer-patch-${Date.now()}.md`);
-  writeFileSync(tmp, parts.join(''));
+  const tmp = tmpFile('patch');
+  writePrivate(tmp, parts.join(''));
   return build(engine, tmp, { ...opts, o: page });
 }
 

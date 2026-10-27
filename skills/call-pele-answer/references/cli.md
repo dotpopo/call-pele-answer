@@ -48,8 +48,17 @@
 ## 计时与自我优化
 
 - 每次运行把分阶段耗时追加到 `~/.call-pele-answer/logs/runs.jsonl`（`PE_TRACE=0` 关闭；`--trace` 打印；`PE_LOG_DIR` 指到持久位置）。
-- Agent 回合计时：Claude Code 装插件后自动记录（`hooks/hooks.json`）。其他 Agent 每步开始运行 `node ${SKILL_DIR}/scripts/hooks/agent-hook.mjs mark <步骤>`（如 research、write、pe-answer、verify），交付后 `mark end`。
+- Agent 回合计时：Claude Code 装插件后自动记录（`hooks/hooks.json`，只记工具名和耗时，见安全一节）。其他 Agent 每步开始运行 `node ${SKILL_DIR}/scripts/hooks/agent-hook.mjs mark <步骤>`（如 research、write、pe-answer、verify），交付后 `mark end`。
 - `pe stats`：各阶段 p50/p95、每回合模型/工具/pe 占比、最慢调用和改法。每约 20 次运行看一次：路由慢 → 换路由器；TODO 多 → 加派生器或直接写表格；模型占比高 → 少写一遍；非 pe 命令多 → 交付前只跑 `pe check`。
+
+## 安全
+
+- **项目配置不受信任**：`./.call-pele-answer.json` 里的 `plugins`、`adapters` 被忽略（stderr 提示）。信任这个仓库时由用户设 `PE_TRUST_PROJECT=1`。
+- **密钥**：只读 `TYPESAFE_API_KEY`、`CLASSIFIER_API_KEY`/`CLASSIFY_API_KEY` 和 `PE_KEY_*`；读取集中在 `scripts/core/keys.mjs`。带 key 的请求只走 https（或本机 http）。
+- **`src=` 引用**：按真实路径判断，同名前缀的兄弟目录（`../project-x`）和指向外部的符号链接都算目录外，报 `code/outside`。
+- **写文件**：`pe check` 不写任何文件。其他命令的临时稿放在 `$TMPDIR/call-pele-answer-<uid>/`（目录 0700、文件 0600）；日志、缓存、状态同样 0600。
+- **日志范围**：`runs.jsonl` 只有本工具的阶段耗时；`agent.jsonl` 对其他工具只记工具名和耗时，对 pe 只记 `pe <子命令>`，不记参数、路径、URL；`offers/usage.jsonl` 只存块标题的哈希。
+- **`scripts/vendor/pele.mjs`**：打包压缩后的渲染库（MIT，见 `PELE-LICENSE.txt`），里面的 `javascript:`/`data:` 字符串是它的 URL 消毒代码，不联网、不执行外部代码。
 
 ## 稿件与围栏写法（从 SKILL.md 移来）
 

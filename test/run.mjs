@@ -101,6 +101,8 @@ t('apiVersion 不匹配的插件被拒绝', threw);
 reg.api.form({ name: 'a', fences: ['z'], render: {} }); reg.api.form({ name: 'b', fences: ['z'], render: {} });
 t('后注册的 form 覆盖同名围栏', reg.formFor('z').name === 'b');
 
+// the plugin and adapter tests use a project config, so this test directory opts in as trusted
+process.env.PE_TRUST_PROJECT = '1';
 const dir = mkdtempSync(join(tmpdir(), 'pe-test-'));
 writeFileSync(join(dir, 'p.mjs'), `export default { name: 'hello', apiVersion: 1, setup(api) { api.form({ name: 'hello', fences: ['hello'], render: { html: n => '<b class="hi">' + n.body.join('') + '</b>', markdown: n => 'HI ' + n.body.join('') } }); } };`);
 writeFileSync(join(dir, '.call-pele-answer.json'), JSON.stringify({ plugins: ['./p.mjs'], routers: [{ name: 'only-local', strategy: 'local' }] }));
@@ -211,6 +213,13 @@ console.log('— 路由缓存');
   const svg = peleR('stateDiagram-v2\n  [*] --> A\n  A --> B\n  class B bad').svg;
   const css = (await import('fs')).readFileSync(new URL('../skills/call-pele-answer/scripts/themes/pele.css', import.meta.url), 'utf8');
   t('语义类进入 SVG，主题 CSS 给它上色', /pele-state bad/.test(svg) && /\.pe-svg g\[class\]:is\(\.bad/.test(css) && /\.pe-legend/.test(css));
+}
+console.log('— 安全（ClawHub 审查回归）');
+{
+  const { spawnSync } = await import('node:child_process');
+  const env = { ...process.env }; delete env.PE_TRUST_PROJECT;
+  const r = spawnSync(process.execPath, [join(HERE, 'security.mjs')], { encoding: 'utf8', env });
+  for (const l of r.stdout.split('\n')) { const m = /^([✓✗]) (.*)$/.exec(l); if (m) t(m[2], m[1] === '✓'); }
 }
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exitCode = fail ? 1 : 0;

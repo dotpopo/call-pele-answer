@@ -10,18 +10,20 @@ export default {
 };
 ```
 
-在配置里登记（`~/.call-pele-answer/config.json` 或项目根目录的 `.call-pele-answer.json`）：
+在用户配置 `~/.call-pele-answer/config.json` 里登记。项目根目录的 `.call-pele-answer.json` 来自当前仓库，不受信任：只能设 `router`、`theme`、`output`、`policy` 这类展示项，`plugins` 和 `adapters` 会被忽略并提示，除非用户对这个仓库设了 `PE_TRUST_PROJECT=1`。
 
 ```json
 {
   "plugins": ["./plugins/kpi.mjs", "some-npm-package"],
-  "adapters": [{ "name": "my-proxy", "kind": "native", "url": "https://…/v1/systemone", "keyEnv": ["MY_KEY"] }],
+  "adapters": [{ "name": "my-proxy", "kind": "native", "url": "https://…/v1/systemone", "keyEnv": ["PE_KEY_MY_PROXY"] }],
   "routers":  [{ "name": "proxy-full", "strategy": "full", "adapter": "my-proxy", "fallback": "classifier" }],
   "router": "proxy-full",
   "theme": "pele",
   "policy": { "device": "desktop", "budget": { "interactive": 2 } }
 }
 ```
+
+自定义适配器的 key 只能放在 `PE_KEY_*` 环境变量里（内置的 `TYPESAFE_API_KEY`、`CLASSIFIER_API_KEY` 除外）；`url` 必须是 https，或本机的 http。写了别的变量名或远程 http 的适配器会被跳过。
 
 优先级（后者覆盖前者）：内置默认 < 用户配置 < 项目配置 < 环境变量（`PE_ROUTER`、`PE_THEME`）< 命令行参数。`pe info` 列出当前加载的全部积木。
 
