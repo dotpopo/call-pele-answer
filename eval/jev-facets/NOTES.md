@@ -25,3 +25,11 @@ code = fence, ≥2 statement lines, or a shell command in prose; tabs = ≥2 nam
 steps not on a checklist ("- [ ]") or a ranked list ("按优先级"); mindmap not on time buckets.
 real .925→.935, runs .921→.933, fresh .901→.951, final .833→.931, synthetic .927 unchanged.
 All 424 real blocks: top1 90.3%→93.6%; wrongly drawn 31→18 of 201 prose; left as text 11→11.
+
+## Root cause probe (2026-10-27 17:45, probe7.mjs, live jev-1.13.0)
+Facets are bare "Does the text give X?" with no criteria or context, so a mention counts. Adding block context
+("one part of a longer answer; draw only when the block is about X") + concrete true/false criteria:
+negatives SYN 025#2 .95→.07, 025#4 .90→.10, winver 038#5 .92→.19, 30% 019#6 .69→.02, 1915 098#4 .99→.32,
+quadrant-usage 028#6 .93→.36, 097#1 .84→.65, layers 064#5 .94→.27, 036#1 .94→.12; positives stay .87–.99.
+Caveat: examples paraphrase the failing cases (TypeSafe yellow flag). Next (asked her): rewrite all facets with
+generic criteria, rerun 424, validate on an unseen batch, then drop HARD rules that become redundant.
