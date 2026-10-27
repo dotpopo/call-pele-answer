@@ -99,7 +99,9 @@ export const HARD = {
   gantt: t => /\d+\s*(天|周|个?月|小时|days?|weeks?)/.test(t),
   pie: t => (t.match(/\d+(?:\.\d+)?\s*%/g) || []).length >= 2,
   radar: t => nums(t) >= 6,
-  sankey: t => nums(t) >= 3, treemap: t => nums(t) >= 3, bar: t => nums(t) >= 3, line: t => nums(t) >= 3, quadrant: t => true,
+  sankey: t => nums(t) >= 3, treemap: t => nums(t) >= 3, bar: t => nums(t) >= 3,
+  // a line needs at least three points on a time axis written out in the text
+  line: t => (t.match(/(1[5-9]|20)\d{2}\s*年?|\d{1,2}\s*月|第\s*\d+\s*(天|周|月|轮|季度?)|Q[1-4]\b|\b\d{1,2}:\d{2}\b|周[一二三四五六日]|(day|week|month)\s*\d+/gi) || []).length >= 3, quadrant: t => true,
   packet: t => /\d+\s*(位|字节|bits?|bytes?)/i.test(t),
   // forms bound to a domain vocabulary: the text must use that vocabulary
   requirement: t => /(需求|验收|REQ-|requirement|shall\b)/i.test(t),
@@ -122,8 +124,19 @@ const COVERS = {
   numbers: ['pie','treemap','radar','sankey','line','gantt','packet'],
   parts: ['treemap','ishikawa','treeView','table','tabs'],
 };
+// Three or more list items that each carry two or more values under the same attribute labels
+// ("- A：价格 3，耗时 5" / "- B：价格 4，耗时 2"): the text already has a grid's shape. Sentences in a list
+// rarely start their clauses with the same words, so a repeated label is the tell.
+export function gridShape(t) {
+  const items = (t.match(/^\s*([-*]|\d+[.)])\s+.+$/gm) || []).filter(l => (l.match(/[，,；;]/g) || []).length >= 2);
+  if (items.length < 3) return false;
+  const seen = new Map();
+  for (const l of items) for (const k of new Set(l.split(/[，,；;：:]/).slice(1).map(x => x.trim().slice(0, 2)).filter(Boolean))) seen.set(k, (seen.get(k) || 0) + 1);
+  return [...seen.values()].some(v => v >= Math.max(3, items.length - 1));
+}
 export function decide(s, text = '') {
   let cands = PRIORITY.filter(c => RULES[c](s) && (!HARD[c] || HARD[c](text)));
+  if (gridShape(text)) cands = ['table', ...cands.filter(c => c !== 'table')];
   const primary = cands[0] || 'prose';
   cands = cands.filter(c => c === primary || !GENERIC[c] || !COVERS[GENERIC[c]].includes(primary));
   return { primary, cands };
