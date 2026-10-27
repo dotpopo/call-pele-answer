@@ -151,6 +151,8 @@ export const HARD = {
   flowchart: t => !listShaped(t) || crossRef(t),
   swimlane: t => !listShaped(t) || crossRef(t),
   stateDiagram: t => !listShaped(t) || crossRef(t),
+  // steps need three or more actions written in order: a list, or ordering words in prose
+  steps: t => (t.match(/^\s*([-*]|\d+[.)])\s/gm) || []).length >= 3 || (t.match(/(先|再|然后|接着|随后|最后|第[一二三四五六]步|first|then|next|finally)/gi) || []).length >= 2 || /分\s*[\d一二三四五六七八九十]+\s*步|→/.test(t),
   // a mindmap shows a hierarchy: two or more parts that each have their own sub-points
   mindmap: t => branchingParents(t) >= 2,
   treemap: t => branchingParents(t) >= 1 && nums(t) >= 3,
