@@ -1,0 +1,35 @@
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { BUILTIN_ADAPTERS } from '/workspace/work/call-pele-answer/skills/call-pele-answer/scripts/routers/systemone.mjs';
+import { FACETS, decide } from './ref/facets058.mjs';
+const split = process.argv[2] || 't';
+const blocks = (process.env.SET || 'blocks').split(',').flatMap(f => JSON.parse(readFileSync(new URL('./' + f + '.json', import.meta.url)))).filter(b => split === 'all' || b.split === split);
+const CACHE = new URL('./answers.cache.json', import.meta.url);
+const cache = existsSync(CACHE) ? JSON.parse(readFileSync(CACHE)) : {};
+const key = (q, t) => createHash('sha1').update(JSON.stringify([q, t])).digest('hex');
+const need = {}; let requests = 0, ms = 0, errors = 0;
+for (const b of blocks) for (const [n, q] of Object.entries(FACETS)) if (cache[key(q, b.text)] == null) (need[b.text] ??= {})[n] = q;
+const texts = Object.keys(need);
+// fetch missing answers in small batches so one request stays under the adapter timeout
+for (let k = 0; k < texts.length; k += 15) {
+  const part = texts.slice(k, k + 15);
+  const qs = Object.assign({}, ...part.map(t => need[t]));
+  const a = BUILTIN_ADAPTERS.find(x => x.name === 'classifier-systemone');
+  const t0 = Date.now();
+  try { const r = await a.ask(part, qs); requests++; ms += Date.now() - t0;
+    part.forEach((tx, i) => { for (const [n, q] of Object.entries(qs)) { const v = r[i][n]?.noul; if (v == null) errors++; else cache[key(q, tx)] = v; } });
+  } catch (e) { errors++; console.error('ask failed', e.message); if (/429/.test(e.message)) await new Promise(r => setTimeout(r, 30000)); }
+  writeFileSync(CACHE, JSON.stringify(cache));
+}
+let top1 = 0, recall = 0, extra = 0; const miss = [];
+for (const b of blocks) {
+  const s = Object.fromEntries(Object.entries(FACETS).map(([n, q]) => [n, cache[key(q, b.text)] ?? 0]));
+  const { primary, cands } = decide(s, b.text);
+  const ok = b.gold.includes(primary); top1 += ok;
+  const inC = b.gold.includes('prose') ? cands.length === 0 : cands.some(c => b.gold.includes(c)); recall += inC;
+  extra += cands.filter(c => !b.gold.includes(c)).length;
+  if (!ok) miss.push(`${b.id}: ${primary} [${cands.join(' ')}]`);
+}
+const n = blocks.length;
+console.log(JSON.stringify({ split, blocks: n, questions: Object.keys(FACETS).length, top1: +(top1 / n).toFixed(3), recall: +(recall / n).toFixed(3), extra_per_block: +(extra / n).toFixed(2), live_requests: requests, live_ms: ms, errors }));
+if (process.env.V) console.log(miss.join('\n'));
