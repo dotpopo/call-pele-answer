@@ -221,5 +221,37 @@ console.log('— 安全（ClawHub 审查回归）');
   const r = spawnSync(process.execPath, [join(HERE, 'security.mjs')], { encoding: 'utf8', env });
   for (const l of r.stdout.split('\n')) { const m = /^([✓✗]) (.*)$/.exec(l); if (m) t(m[2], m[1] === '✓'); }
 }
+
+console.log('— JEV 原子判断路由（一次请求，代码决定）');
+{
+  const { routeFacets } = await import('../skills/call-pele-answer/scripts/routers/engine.mjs');
+  const { FACETS } = await import('../skills/call-pele-answer/scripts/core/facets.mjs');
+  const { admit } = await import('../skills/call-pele-answer/scripts/core/admit.mjs');
+  const { BUILTIN_COMPONENTS } = await import('../skills/call-pele-answer/scripts/core/components.mjs');
+  let calls = 0;
+  const yes = { 0: ['messages', 'steps'], 1: ['percentages'], 2: [] };
+  const fake = { name: 'fake', ask: async (texts, qs) => { calls++; return Object.assign(texts.map((_, i) => Object.fromEntries(Object.keys(qs).map(k => [k, { noul: yes[i].includes(k) ? 0.95 : 0.05 }]))), { model: 'jev-x' }); } };
+  const texts = ['浏览器发送 ClientHello，服务器返回 ServerHello，浏览器再发送 Finished。', '收入构成：云 55%，广告 30%，硬件 15%。', '我建议先小流量上线再全量。'];
+  const r = await routeFacets(texts, fake);
+  t('所有块的全部原子题只发一次请求', calls === 1);
+  t('问的是原子是非题，不是“选什么形式”', Object.values(FACETS).every(q => q.type === 'noul'));
+  t('双方往来 → 时序图', r.blocks[0].family === 'sequence' && r.blocks[0].type === 'sequenceDiagram');
+  t('通用的分步被专用形式覆盖，不进候选', !r.blocks[0].cands.includes('steps'));
+  t('百分比 → 饼图（代码核对至少两个百分数）', r.blocks[1].type === 'pie');
+  t('没有命中 → 文字', r.blocks[2].family === 'prose' && r.blocks[2].cands.length === 0);
+  t('by 标明模型和策略', /jev-x · facets/.test(r.by));
+  calls = 0;
+  await admit(r.blocks, BUILTIN_COMPONENTS, fake, { log: false, overrides: {} });
+  t('组件准入复用路由的判断，不再发第二次请求', calls === 0);
+  t('准入候选来自原子判断', r.blocks[0].options.some(o => o.name === 'sequenceDiagram') && !r.blocks[2].options.some(o => o.name === 'sequenceDiagram'));
+  t('候选按代码优先级排，首选在前', r.blocks[0].options[0]?.name === r.blocks[0].proposed);
+  const failing = { name: 'down', ask: async () => { throw new Error('timeout'); } };
+  let threw = false; try { await routeFacets(texts, failing); } catch { threw = true; }
+  t('请求失败要报错，不能当成“否”', threw);
+  const { createEngine: ce } = await import('../skills/call-pele-answer/scripts/core/engine.mjs');
+  const eng = await ce({ cwd: mkdtempSync(join(tmpdir(), 'pe-jev-')) });
+  t('auto 路由默认走 jev', eng.resolveRouter('auto').name === 'jev');
+}
+
 console.log(`\n${pass} passed, ${fail} failed`);
 process.exitCode = fail ? 1 : 0;

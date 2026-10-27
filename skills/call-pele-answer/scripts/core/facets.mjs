@@ -116,3 +116,12 @@ export function decide(s, text = '') {
   cands = cands.filter(c => c === primary || !GENERIC[c] || !COVERS[GENERIC[c]].includes(primary));
   return { primary, cands };
 }
+
+// Where each component renders: the family and diagram type the scaffold and derivers understand.
+const FORM = { table: ['table', null], tabs: ['tabs', null], slider: ['slider', null], steps: ['steps', 'numbered'], callout: ['prose', null], code: ['prose', null] };
+export function formOf(name, TYPES, s = {}) {
+  if (FORM[name]) return FORM[name];
+  if (name === 'flowchart') return [Y(s, 'steps') ? 'steps' : 'structure', 'flowchart'];
+  for (const [fam, types] of Object.entries(TYPES)) if (types[name]) return [fam, name];
+  return ['prose', null];
+}

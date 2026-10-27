@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { BUILTIN_ADAPTERS } from '/workspace/work/call-pele-answer/skills/call-pele-answer/scripts/routers/systemone.mjs';
-import { FACETS, decide } from './decide.mjs';
+import { FACETS, decide } from '../../skills/call-pele-answer/scripts/core/facets.mjs';
 const split = process.argv[2] || 't';
 const blocks = JSON.parse(readFileSync(new URL('./blocks.json', import.meta.url))).filter(b => split === 'all' || b.split === split);
 const CACHE = new URL('./answers.cache.json', import.meta.url);

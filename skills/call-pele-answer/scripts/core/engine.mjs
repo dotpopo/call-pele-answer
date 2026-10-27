@@ -75,7 +75,7 @@ class Engine {
   constructor(registry, config, trace = NOTRACE) { this.registry = registry; this.config = config; this.trace = trace; }
 
   resolveRouter(name) {
-    if (name === 'auto') name = process.env.TYPESAFE_API_KEY ? 'typesafe' : 'systemone-free';
+    if (name === 'auto') name = 'jev';
     const r = this.registry.router(name);
     if (r) return r;
     const spec = this.registry.routerSpec(name);
@@ -92,7 +92,7 @@ class Engine {
     while (name && !tried.has(name)) {
       tried.add(name);
       const r = this.resolveRouter(name);
-      const rn = name === 'auto' ? (process.env.TYPESAFE_API_KEY ? 'typesafe' : 'systemone-free') : name;
+      const rn = name === 'auto' ? 'jev' : name;
       try { res = await T.span(`router:${rn}`, () => r.route(texts)); T.set('router', rn); T.count('blocks', texts.length); break; }
       catch (e) { notes.push(`${name} 不可用（${e.message}）`); name = r.fallback || (name !== 'local' ? 'local' : null); }
     }

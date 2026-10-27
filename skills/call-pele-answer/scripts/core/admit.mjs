@@ -35,7 +35,10 @@ export async function admit(blocks, components, adapter, { overrides = readJson(
   const flat = blocks.map(b => deformat(b.text));
   const pre = blocks.map((b, i) => components.map(c => ({ c, ev: hard(c, flat[i], b.text) })).filter(x => x.ev));
   let answers = null, note = null;
-  if (adapter) {
+  // the facets router already judged every block: its candidates are the JEV side of admission
+  const judged = blocks.every(b => Array.isArray(b.cands));
+  if (judged) answers = blocks.map(b => Object.fromEntries(components.map(c => [`cmp_${c.name}`, { noul: b.cands.includes(c.name) ? 1 : 0 }])));
+  else if (adapter) {
     const questions = {};
     for (const c of components) if (c.ask) questions[`cmp_${c.name}`] = { type: 'noul', instructions: c.ask };
     try { answers = await adapter.ask(flat, questions); } catch (e) { note = `组件准入没有 JEV（${e.message}），只用脚本条件`; }
@@ -49,7 +52,7 @@ export async function admit(blocks, components, adapter, { overrides = readJson(
       else if (!(c.requires || []).length) continue; // offline: only components a script can vouch for
       opts.push({ name: c.name, p: p == null ? null : +p.toFixed(2), evidence: ev.join('，'), desc: c.desc });
     }
-    b.options = opts.sort((x, y) => (y.p ?? 0) - (x.p ?? 0));
+    b.options = judged ? opts.sort((x, y) => b.cands.indexOf(x.name) - b.cands.indexOf(y.name)) : opts.sort((x, y) => (y.p ?? 0) - (x.p ?? 0));
     b.near = near.sort((x, y) => y.p - x.p); // conditions met, JEV just under the bar: the agent may still use one
     b.tables = tablesIn(b.text).map(t => ({ rows: t.rows.length, cols: t.head.length, ...tableShape(t) }));
   });

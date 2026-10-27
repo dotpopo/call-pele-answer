@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'; import { createHash } from 'node:crypto'; import { FACETS, decide } from './decide.mjs';
+import { readFileSync } from 'node:fs'; import { createHash } from 'node:crypto'; import { FACETS, decide } from '../../skills/call-pele-answer/scripts/core/facets.mjs';
 const cache = JSON.parse(readFileSync(new URL('./answers.cache.json', import.meta.url)));
 const key = (q, t) => createHash('sha1').update(JSON.stringify([q, t])).digest('hex');
 const B = JSON.parse(readFileSync(new URL('./blocks.json', import.meta.url))).filter(b => b.split === (process.argv[2] || 't'));

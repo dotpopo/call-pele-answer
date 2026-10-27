@@ -30,9 +30,10 @@
 
 ## 路由器
 
-| `--router` | 怎么问 | 需要 | 实测（20 块） |
+| `--router` | 怎么问 | 需要 | 实测 |
 |---|---|---|---|
-| `auto`（默认） | 有 `TYPESAFE_API_KEY` 用 `typesafe`；否则 `systemone-free`，失败退 `classifier`，最后 `local` | — | — |
+| `auto` / `jev`（默认） | 每块 42 道原子是非题，所有块一次请求；代码规则定首选形式和候选。有 `TYPESAFE_API_KEY` 先直连，失败退 `jev-free`，再退 `local` | — | 82 块标注集留出命中 90.2%；5 块一页约 1.5 秒 |
+| `jev-free` | 同上，固定经 classifier.dev 转发 | 无 key | 同上 |
 | `classifier` | classifier.dev 批量，形式 + 图类型 | 无 key | 20/20，约 1.5 秒 |
 | `typesafe` | TypeSafe System One，每块多问题并行 + 置信度门控 | `TYPESAFE_API_KEY` | 19/20，约 0.2 秒 |
 | `systemone-free` | 同上，经 classifier.dev 匿名转发，按 IP 限额 | 无 key | 19/20，3–5 秒 |
@@ -41,6 +42,7 @@
 
 - 失败自动沿降级链走到 `local`，输出会注明。
 - **隐私**：除 `local` 外，内容会发到第三方。内部代码、客户数据、未公开信息用 `local` 或自建端点（`plugins.md`）。
+- `jev` 规则在 `scripts/core/facets.mjs`：问题、规则、代码硬条件、优先级、覆盖表都在这一处，改完用 `eval/jev-facets/bench.mjs` 回归。
 - 门控：没有具体数字不画数据图；一句话能说清不升级；带分支的流程不自动生成线性流程图。
 - key 由代理注入（Node 不读 HTTPS_PROXY）时，命令前加 `NODE_USE_ENV_PROXY=1`。
 - 路由按块缓存（`~/.call-pele-answer/cache/route.json`，`PE_CACHE=0` 关闭）：改稿后只有改动的块走网络。
