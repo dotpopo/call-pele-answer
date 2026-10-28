@@ -1,21 +1,6 @@
 #!/usr/bin/env node
 // pe — call-pele-answer CLI. Thin shell over core/engine.mjs; every capability comes from the registry.
-//   pe render <draft.md|->  [-o out] [--output html|markdown|json] [--theme pele] [--ste flavored|strict|off] [--lean]
-//   pe check  <draft.md|->                       lint only, writes nothing
-//   pe route  <answer.md|-> [-o draft.md] [--render out.html] [--router auto|…] [--device desktop|mobile] [--json]
-//   pe answer <answer.md|-> [-o page.html] [--router …] [--audit] [--strict]   route + derive + render
-//   --annotate on|off  批注开关（默认开；也可配置 "annotate": false，或 PE_ANNOTATE=0，或稿件 annotate: off）
-//   --color auto|plain 自动配色开关（默认 auto：每块随机上一种背景色；plain 恢复素色。也可配置 "color": "plain"，或 PE_COLOR=plain，或稿件 color: plain）
-//   --palette on|off   调色器开关（默认开；也可在配置写 "palette": false，或 PE_PALETTE=0，或稿件 palette: off）
-//   --audit            输出每块的候选组件、实际组件和未落地候选
-//   --strict           有 route 警告时不生成输出（STE 文字提示不拦）
-//   pe options <answer.md|-> [--json]           per block: components whose admission conditions pass, with evidence
-//   pe assemble <draft.md> --block <n|title> --use a,b[,c] [--as views|stack] [-o out.md]   insert their skeletons
-//   pe tune                                      adjust admission thresholds from what was offered vs used
-//   pe stats  [--last 50] [--json]               where the time goes (runs + agent hooks) and what to change
-//   pe patch  <page.html> --panel "<title>"  < section.md
-//   pe info                                      forms, routers, adapters, themes, outputs, rules, plugins
-//   pe config [get | set <key> <value> | reset]  user config (~/.call-pele-answer/config.json)
+// Commands and flags: core/commands.mjs (pe --help prints it).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { writePrivate, privateDir, tmpFile, TMP_DIR } from './core/files.mjs';
 import { dirname, resolve, join } from 'node:path';
@@ -24,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createEngine, USER_CONFIG } from './core/engine.mjs';
 import { createTrace } from './core/trace.mjs';
 import { stats } from './core/stats.mjs';
+import { helpText } from './core/commands.mjs';
 import { assemble as assembleDraft, tune as tuneAdmission, usedComponents } from './core/admit.mjs';
 
 const fmt = ([l, r, m, f]) => `L${l} [${r}] ${m}${f ? `  →  ${f}` : ''}`;
@@ -176,7 +162,7 @@ function config(engine, action, pos) {
 async function main(argv) {
   const [cmd, ...rest] = argv;
   const { opts, pos } = parseArgs(rest);
-  if (!cmd || cmd === 'help' || cmd === '-h') { console.log(readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(1, 15).join('\n')); return 0; }
+  if (!cmd || ['help', '-h', '--help'].includes(cmd)) { console.log(helpText()); return 0; }
   if (cmd === 'stats') return stats(opts);
   const trace = createTrace(cmd);
   const engine = await createEngine({ trace });
