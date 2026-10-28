@@ -293,20 +293,9 @@ console.log('— JEV 原子判断路由（一次请求，代码决定）');
   t('auto 路由默认走 jev', eng.resolveRouter('auto').name === 'jev');
 }
 
-{ // one source, many artifacts
-  const { plan } = await import('../scripts/sync.mjs');
-  const drift = plan().filter(f => f.want !== f.have).map(f => f.path);
-  t('插件清单的版本和简介与 SKILL.md 一致（node scripts/sync.mjs）', drift.length === 0, drift.join(', '));
-  const { install, TARGETS } = await import('../scripts/install.mjs');
-  const { existsSync: ex, lstatSync: ls } = await import('node:fs');
-  const h = mkdtempSync(join(tmpdir(), 'pe-inst-'));
-  const got = install({ home: h, log: () => {} });
-  t('安装脚本把同一份技能装进每个 Agent 目录', got.length === Object.keys(TARGETS).length && got.every(g => ex(join(g.dest, 'SKILL.md')) && ex(join(g.dest, 'scripts', 'pe.mjs'))));
-  install({ home: h, link: true, targets: ['codex'], log: () => {} });
-  t('--link 改为软链接，重复安装会覆盖', ls(join(h, '.codex', 'skills', 'call-pele-answer')).isSymbolicLink());
-  const dh = mkdtempSync(join(tmpdir(), 'pe-inst-'));
-  install({ home: dh, dry: true, log: () => {} });
-  t('--dry-run 不写文件', !ex(join(dh, '.claude')));
+{ // static skill contracts live in test/skill.mjs (run alone for a focused check)
+  const { result } = await import('./skill.mjs');
+  pass += result.pass; fail += result.fail;
 }
 
 console.log(`\n${pass} passed, ${fail} failed`);
