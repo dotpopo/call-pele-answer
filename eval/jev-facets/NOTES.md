@@ -62,3 +62,6 @@ Next: recover recall (25 left as text: flattened tables JEV can't see, plan-step
 
 ## 0.5.14 (2026-10-28)
 One source, many artifacts (from caveman): scripts/sync.mjs (SKILL.md version/summary → .claude-plugin/*.json, --check fails on drift; plugin.json had drifted at 0.4.1), scripts/install.mjs (claude/codex/agents/cursor/opencode, copy or --link, --dry-run), .github/workflows/ci.yml (sync --check, install dry run, tests). Caveman-compress before JEV tested and rejected (see eval/caveman, not committed).
+
+## 0.5.15 (2026-10-28)
+From gstack: core/commands.mjs command table (pe --help generated; fixed help truncation), test/skill.mjs static contracts with fix hints, scripts/budget.mjs + test/budget.json ratchet (+5 % headroom), install.mjs trims front matter for codex/agents, AGENTS.md fix discipline, CI step.
