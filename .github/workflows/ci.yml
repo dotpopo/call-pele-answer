@@ -12,6 +12,8 @@ jobs:
           node-version: '20'
       - name: copies match SKILL.md
         run: node scripts/sync.mjs --check
+      - name: skill contracts (docs, commands, budget, structure, install)
+        run: node test/skill.mjs
       - name: install script (dry run)
         run: node scripts/install.mjs --target all --dry-run --home "$RUNNER_TEMP/home"
       - name: tests
