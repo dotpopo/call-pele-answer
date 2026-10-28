@@ -3,7 +3,7 @@
 //   node scripts/install.mjs [--target claude,codex,cursor,opencode|all] [--link] [--dry-run] [--home DIR]
 // --link makes a symlink to this checkout (updates with git pull); default copies.
 // Claude Code users can also use the plugin: /plugin marketplace add dotpopo/call-pele-answer
-import { cpSync, existsSync, lstatSync, mkdirSync, rmSync, symlinkSync, readlinkSync } from 'node:fs';
+import { cpSync, existsSync, lstatSync, mkdirSync, rmSync, symlinkSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { join, dirname, resolve } from 'node:path';
 import { homedir } from 'node:os';
@@ -18,18 +18,39 @@ export const TARGETS = {
   opencode: h => join(process.env.XDG_CONFIG_HOME || join(h, '.config'), 'opencode', 'skills'),
 };
 
+// Hosts whose loaders want only name + description in front matter (gstack hosts/codex.ts: allowlist,
+// description ≤ 1024 chars). The source SKILL.md keeps every field; only the installed copy is trimmed.
+export const TRIM = new Set(['codex', 'agents']);
+export function trimFrontMatter(md) {
+  const m = /^---\n([\s\S]*?)\n---/.exec(md);
+  if (!m) return md;
+  const lines = m[1].split('\n'), keep = [];
+  let on = false;
+  for (const l of lines) {
+    if (/^[\w-]+:/.test(l)) on = /^(name|description):/.test(l);
+    if (on) keep.push(l);
+  }
+  return `---\n${keep.join('\n')}\n---` + md.slice(m[0].length);
+}
+
 export function install({ targets = Object.keys(TARGETS), link = false, dry = false, home = homedir(), log = console.log } = {}) {
   const done = [];
   for (const t of targets) {
     if (!TARGETS[t]) throw new Error(`unknown target ${t} (use ${Object.keys(TARGETS).join(', ')})`);
     const dest = join(TARGETS[t](home), 'call-pele-answer');
     if (resolve(dest) === resolve(SRC)) { log(`${t}: already the source, skipped`); continue; }
-    log(`${t}: ${link ? 'link' : 'copy'} → ${dest}`);
+    log(`${t}: ${link ? 'link' : 'copy'}${TRIM.has(t) ? ' (front matter: name, description)' : ''} → ${dest}`);
     if (!dry) {
       mkdirSync(dirname(dest), { recursive: true });
       const exists = existsSync(dest) || (() => { try { return lstatSync(dest).isSymbolicLink(); } catch { return false; } })();
       if (exists) rmSync(dest, { recursive: true, force: true });
-      if (link) symlinkSync(SRC, dest, 'dir'); else cpSync(SRC, dest, { recursive: true });
+      if (!TRIM.has(t)) { if (link) symlinkSync(SRC, dest, 'dir'); else cpSync(SRC, dest, { recursive: true }); }
+      else {
+        // trimmed host: real dir, children linked or copied, SKILL.md written trimmed (re-run after git pull when --link)
+        mkdirSync(dest, { recursive: true });
+        for (const f of readdirSync(SRC)) if (f !== 'SKILL.md') { if (link) symlinkSync(join(SRC, f), join(dest, f)); else cpSync(join(SRC, f), join(dest, f), { recursive: true }); }
+        writeFileSync(join(dest, 'SKILL.md'), trimFrontMatter(readFileSync(join(SRC, 'SKILL.md'), 'utf8')));
+      }
     }
     done.push({ target: t, dest });
   }
