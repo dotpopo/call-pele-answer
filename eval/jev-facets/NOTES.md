@@ -59,3 +59,6 @@ Next: recover recall (25 left as text: flattened tables JEV can't see, plan-step
 - Fix: HARD kanban rejects column-design advice (列的设计|列 =|每列|WIP Limit|泳道). Gold kanban1/2 unaffected.
 - After: wrongly drawn 0 on all sets — new2 9 prose/0, new 30/0, 424 real 201/0, blocks 4/0. top1 new2 .933→.967; 424 .965; missed draws 424: 25 (unchanged).
 - Released 0.5.13.
+
+## 0.5.14 (2026-10-28)
+One source, many artifacts (from caveman): scripts/sync.mjs (SKILL.md version/summary → .claude-plugin/*.json, --check fails on drift; plugin.json had drifted at 0.4.1), scripts/install.mjs (claude/codex/agents/cursor/opencode, copy or --link, --dry-run), .github/workflows/ci.yml (sync --check, install dry run, tests). Caveman-compress before JEV tested and rejected (see eval/caveman, not committed).

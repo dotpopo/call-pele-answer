@@ -28,7 +28,7 @@ Node.js 18+, no `npm install`.
 /plugin install call-pele-answer@call-pele-answer
 ```
 
-Other agents: copy `skills/call-pele-answer/` into your agent's skills folder.
+Other agents (Codex, Cursor, OpenCode): `node scripts/install.mjs` (or `--target codex --link`) installs the one `skills/call-pele-answer/` folder into each agent's skills directory. Version and summary live only in `SKILL.md`; `node scripts/sync.mjs` copies them into the plugin manifests and CI fails on drift (`--check`).
 
 ```bash
 node skills/call-pele-answer/scripts/pe.mjs answer answer.md -o page.html

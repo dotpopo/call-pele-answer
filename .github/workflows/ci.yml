@@ -1,0 +1,20 @@
+name: ci
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: copies match SKILL.md
+        run: node scripts/sync.mjs --check
+      - name: install script (dry run)
+        run: node scripts/install.mjs --target all --dry-run --home "$RUNNER_TEMP/home"
+      - name: tests
+        env:
+          PE_NO_LOG: '1'
+        run: node test/run.mjs

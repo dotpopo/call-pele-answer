@@ -115,7 +115,15 @@
 /plugin install call-pele-answer@call-pele-answer
 ```
 
-**Codex CLI / Cursor / OpenCode / 其他 Agent**：把 `skills/call-pele-answer/` 复制进 Agent 的 skills 目录即可。
+**Codex CLI / Cursor / OpenCode / 其他 Agent**：克隆仓库后一条命令装进各 Agent 的 skills 目录：
+
+```bash
+git clone https://github.com/dotpopo/call-pele-answer && cd call-pele-answer
+node scripts/install.mjs                     # 全部：claude、codex、agents、cursor、opencode
+node scripts/install.mjs --target codex --link   # 只装 Codex，软链接到仓库，git pull 即更新
+```
+
+所有平台用的是同一份 `skills/call-pele-answer/`。版本和简介只写在 `SKILL.md` 里，`node scripts/sync.mjs` 同步到插件清单，CI 用 `--check` 拦住不一致。
 
 **可选：更快的路由**（不配也能用）
 
