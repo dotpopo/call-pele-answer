@@ -94,6 +94,12 @@ export async function admit(blocks, components, adapter, { overrides = readJson(
     b.options = [...b.recommended, ...b.possible];
     b.near = near.sort((x, y) => y.p - x.p); // conditions met, JEV just under the bar: the agent may still use one
     b.tables = tablesIn(b.text).map(t => ({ rows: t.rows.length, cols: t.head.length, ...tableShape(t) }));
+    // one decision, two readers: what pe answer auto-draws must be what pe options offers. A form the
+    // router picked but whose script conditions failed (steps without three ordered actions, a table
+    // without a grid) stays text, instead of being forced into a misleading diagram.
+    if (judged && b.family !== 'prose' && b.proposed && components.some(c => c.name === b.proposed) && ![...b.options, ...b.near].some(o => o.name === b.proposed)) {
+      b.gated = `${b.proposed} 没通过准入条件，不自动画`; b.family = 'prose'; b.type = null;
+    }
   });
   if (log) append(OFFERS, { ts: Date.now(), blocks: blocks.map(b => ({ title: tid(b.title), options: b.options.map(o => o.name) })) });
   return note;
