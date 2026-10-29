@@ -293,6 +293,35 @@ console.log('— JEV 原子判断路由（一次请求，代码决定）');
   t('auto 路由默认走 jev', eng.resolveRouter('auto').name === 'jev');
 }
 
+{ // 0.5.16 (from diagram-design): route never draws what admission rejected; accessible SVG; complexity budget
+  const { admit } = await import('../skills/call-pele-answer/scripts/core/admit.mjs');
+  const eg = await createEngine({});
+  const para = 'diagram-design 让 Agent 先读约 80 KB 的规范和模板，再手写 SVG，最后跑 self_check.py 检查。Pele 让 Agent 只写 Markdown，pe answer 在本地渲染。';
+  const bs = [{ title: '两者怎么出图', text: para, family: 'steps', type: 'numbered', proposed: 'steps', cands: ['steps'] }];
+  await admit(bs, eg.registry.components(), null, { log: false });
+  t('准入没通过的组件不自动画（两段工具描述不被拆成一条步骤链）', bs[0].family === 'prose' && !bs[0].type && /准入/.test(bs[0].gated || ''));
+  const ok = [{ title: '安装', text: '1. 下载安装包\n2. 双击运行\n3. 登录账号\n4. 连接打印机', family: 'steps', type: 'numbered', proposed: 'steps', cands: ['steps'] }];
+  await admit(ok, eg.registry.components(), null, { log: false });
+  t('准入通过的组件照常画', ok[0].family === 'steps');
+  const r = eg.build('# t\n\n## 下单流程\n\n```mermaid\nflowchart LR\n  A[下单] --> B[付款] --> C[发货]\n```\n', {});
+  const svgs = r.text.match(/<svg[^>]*class="pele[^"]*"[^>]*>/g) || [];
+  t('每张图的 SVG 带 role="img" 和 aria-labelledby', svgs.length > 0 && svgs.every(x => /role="img"/.test(x) && /aria-labelledby="[^"]+"/.test(x)));
+  t('图的 <title> 是块标题，<desc> 说明图的类型和规模', /<title id="[^"]+">下单流程<\/title>/.test(r.text) && /<desc id="[^"]+">[^<]*流程图[^<]*3 个节点[^<]*2 条连线/.test(r.text));
+  const big = '# t\n\n## 大图\n\n```mermaid\nflowchart LR\n' + Array.from({ length: 11 }, (_, i) => `  N${i} --> N${i + 1}`).join('\n') + '\n```\n';
+  const rb = eg.build(big, {});
+  t('超过 9 个节点或 12 条连线时提示拆成总览加细节', rb.warnings.some(([, rule, msg]) => rule === 'route/too-complex' && /12 个节点/.test(msg)));
+  const small = eg.build('# t\n\n## 小图\n\n```mermaid\nflowchart LR\n  A --> B\n  B --> C\n```\n', {});
+  t('SVG 只有一个 role 属性', svgs.every(x => (x.match(/\srole="/g) || []).length === 1));
+  const { geometry } = await import('../skills/call-pele-answer/scripts/core/geometry.mjs');
+  const node = (id, x, y) => `<g class="pele-node pele-shape-rect" data-id="${id}" transform="translate(${x},${y})"><rect x="-34" y="-24" width="68" height="48"/><text class="pele-label" x="0" y="5">${id}</text></g>`;
+  const plate = (id, x, y) => `<g class="pele-edge-label" data-id="${id}"><rect x="${x}" y="${y}" width="36" height="21" rx="3"/><text x="0" y="0">成功</text></g>`;
+  t('几何检查：两个方框重叠时报出', geometry(node('A', 40, 40) + node('B', 80, 40)).some(([r]) => r === 'overlap'));
+  t('几何检查：连线标签压在无关节点上时报出', geometry(plate('L_A_B_0', 200, 30) + node('A', 40, 40) + node('B', 400, 40) + node('C', 210, 40)).some(([r]) => r === 'label-node'));
+  t('几何检查：正常排版不报', !geometry(plate('L_A_B_0', 100, 30) + node('A', 40, 40) + node('B', 200, 40)).length);
+  const real = eg.build('# t\n\n## 下单\n\n```mermaid\nflowchart LR\n  A[下单] -->|成功| B[付款]\n  B --> C{库存?}\n  C -->|有| D[发货]\n  C -->|无| E[退款]\n```\n', {});
+  t('几何检查：渲染器真实输出不报', !real.warnings.some(([, r]) => /geometry/.test(r)));
+  t('小图不提示复杂度', !small.warnings.some(([, rule]) => rule === 'route/too-complex'));
+}
 { // static skill contracts live in test/skill.mjs (run alone for a focused check)
   const { result } = await import('./skill.mjs');
   pass += result.pass; fail += result.fail;

@@ -17,8 +17,9 @@ function html(doc, ctx) {
   const { registry, theme: themeName = 'pele', lang } = ctx;
   const theme = registry.theme(themeName) || registry.theme('pele');
   const r = createRenderer(registry, 'html');
+  r.panelTitle = doc.meta.title;
   const lead = r.nodes(doc.lead);
-  const panels = doc.panels.map((p, k) => `<section class="pe-panel" id="s${k + 1}"><h2><span class="pe-n">${String(k + 1).padStart(2, '0')}</span>${esc(p.title)}</h2>${r.nodes(p.nodes)}</section>`).join('\n');
+  const panels = doc.panels.map((p, k) => (r.panelTitle = p.title, `<section class="pe-panel" id="s${k + 1}"><h2><span class="pe-n">${String(k + 1).padStart(2, '0')}</span>${esc(p.title)}</h2>${r.nodes(p.nodes)}</section>`)).join('\n');
   const forms = [...r.used].map(n => registry.form(n)).filter(f => f?.assets);
   // precedence: draft front matter (palette: off / on) > CLI/env/config (ctx.palette, default on)
   const fm = String(doc.meta.palette || '').trim();
