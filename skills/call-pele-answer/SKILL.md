@@ -2,7 +2,7 @@
 name: call-pele-answer
 slug: call-pele-answer
 displayName: Call Pele Answer
-version: 0.5.15
+version: 0.5.16
 allowed-tools: Bash(node:*) Read Write
 metadata: {"openclaw":{"requires":{"bins":["node"]}}}
 summary: 把长回答按块拆开，逐块挑最合适的形式（文字、表格、30+ 种图、滑块、标签页、分步播放），生成离线交互讲解页，可调色、可批注。
@@ -47,7 +47,7 @@ license: MIT
 
 - **一个事实只写一次**：表、图已表达的，正文不再复述；同一个数字只出现在一块。
 - **不编造数据**：没有真实数字不用数据图；模拟数据标“示意”。
-- **更重的形式要消除具体障碍**：一句话能说清就不画图；一张图超过约 20 个节点或连线就拆块。
+- **更重的形式要消除具体障碍**：画之前问一句“表格或一段话能不能做到”，能就不画。一张图超过 9 个节点或 12 条连线，就拆成总览加细节（`route/too-complex`）。
 - **代码引用真实文件**用 `src=` `lines=`；还不存在的代码在 `title=` 标“草图”。
 - **保留把握程度**：不确定写“未核实”和核实方法；“可能/大约”不升级成断言。
 - 围栏写法（`views` `tabs` `slider` `steps` `callout`、front matter、`ste`）：`references/cli.md`；STE 文字规则：`references/writing.md`。

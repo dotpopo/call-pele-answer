@@ -65,3 +65,6 @@ One source, many artifacts (from caveman): scripts/sync.mjs (SKILL.md version/su
 
 ## 0.5.15 (2026-10-28)
 From gstack: core/commands.mjs command table (pe --help generated; fixed help truncation), test/skill.mjs static contracts with fix hints, scripts/budget.mjs + test/budget.json ratchet (+5 % headroom), install.mjs trims front matter for codex/agents, AGENTS.md fix discipline, CI step.
+
+## 0.5.16 (2026-10-29)
+From diagram-design: admission gates auto-drawing (route can't draw what pe options rejects), SVG a11y (role=img, title=block title, desc=kind+size), route/too-complex (>9 nodes or >12 links on graph diagrams; 4/52 drafts warned), core/geometry.mjs (overlap, label-node; 0/52 false positives; text-fit dropped: renderer sizes boxes, static estimate flagged 4 good boxes), SKILL delete-test line.
