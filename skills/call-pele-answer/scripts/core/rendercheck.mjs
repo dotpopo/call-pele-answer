@@ -13,7 +13,8 @@ import { join, delimiter } from 'node:path';
 import { tmpdir } from 'node:os';
 import { pathToFileURL } from 'node:url';
 
-const NAMES = ['chromium', 'chromium-browser', 'google-chrome', 'google-chrome-stable', 'chrome', 'microsoft-edge', 'chrome-headless-shell'];
+// Chrome before Chromium: on Ubuntu `chromium-browser` is often a snap whose sandbox cannot read the page's file.
+const NAMES = ['google-chrome', 'google-chrome-stable', 'chrome', 'microsoft-edge', 'chromium', 'chromium-browser', 'chrome-headless-shell'];
 const FIXED = [
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
   '/Applications/Chromium.app/Contents/MacOS/Chromium',
@@ -110,6 +111,8 @@ export async function renderCheck(htmlPath, { browser = findBrowser(), widths = 
       await send('Page.navigate', { url: pathToFileURL(htmlPath).href }, s);
       for (let k = 0; k < 100 && !events.slice(before).some(e => e.method === 'Page.loadEventFired'); k++) await new Promise(r => setTimeout(r, 30));
       await ev('document.fonts ? document.fonts.ready.then(() => 1) : 1');
+      // a page that never opened (sandboxed browser, unreadable file) must not pass as clean
+      if (!(await ev(`location.protocol === 'file:' && !!document.body && document.body.childElementCount > 0`))) throw new Error(`浏览器没打开页面（${browser}）`);
       for (const e of events.slice(before).filter(e => e.method === 'Runtime.exceptionThrown'))
         findings.push({ rule: 'render/script-error', panel: '', width, message: `页面脚本报错：${(e.params.exceptionDetails.exception?.description || e.params.exceptionDetails.text || '').split('\n')[0]}` });
       const over = await ev('document.documentElement.scrollWidth - document.documentElement.clientWidth');

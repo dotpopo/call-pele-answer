@@ -362,6 +362,7 @@ console.log('— JEV 原子判断路由（一次请求，代码决定）');
     const bad = join(iso, 'bad.html');
     writeFileSync(bad, '<html><body><section><h2>坏图</h2><div style="padding:40px"><svg width="200" height="100" viewBox="0 0 200 100"><rect x="10" y="10" width="100" height="50" fill="#ccc"/><text x="150" y="50" font-size="20">超出边界的文字</text></svg></div></section><script>boom()</script></body></html>');
     const rb = await renderCheck(bad, { browser });
+    if (!rb.findings.some(f => f.rule === 'render/clipped')) console.log('  browser:', browser, JSON.stringify(rb));
     t('渲染检查：画到边界外的文字被报出', rb.findings.some(f => f.rule === 'render/clipped' && f.panel === '坏图'));
     t('渲染检查：页面脚本报错被报出', rb.findings.some(f => f.rule === 'render/script-error'));
     const good = join(iso, 'good.md'); writeFileSync(good, '---\ntitle: 好图\n---\n\n## 流程\n\n```mermaid\nflowchart LR\n  A[开始] -->|下一步| B[检查] --> C[发布]\n```\n\n## 表\n\n| a | b |\n|---|---|\n| 1 | 2 |\n');
