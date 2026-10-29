@@ -360,7 +360,7 @@ console.log('— JEV 原子判断路由（一次请求，代码决定）');
   if (!browser) console.log('  （本机没有 Chrome，跳过真实渲染的两项；设 PE_CHROME 可跑）');
   else {
     const bad = join(iso, 'bad.html');
-    writeFileSync(bad, '<html><body><section><h2>坏图</h2><div style="padding:40px"><svg width="200" height="100" viewBox="0 0 200 100"><rect x="10" y="10" width="100" height="50" fill="#ccc"/><text x="150" y="50" font-size="20">超出边界的文字</text></svg></div></section><script>boom()</script></body></html>');
+    writeFileSync(bad, '<html><body><section><h2>坏图</h2><div style="padding:40px"><svg width="200" height="100" viewBox="0 0 200 100"><rect x="10" y="10" width="100" height="50" fill="#ccc"/><text x="150" y="50" font-size="20">OUTSIDE THE VIEWBOX</text><rect x="180" y="70" width="80" height="20" fill="#333"/></svg></div></section><script>boom()</script></body></html>');
     const rb = await renderCheck(bad, { browser });
     if (!rb.findings.some(f => f.rule === 'render/clipped')) console.log('  browser:', browser, JSON.stringify(rb));
     t('渲染检查：画到边界外的文字被报出', rb.findings.some(f => f.rule === 'render/clipped' && f.panel === '坏图'));

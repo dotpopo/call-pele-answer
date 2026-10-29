@@ -61,7 +61,8 @@ const PREP = `(() => {
 const BOXES = `(() => [...document.querySelectorAll('[data-pe-rc]')].map(s => { const r = s.getBoundingClientRect();
   return { i: +s.dataset.peRc, x: r.left + scrollX, y: r.top + scrollY, w: r.width, h: r.height }; }))()`;
 const SIZE = '({ w: document.documentElement.scrollWidth, h: document.documentElement.scrollHeight })';
-const RELEASE = on => `(() => { document.querySelectorAll('[data-pe-rc]').forEach(s => s.style.overflow = ${on ? "'visible'" : "''"}); return 1; })()`;
+// wait two frames after the change so the screenshot sees the repaint (headless Chrome can capture the old frame)
+const RELEASE = on => `new Promise(r => { document.querySelectorAll('[data-pe-rc]').forEach(s => s.style.overflow = ${on ? "'visible'" : "''"}); requestAnimationFrame(() => requestAnimationFrame(() => r(1))); })`;
 // Pixel diff in the page: decode both full-page PNGs on a canvas; for each figure, count changed pixels in a
 // ring around it that lie outside every figure's (guarded) box. Two screenshots per width, whatever the figure count.
 const DIFF = (a, b, boxes, guard, margin) => `(async () => {
