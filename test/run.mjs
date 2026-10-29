@@ -1,5 +1,7 @@
 // node test/run.mjs — offline: remote adapters are tested against a local mock server.
 process.env.PE_NO_LOG = '1';
+// the render check launches a browser; CLI tests turn it off unless they test it (PE_RENDER_CHECK_TEST_ON)
+if (!process.env.PE_RENDER_CHECK_TEST_ON) process.env.PE_RENDER_CHECK = '0';
 import { lintProse, lintRouting, stripSpans } from '../skills/call-pele-answer/scripts/lint/rules.mjs';
 import { createEngine } from '../skills/call-pele-answer/scripts/core/engine.mjs';
 import { createRegistry } from '../skills/call-pele-answer/scripts/core/registry.mjs';
@@ -321,6 +323,52 @@ console.log('— JEV 原子判断路由（一次请求，代码决定）');
   const real = eg.build('# t\n\n## 下单\n\n```mermaid\nflowchart LR\n  A[下单] -->|成功| B[付款]\n  B --> C{库存?}\n  C -->|有| D[发货]\n  C -->|无| E[退款]\n```\n', {});
   t('几何检查：渲染器真实输出不报', !real.warnings.some(([, r]) => /geometry/.test(r)));
   t('小图不提示复杂度', !small.warnings.some(([, rule]) => rule === 'route/too-complex'));
+}
+{ console.log('— 对比度（文字 4.5:1，关键图形 3:1，亮暗两套）');
+  const { check, ratio } = await import('../skills/call-pele-answer/scripts/core/contrast.mjs');
+  const eng = await createEngine({ config: { router: 'auto', theme: 'pele', output: 'html', plugins: [], adapters: [], routers: [], policy: {} } });
+  const pages = eng.registry.palettes('page'), sw = eng.registry.palettes('swatch');
+  t('对比度：比值算法与 WCAG 一致（黑白 21:1）', Math.abs(ratio('#000000', '#FFFFFF') - 21) < 0.01);
+  t('对比度：内置主题、全部页面配色和色块都达标', !check({ pages, swatches: sw }).length);
+  t('对比度：调色器染色后也达标', !check({ pages, swatches: sw, studio: true }).length);
+  const pale = [{ kind: 'swatch', name: 'pale', label: '浅黄', l: '#FFF6C0', m: '#E8D46A', d: '#4A4420' }];
+  t('对比度：太浅的色块会被报出（块编号/表头）', check({ swatches: pale }).some(f => f.what === '块编号/表头'));
+  t('对比度：太浅的次要文字会被报出', check({ pages: [{ name: 'x', light: { '--pe-muted': '#BBBBBB' }, dark: {} }] }).some(f => f.what.startsWith('次要文字')));
+  t('对比度：太浅的系列色会被报出（3:1）', check({ pages: [{ name: 'x', light: { '--pe-orange': '#F5C9A0' }, dark: {} }] }).some(f => f.kind === 'mark' && /orange/.test(f.what)));
+  const ui = readFileSync(join(HERE, '../skills/call-pele-answer/scripts/themes/palette-ui.mjs'), 'utf8'), css = readFileSync(join(HERE, '../skills/call-pele-answer/scripts/themes/pele.css'), 'utf8');
+  t('对比度：检查模型与样式一致（色块里的次要文字和强调文字加深）', /--pe-muted:color-mix\(in srgb,var\(--pe-muted-0\) 65%/.test(ui) && /--pe-muted:color-mix\(in srgb,var\(--pe-muted-0\) 55%/.test(ui) && /--pe-accent-text:color-mix\(in srgb,var\(--pk-m\) 55%/.test(ui) && /--pe-muted-0:var\(--pe-muted\)/.test(css));
+}
+{ console.log('— 渲染检查（截图对比，默认开，可关）');
+  const { renderCheck, findBrowser } = await import('../skills/call-pele-answer/scripts/core/rendercheck.mjs');
+  const { loadConfig } = await import('../skills/call-pele-answer/scripts/core/engine.mjs');
+  const saved = process.env.PE_RENDER_CHECK; delete process.env.PE_RENDER_CHECK;
+  const iso = mkdtempSync(join(tmpdir(), 'pe-rc-cfg-'));
+  t('渲染检查：默认开启', loadConfig(iso).renderCheck === true);
+  process.env.PE_RENDER_CHECK = '0';
+  t('渲染检查：PE_RENDER_CHECK=0 关闭', loadConfig(iso).renderCheck === false);
+  writeFileSync(join(iso, '.call-pele-answer.json'), JSON.stringify({ renderCheck: false })); delete process.env.PE_RENDER_CHECK;
+  t('渲染检查：配置 "renderCheck": false 关闭', loadConfig(iso).renderCheck === false);
+  if (saved === undefined) delete process.env.PE_RENDER_CHECK; else process.env.PE_RENDER_CHECK = saved;
+  t('渲染检查：PE_CHROME 指向不存在的路径时不猜别的浏览器', findBrowser({ PE_CHROME: '/nonexistent/chrome', PATH: '' }) === null);
+  const none = await renderCheck('/tmp/x.html', { browser: null });
+  t('渲染检查：没有浏览器时跳过并说明，不报错', !!none.skipped && !none.findings.length);
+  const md = join(iso, 'a.md'); writeFileSync(md, '---\ntitle: 测试\n---\n\n## 一\n\n一段话。\n');
+  const cli = (args, env) => execFileSync(process.execPath, [PE, ...args], { env: { ...process.env, PE_TEST_ISOLATED: '1', ...env }, encoding: 'utf8' });
+  t('渲染检查：--render-check off 时不跑', !/render-check|渲染检查/.test(cli(['render', md, '-o', join(iso, 'a.html'), '--render-check', 'off'], { PE_RENDER_CHECK: '', PE_CHROME: '/nonexistent' })));
+  t('渲染检查：默认开启，没浏览器时打印跳过', /render-check 跳过/.test(cli(['render', md, '-o', join(iso, 'a.html')], { PE_RENDER_CHECK: '', PE_CHROME: '/nonexistent' })));
+  const browser = findBrowser();
+  if (!browser) console.log('  （本机没有 Chrome，跳过真实渲染的两项；设 PE_CHROME 可跑）');
+  else {
+    const bad = join(iso, 'bad.html');
+    writeFileSync(bad, '<html><body><section><h2>坏图</h2><div style="padding:40px"><svg width="200" height="100" viewBox="0 0 200 100"><rect x="10" y="10" width="100" height="50" fill="#ccc"/><text x="150" y="50" font-size="20">超出边界的文字</text></svg></div></section><script>boom()</script></body></html>');
+    const rb = await renderCheck(bad, { browser });
+    t('渲染检查：画到边界外的文字被报出', rb.findings.some(f => f.rule === 'render/clipped' && f.panel === '坏图'));
+    t('渲染检查：页面脚本报错被报出', rb.findings.some(f => f.rule === 'render/script-error'));
+    const good = join(iso, 'good.md'); writeFileSync(good, '---\ntitle: 好图\n---\n\n## 流程\n\n```mermaid\nflowchart LR\n  A[开始] -->|下一步| B[检查] --> C[发布]\n```\n\n## 表\n\n| a | b |\n|---|---|\n| 1 | 2 |\n');
+    cli(['render', good, '-o', join(iso, 'good.html'), '--render-check', 'off']);
+    const rg = await renderCheck(join(iso, 'good.html'), { browser });
+    t('渲染检查：正常页面不报', !rg.findings.length);
+  }
 }
 { // static skill contracts live in test/skill.mjs (run alone for a focused check)
   const { result } = await import('./skill.mjs');

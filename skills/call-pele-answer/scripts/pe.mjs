@@ -10,6 +10,7 @@ import { createEngine, USER_CONFIG } from './core/engine.mjs';
 import { createTrace } from './core/trace.mjs';
 import { stats } from './core/stats.mjs';
 import { helpText } from './core/commands.mjs';
+import { renderCheck } from './core/rendercheck.mjs';
 import { assemble as assembleDraft, tune as tuneAdmission, usedComponents } from './core/admit.mjs';
 
 const fmt = ([l, r, m, f]) => `L${l} [${r}] ${m}${f ? `  →  ${f}` : ''}`;
@@ -57,6 +58,16 @@ async function build(engine, file, opts, { checkOnly = false } = {}) {
   const route = r.warnings.filter(w => w[1].startsWith('route/')), ste = r.warnings.filter(w => !w[1].startsWith('route/'));
   if (route.length) { console.log(`route ${route.length} warnings（形式选择）:`); route.forEach(w => console.log('  ' + fmt(w))); }
   if (ste.length) { console.log(`STE ${ste.length} warnings（文字）:`); ste.forEach(w => console.log('  ' + fmt(w))); }
+  const rcOn = opts['render-check'] === undefined ? engine.config.renderCheck !== false : !/^(off|0|false|no)$/i.test(String(opts['render-check']));
+  if (rcOn && r.ext === 'html') {
+    const rc = await engine.trace.span('render-check', () => renderCheck(out));
+    if (rc.skipped) console.log(`render-check 跳过：${rc.skipped}`);
+    else if (rc.findings.length) {
+      console.log(`render ${rc.findings.length} warnings（渲染检查，${rc.ms} ms）:`);
+      rc.findings.forEach(f => console.log(`  [${f.rule}] ${f.panel ? `「${f.panel}」` : ''}${f.message}`));
+      if (opts.strict) return 1;
+    }
+  }
   return 0;
 }
 

@@ -36,7 +36,7 @@ export function loadConfig(cwd = process.cwd()) {
   const ignored = [];
   if (project && process.env.PE_TRUST_PROJECT !== '1') for (const k of CODE_KEYS) if (project[k]?.length) { ignored.push(k); delete project[k]; }
   const layers = [user, project].filter(Boolean);
-  const cfg = { router: 'auto', theme: 'pele', output: 'html', palette: true, annotate: true, color: 'auto', plugins: [], adapters: [], routers: [], policy: {}, ignored };
+  const cfg = { router: 'auto', theme: 'pele', output: 'html', palette: true, annotate: true, color: 'auto', renderCheck: true, plugins: [], adapters: [], routers: [], policy: {}, ignored };
   for (const l of layers) {
     for (const k of ['router', 'theme', 'output', 'ste']) if (l[k]) cfg[k] = l[k];
     cfg.plugins.push(...(l.plugins || []).map(p => ({ spec: p, dir: l.__dir })));
@@ -46,11 +46,13 @@ export function loadConfig(cwd = process.cwd()) {
     if ('annotate' in l) cfg.annotate = l.annotate !== false && l.annotate !== 'off';
     if ('color' in l) cfg.color = /^(plain|off|0|false|no)$/i.test(String(l.color)) ? 'plain' : 'auto';
     if ('palette' in l) cfg.palette = l.palette !== false && l.palette !== 'off';
+    if ('renderCheck' in l) cfg.renderCheck = l.renderCheck !== false && l.renderCheck !== 'off';
   }
   if (process.env.PE_ROUTER) cfg.router = process.env.PE_ROUTER;
   if (process.env.PE_THEME) cfg.theme = process.env.PE_THEME;
   if (process.env.PE_ANNOTATE) cfg.annotate = !/^(0|off|false|no)$/i.test(process.env.PE_ANNOTATE);
   if (process.env.PE_COLOR) cfg.color = /^(plain|off|0|false|no)$/i.test(process.env.PE_COLOR) ? 'plain' : 'auto';
+  if (process.env.PE_RENDER_CHECK) cfg.renderCheck = !/^(0|off|false|no)$/i.test(process.env.PE_RENDER_CHECK);
   if (process.env.PE_PALETTE) cfg.palette = !/^(0|off|false|no)$/i.test(process.env.PE_PALETTE);
   cfg.layers = layers.map(l => l.__dir);
   return cfg;
