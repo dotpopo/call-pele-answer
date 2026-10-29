@@ -19,14 +19,14 @@ export function tintCss(registry) {
   const decl = o => Object.entries(o).map(([k, v]) => `${k}:${v}`).join(';');
   const pageCss = pages.filter(p => Object.keys(p.light || {}).length).map(p =>
     `html[data-pal=${p.name}]{${decl(p.light)}}@media (prefers-color-scheme:dark){html[data-pal=${p.name}]:not([data-theme=light]){${decl(p.dark || {})}}}html[data-pal=${p.name}][data-theme=dark]{${decl(p.dark || {})}}`).join('\n');
-  const tint = `--pe-accent:var(--pk-m);--pe-blue:var(--pk-m);--pe-surface:color-mix(in srgb,var(--pk-l) 22%,var(--pe-paper));--pe-surface-2:color-mix(in srgb,var(--pk-l) 42%,var(--pe-paper));--pe-border:color-mix(in srgb,var(--pk-m) 45%,var(--pe-paper))`;
-  const tintDark = `--pe-accent:var(--pk-l);--pe-blue:var(--pk-l);--pe-surface:color-mix(in srgb,var(--pk-d) 55%,var(--pe-paper));--pe-surface-2:color-mix(in srgb,var(--pk-d) 80%,var(--pe-paper));--pe-border:color-mix(in srgb,var(--pk-l) 35%,var(--pe-paper))`;
+  const tint = `--pe-accent:var(--pk-m);--pe-muted:color-mix(in srgb,var(--pe-muted-0) 65%,var(--pe-ink));--pe-accent-text:color-mix(in srgb,var(--pk-m) 55%,var(--pe-ink));--pe-blue:var(--pk-m);--pe-surface:color-mix(in srgb,var(--pk-l) 22%,var(--pe-paper));--pe-surface-2:color-mix(in srgb,var(--pk-l) 42%,var(--pe-paper));--pe-border:color-mix(in srgb,var(--pk-m) 45%,var(--pe-paper))`;
+  const tintDark = `--pe-accent:var(--pk-l);--pe-muted:color-mix(in srgb,var(--pe-muted-0) 55%,var(--pe-ink));--pe-accent-text:var(--pk-l);--pe-blue:var(--pk-l);--pe-surface:color-mix(in srgb,var(--pk-d) 55%,var(--pe-paper));--pe-surface-2:color-mix(in srgb,var(--pk-d) 80%,var(--pe-paper));--pe-border:color-mix(in srgb,var(--pk-l) 35%,var(--pe-paper))`;
   return `${pageCss}
 [data-pk]{${tint}}
 @media (prefers-color-scheme:dark){html:not([data-theme=light]) [data-pk]{${tintDark}}}
 html[data-theme=dark] [data-pk]{${tintDark}}
-[data-pk]>h2 .pe-n{color:var(--pe-accent)}
-[data-pk] th{color:var(--pe-accent);background:var(--pe-surface)}[data-pk] th:first-child{padding-left:.5rem}[data-pk] td:first-child{padding-left:.5rem}
+[data-pk]>h2 .pe-n{color:var(--pe-accent-text)}
+[data-pk] th{color:var(--pe-accent-text);background:var(--pe-surface)}[data-pk] th:first-child{padding-left:.5rem}[data-pk] td:first-child{padding-left:.5rem}
 .pe-callout[data-pk]{border-left-color:var(--pe-accent);background:var(--pe-surface)}
 .pe-fig[data-pk],.pe-views[data-pk]{border-color:var(--pe-border)}
 section.pe-panel[data-pb]{--pb:color-mix(in srgb,var(--pb-l) 30%,var(--pe-paper));box-shadow:none;border-radius:var(--pe-radius);padding:1.4rem 1.4rem;margin:.9rem 0;border-bottom:0}
@@ -41,10 +41,10 @@ const STUDIO_CSS = `.pe-pal{margin-left:0;height:1.6rem;min-width:auto;padding:0
 .pe-picking [data-pe-sel]:not(svg *){outline:2px solid var(--pe-ink)!important;outline-offset:3px}
 .pe-picking svg [data-pe-hov]>:is(rect,circle,ellipse,polygon),.pe-picking svg path[data-pe-hov]{stroke:var(--pe-muted);stroke-width:2;stroke-dasharray:4 3}
 .pe-picking svg [data-pe-sel]>:is(rect,circle,ellipse,polygon),.pe-picking svg path[data-pe-sel]{stroke:var(--pe-ink)!important;stroke-width:2.5;stroke-dasharray:5 3}
-:is(p,li,blockquote,h2,td,th)[data-pk]:not(svg *){color:var(--pk-m)}
+:is(p,li,blockquote,h2,td,th)[data-pk]:not(svg *){color:color-mix(in srgb,var(--pk-m) 55%,var(--pe-ink))}
 @media (prefers-color-scheme:dark){html:not([data-theme=light]) :is(p,li,blockquote,h2,td,th)[data-pk]{color:var(--pk-l)}}
 html[data-theme=dark] :is(p,li,blockquote,h2,td,th)[data-pk]{color:var(--pk-l)}
-tr[data-pk]>*,thead[data-pk] th{color:var(--pk-m)}
+tr[data-pk]>*,thead[data-pk] th{color:color-mix(in srgb,var(--pk-m) 55%,var(--pe-ink))}
 [data-pb]{--pb:color-mix(in srgb,var(--pb-l) 42%,var(--pe-paper));background:var(--pb)!important;box-shadow:0 0 0 .45rem var(--pb);border-radius:2px}
 @media (prefers-color-scheme:dark){html:not([data-theme=light]) [data-pb]{--pb:color-mix(in srgb,var(--pb-d) 75%,var(--pe-paper))}}
 html[data-theme=dark] [data-pb]{--pb:color-mix(in srgb,var(--pb-d) 75%,var(--pe-paper))}

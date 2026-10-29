@@ -2,7 +2,7 @@
 :root{
   --pe-paper:#FFFCF0;--pe-ink:#100F0F;--pe-muted:#6F6E69;--pe-faint:#B7B5AC;--pe-border:#CECDC3;--pe-surface:#F2F0E5;--pe-surface-2:#E6E4D9;
   --pe-blue:#205EA6;--pe-red:#AF3029;--pe-green:#66800B;--pe-yellow:#AD8301;--pe-orange:#BC5215;--pe-cyan:#24837B;--pe-purple:#5E409D;--pe-magenta:#A02F6F;
-  --pe-accent:var(--pe-blue);
+  --pe-accent:var(--pe-blue);--pe-muted-0:var(--pe-muted);
   --pe-font:-apple-system,BlinkMacSystemFont,"Inter","PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
   --pe-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --pe-radius:4px;--pe-measure:44rem;color-scheme:light dark;

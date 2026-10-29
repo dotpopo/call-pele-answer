@@ -11,12 +11,13 @@ export default {
   name: 'builtin-palettes', apiVersion: 1,
   setup(api) {
     api.palette(page('ink', '墨纸', {}, {}, '墨与纸（默认）'));
-    // warm paper, brown-black ink, five candy body colours
+    // warm paper, brown-black ink, five candy body colours (light orange/magenta/yellow/red darkened a few % in
+    // 0.5.17 so text clears 4.5:1 and chart marks 3:1 on the paper — core/contrast.mjs)
     api.palette(page('warm', '暖纸', {
       '--pe-paper': '#FBF5E9', '--pe-ink': '#231E16', '--pe-muted': '#6B6152', '--pe-faint': '#B9AE98', '--pe-border': '#E2D7C1',
       '--pe-surface': '#F4EBD8', '--pe-surface-2': '#EBDFC6',
-      '--pe-blue': '#5A82C6', '--pe-red': '#CF5038', '--pe-yellow': '#B8860F', '--pe-green': '#3E8E66',
-      '--pe-orange': '#E07A3F', '--pe-cyan': '#41538F', '--pe-purple': '#8A6BB8', '--pe-magenta': '#D8869C', '--pe-accent': '#CF5038',
+      '--pe-blue': '#5A82C6', '--pe-red': '#CA4F37', '--pe-yellow': '#B4830F', '--pe-green': '#3E8E66',
+      '--pe-orange': '#D1733C', '--pe-cyan': '#41538F', '--pe-purple': '#8A6BB8', '--pe-magenta': '#BD7688', '--pe-accent': '#BD4B34',
     }, {
       '--pe-paper': '#1D1A15', '--pe-ink': '#EDE3D0', '--pe-muted': '#A89C86', '--pe-faint': '#5E5647', '--pe-border': '#3A342A',
       '--pe-surface': '#26221B', '--pe-surface-2': '#302A21',
@@ -28,11 +29,11 @@ export default {
       '--pe-surface': '#E7EDF5', '--pe-surface-2': '#DAE3EF', '--pe-blue': '#2F5FB3', '--pe-accent': '#2F5FB3',
     }, {
       '--pe-paper': '#0E1A2E', '--pe-ink': '#D6E2F3', '--pe-muted': '#8DA0BC', '--pe-faint': '#43567A', '--pe-border': '#25395C',
-      '--pe-surface': '#14233D', '--pe-surface-2': '#1B2D4C', '--pe-blue': '#6E9BE6', '--pe-accent': '#6E9BE6',
+      '--pe-surface': '#14233D', '--pe-surface-2': '#1B2D4C', '--pe-blue': '#6E9BE6', '--pe-red': '#D25145', '--pe-accent': '#6E9BE6',
     }, '图纸风'));
     for (const s of [
       sw('tomato', '番茄', '#EF6A4C', '#CF5038', '#4A2219'),
-      sw('mustard', '芥末', '#F4B829', '#B8860F', '#4E4A18'),
+      sw('mustard', '芥末', '#F4B829', '#B4830F', '#4E4A18'),
       sw('mint', '薄荷', '#93D3B0', '#3E8E66', '#1F4034'),
       sw('cobalt', '钴蓝', '#76A0E2', '#5A82C6', '#1C2948'),
       sw('blush', '腮红', '#F3A6BB', '#C26A84', '#4B2430'),
