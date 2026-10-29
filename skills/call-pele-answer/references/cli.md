@@ -17,6 +17,7 @@
   ```
 - **`pe options 稿件.md [--json]`**：每块按 `推荐 / 可选 / 仅证据命中` 分层。推荐需要结构性证据；可选需要人工确认；仅证据命中不会进入普通候选组合。JEV 可用时，推荐层由 JEV 概率和脚本证据共同决定；离线 local 时不把关键词命中当作语义确认。
 - **`pe answer ... --audit`**：快捷模式的组件覆盖审计。`候选` 是准入通过的组件，`实际` 是稿件中已识别并会渲染的组件；候选存在但实际为空时必须回到 `pe assemble` 或手写对应围栏。
+- **渲染检查**（`pe answer`/`pe render` 出 HTML 后默认开）：用本机 Chrome/Chromium/Edge 截图两次，第二次放开图的 overflow，多出来的墨迹就是被裁掉的内容（`render/clipped`）；同时查图被压扁（`render/collapsed`）、1000px 和 390px 宽时页面横向溢出（`render/page-overflow`）、脚本报错（`render/script-error`）。每页多 1–4 秒，长页更久。关闭：`--render-check off`、`PE_RENDER_CHECK=0` 或配置 `"renderCheck": false`；找不到浏览器就跳过并说明，`PE_CHROME=路径` 指定。加 `--strict` 时有 render 警告返回非零。
 - **`pe check 稿件.md --strict`**：严格检查；route 警告按错误处理，适合交付前或 CI。
 - **`pe assemble 稿件.md --block <n|标题> --use a,b --as views|stack [-o out.md]`**：把选中组件的骨架拼进这一块；`views` 让原文成为最后一个视图，`stack` 追加在正文后。
 - **`pe tune`**：对比“提供过的组件”和“稿件里真正用到的组件”（`~/.call-pele-answer/offers.jsonl`、`usage.jsonl`），提供 ≥8 次使用率 <10% 的门槛 +0.03，没提供却被用 ≥3 次的 −0.03，写到 `admission.json`。设 `PE_NO_LOG=1` 不记录。

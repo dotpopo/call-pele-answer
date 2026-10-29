@@ -68,3 +68,7 @@ From gstack: core/commands.mjs command table (pe --help generated; fixed help tr
 
 ## 0.5.16 (2026-10-29)
 From diagram-design: admission gates auto-drawing (route can't draw what pe options rejects), SVG a11y (role=img, title=block title, desc=kind+size), route/too-complex (>9 nodes or >12 links on graph diagrams; 4/52 drafts warned), core/geometry.mjs (overlap, label-node; 0/52 false positives; text-fit dropped: renderer sizes boxes, static estimate flagged 4 good boxes), SKILL delete-test line.
+
+## 0.5.17 (2026-10-29)
+- core/contrast.mjs: static WCAG gate (text 4.5:1, marks 3:1, light+dark, every page palette × swatch, studio). Before: auto colour failed 10 pairs (muted text 3.5–4.3 and block number/th accent 2.8–3.5 on tinted panels); warm palette series orange/magenta/yellow < 3. Fix: tinted panels darken muted (65%/55% with ink) and accent text (--pe-accent-text 55% with ink); warm light orange/magenta/yellow/red/accent and mustard m darkened 1–15%; blueprint dark red lightened 2%.
+- core/rendercheck.mjs: zero-dep CDP-over-pipe Chrome; full-page screenshot before/after releasing every figure's overflow, diff rings outside figure boxes; plus collapsed, page overflow at 1000/390, script errors. Default on (--render-check off, PE_RENDER_CHECK=0, "renderCheck": false); skips without browser. 40 answer pages: 0 findings, avg 1.7 s, longest 5–7 s; +2.3 s on a 3-panel page.

@@ -2,7 +2,7 @@
 name: call-pele-answer
 slug: call-pele-answer
 displayName: Call Pele Answer
-version: 0.5.16
+version: 0.5.17
 allowed-tools: Bash(node:*) Read Write
 metadata: {"openclaw":{"requires":{"bins":["node"]}}}
 summary: 把长回答按块拆开，逐块挑最合适的形式（文字、表格、30+ 种图、滑块、标签页、分步播放），生成离线交互讲解页，可调色、可批注。
@@ -35,7 +35,7 @@ license: MIT
 2. **`pe options 稿件.md`**。JEV 对所有块一次答完几十道原子是非题（约 1–2 秒），代码按规则定每块首选形式和候选，再过脚本硬条件；首选排第一，照着用即可。
 3. **只在首选不对时才改**。同一内容的不同看法用 `views`（第一个是首选，最多 3 个），不同侧面用 `stack`；只有文字就留文字。候选外的组件要能说出理由才加。
 4. **`pe assemble 稿件.md --block n --use a,b --as views|stack`**，把骨架换成真实内容，视图标签改成读者看得懂的中文。它会在块里留下 `<!-- pe:use … -->` 标记。
-5. **`pe answer 稿件.md -o <绝对路径>.html --audit`**，按输出修（见下）。要卡住形式问题（CI、交付前）加 `--strict`：有 route 警告就不出页；STE 文字提示不拦。
+5. **`pe answer 稿件.md -o <绝对路径>.html --audit`**，按输出修（见下）。要卡住形式问题（CI、交付前）加 `--strict`：有 route 警告就不出页；STE 文字提示不拦。出页后默认跑渲染检查（本机 Chrome 截图找被裁掉的图、横向溢出、脚本报错，每页多 1–4 秒）；有 `render/` 警告就改图，赶时间可 `--render-check off`。
 
 快捷模式 `pe answer` 允许一次完成路由、派生和渲染，但它不是严格验收。它会打印候选组件；加 `--audit` 会同时打印每块的实际组件与未落地候选。需要保留人工选择时，继续使用 `pe options` → `pe assemble` → `pe answer`。
 
