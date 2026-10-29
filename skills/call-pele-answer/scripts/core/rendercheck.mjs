@@ -6,7 +6,8 @@
 //
 // Zero dependencies: a local Chrome/Chromium/Edge is driven over the DevTools pipe (fd 3/4).
 // No browser found → { skipped } and the build goes on. Switch: --render-check on|off,
-// config "renderCheck": false, PE_RENDER_CHECK=0. Default on; it costs one headless launch per page.
+// config "renderCheck": true, PE_RENDER_CHECK=1. Default off (0.5.18): daily answers favour speed; turn it on
+// for architecture-heavy pages, delivery, or CI. It costs one headless launch per page.
 import { spawn } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync } from 'node:fs';
 import { join, delimiter } from 'node:path';

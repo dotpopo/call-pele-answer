@@ -58,7 +58,7 @@ async function build(engine, file, opts, { checkOnly = false } = {}) {
   const route = r.warnings.filter(w => w[1].startsWith('route/')), ste = r.warnings.filter(w => !w[1].startsWith('route/'));
   if (route.length) { console.log(`route ${route.length} warnings（形式选择）:`); route.forEach(w => console.log('  ' + fmt(w))); }
   if (ste.length) { console.log(`STE ${ste.length} warnings（文字）:`); ste.forEach(w => console.log('  ' + fmt(w))); }
-  const rcOn = opts['render-check'] === undefined ? engine.config.renderCheck !== false : !/^(off|0|false|no)$/i.test(String(opts['render-check']));
+  const rcOn = opts['render-check'] === undefined ? engine.config.renderCheck === true : !/^(off|0|false|no)$/i.test(String(opts['render-check']));
   if (rcOn && r.ext === 'html') {
     const rc = await engine.trace.span('render-check', () => renderCheck(out));
     if (rc.skipped) console.log(`render-check 跳过：${rc.skipped}`);

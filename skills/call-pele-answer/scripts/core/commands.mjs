@@ -17,7 +17,7 @@ export const GLOBAL_FLAGS = [
   { name: 'annotate', usage: '--annotate on|off', about: '批注开关（默认开；配置 "annotate": false、PE_ANNOTATE=0 或稿件 annotate: off）' },
   { name: 'color', usage: '--color auto|plain', about: '自动配色（默认 auto；plain 恢复素色；配置 "color"、PE_COLOR 或稿件 color:）' },
   { name: 'palette', usage: '--palette on|off', about: '调色器开关（默认开；配置 "palette": false、PE_PALETTE=0 或稿件 palette: off）' },
-  { name: 'render-check', usage: '--render-check on|off', about: '渲染检查：用本机 Chrome 截图找被裁掉的图、横向溢出、脚本报错（默认开，每页多 1–4 秒；配置 "renderCheck": false、PE_RENDER_CHECK=0 关闭；没有浏览器就跳过）' },
+  { name: 'render-check', usage: '--render-check on|off', about: '渲染检查：用本机 Chrome 截图找被裁掉的图、横向溢出、脚本报错（默认关，开了每页多 1–4 秒；--render-check on、配置 "renderCheck": true 或 PE_RENDER_CHECK=1 打开；没有浏览器就跳过）' },
   { name: 'trace', usage: '--trace', about: '打印各阶段耗时（总是写入 runs.jsonl，PE_TRACE=0 关闭）' },
 ];
 export function helpText() {
