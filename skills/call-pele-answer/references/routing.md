@@ -28,7 +28,7 @@
 
 其余图（`usecase-beta` `requirementDiagram` `packet` `railroad-ebnf-beta` 等）和反例见 `references/routing.md`。
 
-**升级纪律**：更重的形式必须消除一个具体障碍，“显得单薄”不是理由。一句话能说清就不画图；一张图超过约 20 个节点或连线就拆块。
+**升级纪律**：更重的形式必须消除一个具体障碍，“显得单薄”不是理由。一句话能说清就不画图；一张图超过 9 个节点或 12 条连线，就拆成总览加细节（`route/too-complex`）。
 
 ## 为什么按块路由
 
@@ -98,7 +98,7 @@
 
 通用规则：
 
-- 一张图只讲一件事。超过约 20 个节点或 25 条边，拆图或用 `subgraph` 折叠。
+- 一张图只讲一件事。超过 9 个节点或 12 条连线，拆成总览加细节或用 `subgraph` 折叠。
 - 节点文字短；含括号、冒号、引号时用 `A["f(x): 值"]`。
 - 不在图里写 `style`/`classDef` 固定颜色：固定色不随主题切换。要强调或分类，用语义类：`class A,B bad`（或 `A:::ok`）。状态类 `bad/bug` 红框、`ok/fixed` 绿框、`warn` 黄、`new` 蓝、`muted` 灰；分类用色名 `blue/green/red/yellow/orange/cyan/purple/magenta` 浅底。颜色随主题和调色器走。
 - 用了语义类就加图例：图里写一行 `%% 图例: bad=违反规则; fixed=已修复`，页面在图上方画同色标签。
